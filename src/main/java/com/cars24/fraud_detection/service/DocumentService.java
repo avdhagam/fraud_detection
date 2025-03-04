@@ -1,5 +1,15 @@
 package com.cars24.fraud_detection.service;
 
+import com.cars24.fraud_detection.data.entity.DocumentEntity;
+import com.cars24.fraud_detection.data.response.DocumentResponseDTO;
+import com.cars24.fraud_detection.repository.DocumentRepository;
+import com.cars24.fraud_detection.workflow.WorkflowInitiator;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Map;
+
 @Service
 public class DocumentService {
 
@@ -19,7 +29,7 @@ public class DocumentService {
         Map<String, Object> workflowResults = workflowInitiator.startWorkflow(file);
 
         // Save results in MongoDB
-        Document document = new Document();
+        DocumentEntity document = new DocumentEntity();
         document.setExtractedData((String) workflowResults.get("ocr"));
         document.setValidationScore((Double) workflowResults.get("validation_score"));
         document.setImageQualityScore((Double) workflowResults.get("image_quality_score"));
