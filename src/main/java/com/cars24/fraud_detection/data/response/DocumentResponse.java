@@ -1,4 +1,4 @@
-package com.cars24.fraud_detection.data.dto;
+package com.cars24.fraud_detection.data.response;
 
-public class DocumentResponseDto {
+public class DocumentResponse {
 }

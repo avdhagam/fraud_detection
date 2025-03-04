@@ -1,4 +1,4 @@
-package com.cars24.fraud_detection.data.repository;
+package com.cars24.fraud_detection.repository;
 
 public class AudioRepository {
 }
