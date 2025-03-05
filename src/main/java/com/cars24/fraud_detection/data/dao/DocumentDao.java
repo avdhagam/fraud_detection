@@ -1,4 +1,12 @@
 package com.cars24.fraud_detection.data.dao;
 
+
+import com.cars24.fraud_detection.data.entity.DocumentEntity;
+
+import java.util.Optional;
+
+
 public interface DocumentDao {
+    void saveDocument(DocumentEntity document);
+    Optional<DocumentEntity> getDocumentById(String documentId);
 }
