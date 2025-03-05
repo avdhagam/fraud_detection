@@ -1,26 +1,37 @@
 package com.cars24.fraud_detection.controller;
 
-import com.cars24.fraud_detection.data.response.DocumentResponseDTO;
+import com.cars24.fraud_detection.data.request.DocumentRequest;
+import com.cars24.fraud_detection.data.response.DocumentResponse;
 import com.cars24.fraud_detection.service.DocumentService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+
 @RestController
-@RequestMapping("/api/document")
+@RequestMapping("/documents")
 public class DocumentController {
 
-    @Autowired
-    private DocumentService documentService;
+    private final DocumentService documentService;
+
+    public DocumentController(DocumentService documentService) {
+        this.documentService = documentService;
+    }
 
     @PostMapping("/process")
-    public ResponseEntity<DocumentResponseDTO> processDocument(@RequestParam("file") MultipartFile file) {
-        DocumentResponseDTO response = documentService.processDocument(file);
+    public ResponseEntity<DocumentResponse> processDocument(@RequestParam("file") MultipartFile file) throws IOException {
+        DocumentRequest request = new DocumentRequest();
+        request.setFileName(file.getOriginalFilename());
+        request.setDocumentData(file.getBytes());
+
+        DocumentResponse response = documentService.processDocument(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/result")
+    public ResponseEntity<DocumentResponse> getDocument(@RequestParam("documentId") String documentId) {
+        DocumentResponse response = documentService.getDocumentById(documentId);
         return ResponseEntity.ok(response);
     }
 }
-
