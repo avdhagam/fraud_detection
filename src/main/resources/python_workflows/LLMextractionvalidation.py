@@ -4,6 +4,39 @@ import re
 import requests
 from openai import OpenAI
 
+def parse_transcript_to_structured_format(transcript_text):
+    """
+    Parse the raw transcript text into a structured array of transcript segments.
+
+    Args:
+        transcript_text (str): Raw transcript text
+
+    Returns:
+        list: List of dictionaries with structured transcript data
+    """
+    structured_transcript = []
+
+    # Regular expression to match transcript segments
+    # Format: <start_time> <end_time> <speaker> <text>
+    pattern = r'(\d+\.\d+)\s+(\d+\.\d+)\s+(SPEAKER_\d+)\s+(.+?)(?=\d+\.\d+\s+\d+\.\d+\s+SPEAKER_|\Z)'
+
+    matches = re.finditer(pattern, transcript_text, re.DOTALL)
+
+    for match in matches:
+        start_time = float(match.group(1))
+        end_time = float(match.group(2))
+        speaker = match.group(3)
+        text = match.group(4).strip()
+
+        structured_transcript.append({
+            "start_time": start_time,
+            "end_time": end_time,
+            "speaker": speaker,
+            "text": text
+        })
+
+    return structured_transcript
+
 def extract_transcript_information(transcript):
     """
     Extract key information from a call transcript using OpenRouter API.
@@ -15,7 +48,7 @@ def extract_transcript_information(transcript):
         dict: Extracted information in dictionary format.
     """
     # OpenRouter API key
-    api_key = os.environ.get("OPENROUTER_API_KEY", "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")
+    api_key = os.environ.get("OPENROUTER_API_KEY", "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")
 
     # API URL
     url = "https://openrouter.ai/api/v1/chat/completions"
@@ -104,7 +137,7 @@ def score_extraction_with_llm(result, ground_truth):
     # Initialize client with OpenRouter API
     client = OpenAI(
         base_url="https://openrouter.ai/api/v1",
-        api_key=os.environ.get("OPENROUTER_API_KEY", "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"),
+        api_key=os.environ.get("OPENROUTER_API_KEY", "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"),
     )
 
     # Convert result to string if it's a dict
@@ -149,9 +182,11 @@ def score_extraction_with_llm(result, ground_truth):
        - Lower scores for significantly different descriptions
     
     Return a JSON with these fields:
-    1. field_scores: A dictionary with scores for each field
+    1. transcript
+    2. field_by_field_scores: A dictionary with scores for each field (reference_name, subject_name, subject_address, relation_to_subject, subject_occupation)
     2. overall_score: Average of all field scores
-    3. explanation: Detailed explanation of scoring decisions
+    3. explanation: A dictionary with detailed explanations for each field score
+    
     
     IMPORTANT: Return ONLY a valid JSON object with no markdown formatting, code blocks, or additional text.
     """
@@ -181,6 +216,23 @@ def score_extraction_with_llm(result, ground_truth):
     # Try to parse the JSON response
     try:
         score_data = json.loads(cleaned_result)
+
+        # Ensure the response has the correct structure
+        if "field_scores" in score_data and not "field_by_field_scores" in score_data:
+            score_data["field_by_field_scores"] = score_data.pop("field_scores")
+
+        # Ensure explanation is a dictionary if it's a string
+        if "explanation" in score_data and isinstance(score_data["explanation"], str):
+            # Create a dictionary with the same explanation for each field
+            explanation_text = score_data["explanation"]
+            score_data["explanation"] = {
+                "reference_name": explanation_text,
+                "subject_name": explanation_text,
+                "subject_address": explanation_text,
+                "relation_to_subject": explanation_text,
+                "subject_occupation": explanation_text
+            }
+
         return score_data
     except json.JSONDecodeError:
         # If still failing, try a more aggressive cleanup
@@ -211,14 +263,18 @@ def process_transcript(transcript, ground_truth):
     Returns:
         dict: Comprehensive results including extraction and scoring
     """
+    # Parse transcript into structured format
+    structured_transcript = parse_transcript_to_structured_format(transcript)
+
     # Extract information from transcript
     extracted_result = extract_transcript_information(transcript)
 
     # Score the extracted information
     scoring_results = score_extraction_with_llm(extracted_result, ground_truth)
 
-    # Combine results
+    # Combine results into the required format
     return {
+        "transcript": structured_transcript,
         "extracted_result": extracted_result,
         "scoring_results": scoring_results
     }
@@ -242,19 +298,5 @@ if __name__ == "__main__":
     # Process the transcript
     results = process_transcript(transcript, ground_truth)
 
-    # Print results
-    print("Extracted Result:")
-    print(json.dumps(results['extracted_result'], indent=2))
-
-    print("\nScoring Results:")
-    scoring_results = results['scoring_results']
-
-    if "field_scores" in scoring_results:
-        print("\nField-by-field scores:")
-        for field, score in scoring_results["field_scores"].items():
-            print(f"{field}: {score:.2f}")
-
-        print(f"\nOverall score: {scoring_results.get('overall_score', 0):.2f} ({scoring_results.get('overall_score', 0)*100:.1f}%)")
-        print(f"\nExplanation: {scoring_results.get('explanation', '')}")
-    else:
-        print("\nError in scoring:", scoring_results.get("error", "Unknown error"))
+    # Print the results in JSON format
+    print(json.dumps(results, indent=2))
