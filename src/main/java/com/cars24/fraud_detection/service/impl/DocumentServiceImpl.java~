@@ -34,22 +34,25 @@ public class DocumentServiceImpl implements DocumentService {
             DocumentResponse response = workflowInitiator.processDocument(request);
             log.info("✅ Workflow execution completed for file: {}", request.getFileName());
 
+            // ✅ Step 2: Use the actual stored document path from workflow
+            String documentFilePath = response.getFilePath();  // Fetch from response
+
             // ✅ Step 3: Save document details to database
             DocumentEntity entity = DocumentEntity.builder()
                     .userId(request.getUserId())
                     .fileName(request.getFileName())
+                    .filePath(documentFilePath) // Using actual stored path
                     .status(response.isValid() ? "COMPLETED" : "FAILED")
                     .remarks(response.getRemarks())
-                    .ocrResults(response.getOcrResults())
-                    .qualityResults(response.getQualityResults())
-                    .forgeryResults(response.getForgeryResults())
-                    .validationResults(response.getValidationResults())
+                    .ocrResults(response.getOcrResults() != null ? response.getOcrResults() : Map.of())  // ✅ Handle null safely
+                    .qualityResults(response.getQualityResults() != null ? response.getQualityResults() : Map.of())
+                    .forgeryResults(response.getForgeryResults() != null ? response.getForgeryResults() : Map.of())
+                    .validationResults(response.getValidationResults() != null ? response.getValidationResults() : Map.of())
                     .finalRiskScore(response.getFinalRiskScore())
                     .riskLevel(response.getRiskLevel())
                     .decision(response.getDecision())
                     .nextSteps(response.getNextSteps())
                     .build();
-
 
             documentDao.saveDocument(entity);
             log.info("✅ Document saved successfully in database: {} (Status: {})", request.getFileName(), entity.getStatus());

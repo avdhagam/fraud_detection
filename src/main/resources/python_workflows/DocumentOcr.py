@@ -4,10 +4,11 @@ import base64
 import json
 import cv2
 import numpy as np
+import re
 from openai import OpenAI
 
 # OpenRouter API Config
-API_KEY = "api key"  # 🔹 Replace with your actual API key
+API_KEY = "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"  # 🔹 Replace with actual API key
 BASE_URL = "https://openrouter.ai/api/v1"
 
 client = OpenAI(
@@ -15,15 +16,18 @@ client = OpenAI(
     api_key=API_KEY
 )
 
-# Document Storage Path
+# Document Storage Paths
 DOCUMENT_STORAGE_PATH = os.path.join("src", "main", "resources", "document_storage")
+VALIDATION_STORAGE_PATH = os.path.join(DOCUMENT_STORAGE_PATH, "validation_json")
+
+# Ensure storage directories exist
+os.makedirs(VALIDATION_STORAGE_PATH, exist_ok=True)
 
 def preprocess_image(image_path):
     """
-    Preprocess the document image for better OCR accuracy.
+    Preprocess document image for better OCR accuracy:
     - Convert to grayscale
     - Apply adaptive thresholding
-    - Deskew if needed
     - Denoise using Gaussian blur
     """
     try:
@@ -38,18 +42,15 @@ def preprocess_image(image_path):
         img = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 31, 2)
 
         # Save preprocessed image temporarily
-        processed_path = image_path.replace(".jpg", "_processed.jpg").replace(".png", "_processed.png")
+        processed_path = f"{os.path.splitext(image_path)[0]}_processed.jpg"
         cv2.imwrite(processed_path, img)
         return processed_path, None
-
     except Exception as e:
         return None, f"Preprocessing error: {str(e)}"
 
-import re
-
 def extract_text(image_path):
+    """Extracts structured text from an Aadhaar or PAN card using OCR & AI."""
     try:
-        # Check if file exists
         if not os.path.exists(image_path):
             return {"error": f"File not found: {image_path}"}
 
@@ -64,7 +65,6 @@ def extract_text(image_path):
 
         # Request payload with refined prompt
         completion = client.chat.completions.create(
-            extra_headers={"Authorization": f"Bearer {API_KEY}", "Content-Type": "application/json"},
             model="google/gemini-pro-vision",
             messages=[
                 {
@@ -72,19 +72,24 @@ def extract_text(image_path):
                     "content": [
                         {"type": "text", "text": (
                             "Perform high-accuracy OCR on this document image.\n"
-                            "Classify the document type (Aadhaar or PAN).\n"
-                            "Extract accurate text fields in a structured JSON:\n"
-                            "1. document_type (Aadhaar, PAN, or Unknown)\n"
-                            "2. name\n"
-                            "3. date_of_birth\n"
-                            "4. gender\n"
-                            "5. id_number(Adhaar/PAN number)\n"
-                            "6. qr_code_data (if present)\n"
-                            "7. confidence_score (0-100, confidence in extraction)\n"
-                            "If extraction is unreliable, return 'null' instead of incorrect values.\n"
-                            "Ensure support for:\n"
-                            "- Aadhaar in 16 languages: Assamese, Bengali, English, Gujarati, Hindi, Kannada, Konkani, Malayalam, Marathi, Manipuri, Nepali, Odia, Punjabi, Tamil, Telugu, Urdu.\n"
-                            "- PAN in Hindi & English."
+                            "Return ONLY a valid JSON response, without explanations or extra text.\n"
+                            "Ensure the JSON is structured as follows:\n"
+                            "{\n"
+                            '  "document_type": "Aadhaar" | "PAN" | "Unknown",\n'
+                            '  "name": "string" | null,\n'
+                            '  "date_of_birth": "YYYY-MM-DD" | "YYYY" | null,\n'
+                            '  "gender": "Male" | "Female" | "Other" | null,\n'
+                            '  "id_number": "string" | null,\n'
+                            '  "confidence_score": integer (0-100),\n'
+                            '  "insights": "string",\n'
+                            '  "issues": ["string", ...] | [],\n'
+                            '  "recommendations": "string"\n'
+                            "}\n\n"
+                            "**Rules:**\n"
+                            "- If a field is missing or unreadable, return null instead of incorrect values.\n"
+                            "- Provide insights on extraction accuracy.\n"
+                            "- Identify potential OCR issues (misreads, missing fields).\n"
+                            "- Generate recommendations for accuracy improvement.\n"
                         )},
                         {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}}
                     ]
@@ -92,62 +97,84 @@ def extract_text(image_path):
             ]
         )
 
-        # Print API raw response for debugging
+        # Extract JSON response directly
         raw_response = completion.choices[0].message.content
-        print("🔹 API Raw Response:", raw_response)
-
-        # **🔹 Extract JSON from Markdown formatting**
-        json_match = re.search(r"```json\n(.*)\n```", raw_response, re.DOTALL)
-        if json_match:
-            json_string = json_match.group(1).strip()
+        if raw_response:
+            raw_response = raw_response.strip()
         else:
-            return {"error": "API response not in expected JSON format", "raw_response": raw_response}
+            return {"error": "Empty response received from API"}
 
-        # Convert string to JSON
-        extracted_data = json.loads(json_string)
+        print("API Raw Response:", raw_response)  # Debugging purpose
 
-        # Apply final checks
+        # Ensure it's properly formatted JSON
+        try:
+            json_match = re.search(r"```json\n(.*?)\n```", raw_response, re.DOTALL)
+            if json_match:
+                extracted_data = json.loads(json_match.group(1).strip())
+            else:
+                extracted_data = json.loads(raw_response)
+        except json.JSONDecodeError as e:
+            return {"error": f"Failed to parse JSON response: {str(e)}", "raw_response": raw_response}
+
+        # Post-process extracted data
         extracted_data = postprocess_extracted_data(extracted_data)
 
-        # Save extracted data as JSON for workflow
-        save_extraction_results(image_path, extracted_data)
+        # Save extracted JSON for validation
+        save_validation_json(image_path, extracted_data)
 
-        return extracted_data
+        return generate_ocr_response(extracted_data)  # Return final structured response
 
     except Exception as e:
         return {"error": str(e)}
+
 
 def postprocess_extracted_data(data):
     """
     Final cleanup on extracted data:
     - Mask Aadhaar numbers (XXXX-XXXX-1234)
     - Ensure no hallucinations (replace unlikely values with null)
+    - Adjust confidence-based validation
     """
     if data.get("document_type") == "Aadhaar":
         if "id_number" in data and len(data["id_number"]) == 12 and data["id_number"].isdigit():
             data["id_number"] = f"XXXX-XXXX-{data['id_number'][-4:]}"  # Mask Aadhaar
 
-    if data.get("confidence_score", 100) < 50:
+    confidence = data.get("confidence_score", 100)
+
+    if 30 <= confidence < 50:
+        data.setdefault("issues", []).append("Some fields have low confidence. Manual review recommended.")
+
+    if confidence < 30:
         for key in ["name", "date_of_birth", "gender", "id_number"]:
             data[key] = None  # Set unreliable data to null
 
     return data
 
-def save_extraction_results(image_path, extracted_data):
-    """
-    Save the extracted JSON data in the document storage folder.
-    """
-    output_path = image_path.replace(".jpg", ".json").replace(".png", ".json")
+def save_validation_json(image_path, extracted_data):
+    """Save extracted fields JSON for validation.py."""
+    validation_json = {
+        "document_type": extracted_data.get("document_type"),
+        "name": extracted_data.get("name"),
+        "date_of_birth": extracted_data.get("date_of_birth"),
+        "gender": extracted_data.get("gender"),
+        "id_number": extracted_data.get("id_number")
+    }
+    output_path = os.path.join(VALIDATION_STORAGE_PATH, os.path.basename(image_path).replace(".jpg", ".json").replace(".png", ".json"))
     with open(output_path, "w") as json_file:
-        json.dump(extracted_data, json_file, indent=4)
+        json.dump(validation_json, json_file, indent=4)
+
+def generate_ocr_response(data):
+    """Builds structured response with AI-generated insights and confidence scores."""
+    return {
+        "extractedText": data,
+        "confidenceScore": data.get("confidence_score", 0) / 100,
+        "detailedInsight": data.get("insights", "No additional insights provided."),
+        "issues": data.get("issues", []),
+        "recommendations": data.get("recommendations", "No specific recommendations.")
+    }
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print(json.dumps({"error": "Usage: python DocumentOcr.py <image_filename>"}))
-        sys.exit(1)
-
     image_filename = sys.argv[1]
     image_path = os.path.join(DOCUMENT_STORAGE_PATH, image_filename)
-
     result = extract_text(image_path)
     print(json.dumps(result, indent=4))

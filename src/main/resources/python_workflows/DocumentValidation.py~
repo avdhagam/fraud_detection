@@ -111,11 +111,9 @@ def main():
         sys.exit(1)
 
     reference_data = {
-        "document_type": "Aadhaar",
-        "name": "Sapna Singh",
-        "date_of_birth": "1980-01-01",
-        "gender": "Female",
-        "id_number": "XXXX-XXXX-6666"
+        "name": "Pari Sharma",
+        "dob": "2000-08-01",
+        "id_number": "ABCDE1234F"
     }
 
     validation_results = validate_fields(ocr_data, reference_data)
