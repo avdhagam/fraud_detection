@@ -1,32 +1,37 @@
 package com.cars24.fraud_detection.service.impl;
 
-import com.cars24.fraud_detection.data.dao.DocumentDao;
-import com.cars24.fraud_detection.data.entity.DocumentEntity;
 import com.cars24.fraud_detection.data.request.DocumentRequest;
 import com.cars24.fraud_detection.data.response.DocumentResponse;
 import com.cars24.fraud_detection.exception.DocumentProcessingException;
+import com.cars24.fraud_detection.data.entity.DocumentEntity;
+import com.cars24.fraud_detection.data.dao.DocumentDao;
 import com.cars24.fraud_detection.service.DocumentService;
 import com.cars24.fraud_detection.workflow.WorkflowInitiator;
+import com.cars24.fraud_detection.workflow.impl.WorkflowInitiatorImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
-import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DocumentServiceImpl implements DocumentService {
 
+    private final WorkflowInitiatorImpl workflowInitiator;
     private final DocumentDao documentDao;
-    private final WorkflowInitiator workflowInitiator;
 
-    @Override
     public DocumentResponse processDocument(DocumentRequest request) {
         try {
-            // Step 1: Process document via workflow (OCR, Validation, Quality, Forgery)
+            log.info("Processing document: {}", request.getFileName());
+
             DocumentResponse response = workflowInitiator.processDocument(request);
 
-            // Step 2: Save document details in database
+            if (response.getExtractedData().isEmpty() || response.getFraudRiskScore() == 0.0) {
+                throw new DocumentProcessingException("Document processing failed due to missing or invalid data.");
+            }
+
             DocumentEntity entity = DocumentEntity.builder()
                     .userId(request.getUserId())
                     .fileName(request.getFileName())
@@ -39,15 +44,15 @@ public class DocumentServiceImpl implements DocumentService {
                     .finalRiskScore(response.getFraudRiskScore())
                     .build();
 
-
             documentDao.saveDocument(entity);
+            log.info("Document successfully processed and stored.");
             return response;
 
         } catch (Exception e) {
+            log.error("Error processing document: {}", e.getMessage(), e);
             throw new DocumentProcessingException("Error processing document: " + e.getMessage(), e);
         }
     }
-
     @Override
     public DocumentResponse getDocumentById(String documentId) {
         DocumentEntity documentEntity = documentDao.getDocumentById(documentId)

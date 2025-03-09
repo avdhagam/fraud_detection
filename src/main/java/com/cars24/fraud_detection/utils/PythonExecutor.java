@@ -1,34 +1,39 @@
 package com.cars24.fraud_detection.utils;
 
 import com.cars24.fraud_detection.exception.PythonExecutionException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.util.*;
+import java.io.*;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 public class PythonExecutor {
 
-    private final ObjectMapper objectMapper = new ObjectMapper(); // JSON parser
+    private static final String PYTHON_SCRIPT_FOLDER = System.getProperty("user.dir") + "\\python_workflows\\";
 
-    public Map<String, Object> runPythonScript(String scriptName, Object... args) {
+    public String runPythonScript(String scriptName, String... args) {
         try {
-            // Prepare command: python3 scriptName arg1 arg2 ...
-            List<String> command = new ArrayList<>();
-            command.add("python3");
-            command.add(scriptName);
+            // Construct full script path
+            String scriptPath = Paths.get(PYTHON_SCRIPT_FOLDER, scriptName).toString();
 
-            for (Object arg : args) {
-                if (arg instanceof Map) {
-                    command.add(objectMapper.writeValueAsString(arg)); // Convert Map to JSON
-                } else {
-                    command.add(arg.toString());
-                }
+            // Validate script existence
+            File scriptFile = new File(scriptPath);
+            if (!scriptFile.exists()) {
+                throw new PythonExecutionException("Python script not found: " + scriptPath);
+            }
+
+            // Prepare command: python3 scriptPath arg1 arg2 ...
+            List<String> command = new ArrayList<>();
+            command.add("python3"); // Ensure correct Python version
+            command.add(scriptPath);
+
+            for (String arg : args) {
+                command.add(arg);
             }
 
             log.info("Executing Python script: {}", String.join(" ", command));
@@ -45,16 +50,16 @@ public class PythonExecutor {
             int exitCode = process.waitFor();
 
             if (exitCode != 0) {
-                log.error("Python script failed with exit code {}: {}", exitCode, scriptOutput);
-                throw new PythonExecutionException("Python script execution failed with exit code " + exitCode);
+                // Capture error stream
+                BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+                String errorOutput = errorReader.lines().collect(Collectors.joining("\n"));
+                log.error("Python script failed with exit code {}: {}", exitCode, errorOutput);
+                throw new PythonExecutionException("Python script execution failed with exit code " + exitCode + ": " + errorOutput);
             }
 
-            // Parse the output (Assuming JSON-like structure)
-            Map<String, Object> result = new HashMap<>();
-            result.put("output", scriptOutput);
-
             log.info("Python script executed successfully: {}", scriptOutput);
-            return result;
+            return scriptOutput;
+
         } catch (Exception e) {
             log.error("Error executing Python script: {}", e.getMessage(), e);
             throw new PythonExecutionException("Error executing Python script", e);
