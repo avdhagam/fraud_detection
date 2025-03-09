@@ -28,13 +28,13 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public DocumentResponse processDocument(DocumentRequest request) {
         try {
-            log.info("🔍 Processing document for user: {}", request.getUserId());
+            log.info("Processing document for user: {}", request.getUserId());
 
-            // ✅ Step 1: Run workflow (OCR, Validation, Quality, Forgery Detection)
+            //Run workflow (OCR, Validation, Quality, Forgery Detection)
             DocumentResponse response = workflowInitiator.processDocument(request);
-            log.info("✅ Workflow execution completed for file: {}", request.getFileName());
+            log.info("Workflow execution completed for file: {}", request.getFileName());
 
-            // ✅ Step 3: Save document details to database
+            //Save document details to database
             DocumentEntity entity = DocumentEntity.builder()
                     .userId(request.getUserId())
                     .fileName(request.getFileName())
@@ -52,27 +52,27 @@ public class DocumentServiceImpl implements DocumentService {
 
 
             documentDao.saveDocument(entity);
-            log.info("✅ Document saved successfully in database: {} (Status: {})", request.getFileName(), entity.getStatus());
+            log.info("Document saved successfully in database: {} (Status: {})", request.getFileName(), entity.getStatus());
 
             return response;
 
         } catch (Exception e) {
-            log.error("❌ Error processing document: {}", e.getMessage(), e);
+            log.error("Error processing document: {}", e.getMessage(), e);
             throw new DocumentProcessingException("Failed to process document. Please try again.");
         }
     }
 
     @Override
     public DocumentResponse getDocumentById(String documentId) {
-        log.info("🔍 Fetching document by ID: {}", documentId);
+        log.info("Fetching document by ID: {}", documentId);
 
         DocumentEntity documentEntity = documentDao.getDocumentById(documentId)
                 .orElseThrow(() -> {
-                    log.warn("❌ Document not found: {}", documentId);
+                    log.warn("Document not found: {}", documentId);
                     return new DocumentProcessingException("Document not found");
                 });
 
-        log.info("✅ Document fetched successfully: {}", documentId);
+        log.info("Document fetched successfully: {}", documentId);
         return documentEntity.toResponse();
     }
 }

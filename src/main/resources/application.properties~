@@ -1,4 +1,0 @@
-spring.application.name=demo
-
-
-spring.data.mongodb.uri=mongodb+srv://diyamariya:nofrauds@fraudcluster.sekmv.mongodb.net/fraud_db?retryWrites=true&w=majority
