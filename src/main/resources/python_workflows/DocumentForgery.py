@@ -18,7 +18,7 @@ logging.basicConfig(
 )
 
 # OpenRouter API Config
-API_KEY = "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"
+API_KEY = "api key"
 BASE_URL = "https://openrouter.ai/api/v1"
 client = OpenAI(base_url=BASE_URL, api_key=API_KEY)
 
@@ -54,11 +54,14 @@ def detect_image_manipulation(image_path):
         return {
             "tamperingScore": float(tampering_score),
             "metadataAnomalyScore": 0.0,
-            "formatConsistencyScore": 0.0
+            "formatConsistencyScore": 0.0,
+            "securityFeatureScore": 0.0,
+            "backgroundConsistencyScore": 0.0
         }
     except Exception as e:
         logging.error(f"Error in image manipulation detection: {str(e)}")
-        return {"tamperingScore": 0.5, "metadataAnomalyScore": 0.5, "formatConsistencyScore": 0.5}
+        return {"tamperingScore": 0.5, "metadataAnomalyScore": 0.5, "formatConsistencyScore": 0.5,
+                "securityFeatureScore": 0.5, "backgroundConsistencyScore": 0.5}
 
 def analyze_forgery(image_path):
     """Analyze document for potential forgery indicators."""
@@ -67,14 +70,25 @@ def analyze_forgery(image_path):
             raise FileNotFoundError(f"File not found: {image_path}")
 
         cv_results = detect_image_manipulation(image_path)
-
-        with open(image_path, "rb") as img_file:
-            image_base64 = base64.b64encode(img_file.read()).decode("utf-8")
+        try:
+            with open(image_path, "rb") as img_file:
+                image_base64 = base64.b64encode(img_file.read()).decode("utf-8")
+        except Exception as e:
+            logging.error(f"Error encoding image: {str(e)}")
+            return {"error": f"Failed to encode image: {str(e)}", "success": False}
 
         forgery_prompt = (
-            "Analyze this document image for forgery. Identify manipulation, metadata anomalies, "
-            "and format inconsistencies. Return JSON with: tamperingScore, metadataAnomalyScore, "
-            "formatConsistencyScore, finalForgeryRiskScore, detailedInsight, and recommendations."
+            "Analyze this document image for potential forgery. Identify the following:\n\n"
+            "**Tampering Analysis** - Check for image manipulation, alterations, or suspicious artifacts.\n"
+            "**Metadata Analysis** - Verify if metadata anomalies indicate document modification.\n"
+            "**Format Consistency** - Check if the font, alignment, and layout match the standard document structure.\n"
+            "**Security Features** - Detect missing watermarks, holograms, or embedded security elements.\n"
+            "**Background Integrity** - Identify unnatural noise patterns or splicing artifacts in the document's background.\n\n"
+            "Provide the results in structured JSON format with:\n"
+            "- Scores (0-1) for each category.\n"
+            "- Detailed insights explaining why the score was given.\n"
+            "- Clear recommendations on the next steps.\n"
+            "- An overall forgery risk score and a final decision (Low, Medium, High Risk)."
         )
 
         completion = client.chat.completions.create(
@@ -92,26 +106,73 @@ def analyze_forgery(image_path):
 
         raw_response = completion.choices[0].message.content
         logging.info(f"Forgery API Raw Response: {raw_response}")
+        # Properly clean the response for JSON parsing
+        if "```json" in raw_response:
+            # Remove the ```json prefix and trailing ``` suffix
+            json_start = raw_response.find("```json") + len("```json")
+            json_end = raw_response.rfind("```")
+            if json_end > json_start:
+                cleaned_response = raw_response[json_start:json_end].strip()
+            else:
+                cleaned_response = raw_response[json_start:].strip()
+        else:
+            cleaned_response = raw_response.strip()
 
-        ai_results = json.loads(raw_response)
+        # Log the cleaned response to ensure it's not empty
+        logging.info(f"Cleaned API Response: {cleaned_response}")
+
+        if not cleaned_response:
+            logging.error("Error: Cleaned response is empty.")
+            return {"error": "Empty response from the forgery analysis API", "success": False}
+
+        try:
+        # First try direct parsing
+             ai_results = json.loads(cleaned_response)
+        except json.JSONDecodeError:
+        # If that fails, try additional cleanup
+            try:
+                # Remove any non-JSON characters and try again
+                import re
+                json_pattern = re.search(r'(\{.*\})', cleaned_response, re.DOTALL)
+                if json_pattern:
+                    cleaned_json = json_pattern.group(1)
+                    ai_results = json.loads(cleaned_json)
+                else:
+                    raise ValueError("Could not extract JSON pattern")
+            except Exception as e:
+                logging.error(f"Failed to parse JSON after cleanup: {str(e)}")
+                return {"error": "Invalid JSON response", "success": False}
 
         combined_results = {
-            "tamperingScore": ai_results.get("tamperingScore", cv_results["tamperingScore"]),
-            "metadataAnomalyScore": ai_results.get("metadataAnomalyScore", 0.5),
-            "formatConsistencyScore": ai_results.get("formatConsistencyScore", 0.5),
+            "forgeryAnalysis": {
+                "tamperingAnalysis": {
+                    "tamperingScore": ai_results.get("Tampering Analysis", {}).get("Score", 0),
+                    "detailedInsight": ai_results.get("Tampering Analysis", {}).get("Insights", "No tampering insights available.")
+                },
+                "metadataAnalysis": {
+                    "metadataAnomalyScore": ai_results.get("Metadata Analysis", {}).get("Score", 0),
+                    "detailedInsight": ai_results.get("Metadata Analysis", {}).get("Insights", "No metadata insights available."),
+                },
+                "formatConsistencyAnalysis": {
+                    "formatConsistencyScore": ai_results.get("Format Consistency", {}).get("Score", 0),
+                    "detailedInsight": ai_results.get("Format Consistency", {}).get("Insights", "No format inconsistencies detected.")
+                },
+                "securityFeatureAnalysis": {
+                    "securityFeatureScore": ai_results.get("Security Features", {}).get("Score", 0),
+                    "detailedInsight": ai_results.get("Security Features", {}).get("Insights", "Security features analysis unavailable.")
+                },
+                "backgroundIntegrityAnalysis": {
+                    "backgroundConsistencyScore": ai_results.get("Background Integrity", {}).get("Score", 0),
+                    "detailedInsight": ai_results.get("Background Integrity", {}).get("Insights", "No background inconsistencies found.")
+                },
+                "overallForgeryAssessment": {
+                    "finalForgeryRiskScore": ai_results.get("Forgery Risk Score", 0.0),
+                    "decision": ai_results.get("Final Decision", "Manual Review Recommended"),
+                }
+            },
+            "success": True
         }
 
-        combined_results["finalForgeryRiskScore"] = (
-                combined_results["tamperingScore"] * 0.5 +
-                combined_results["metadataAnomalyScore"] * 0.3 +
-                combined_results["formatConsistencyScore"] * 0.2
-        )
-
-        combined_results.update({
-            "detailedInsight": ai_results.get("detailedInsight", "AI analysis not available"),
-            "recommendations": ai_results.get("recommendations", "Verify manually if needed."),
-            "success": True
-        })
 
         output_filename = f"forgery_analysis_{uuid.uuid4().hex[:8]}.json"
         output_path = os.path.join(OUTPUT_PATH, output_filename)

@@ -1,14 +1,14 @@
 import sys
 import os
 import base64
-import json
 import cv2
-import numpy as np
 import re
+import json
+import logging
 from openai import OpenAI
 
 # OpenRouter API Config
-API_KEY = "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"  # 🔹 Replace with actual API key
+API_KEY = "api key"  # Replace with actual API key
 BASE_URL = "https://openrouter.ai/api/v1"
 
 client = OpenAI(
@@ -23,6 +23,9 @@ VALIDATION_STORAGE_PATH = os.path.join(DOCUMENT_STORAGE_PATH, "validation_json")
 # Ensure storage directories exist
 os.makedirs(VALIDATION_STORAGE_PATH, exist_ok=True)
 
+# Configure Logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
 def preprocess_image(image_path):
     """
     Preprocess document image for better OCR accuracy:
@@ -34,6 +37,7 @@ def preprocess_image(image_path):
         img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
         if img is None:
             return None, f"Error: Unable to load image from {image_path}"
+
 
         # Apply Gaussian Blur to remove noise
         img = cv2.GaussianBlur(img, (5, 5), 0)
@@ -53,6 +57,7 @@ def extract_text(image_path):
     try:
         if not os.path.exists(image_path):
             return {"error": f"File not found: {image_path}"}
+        logging.info(f"Processing image: {image_path}")
 
         # Preprocess the image
         preprocessed_path, preprocess_error = preprocess_image(image_path)
@@ -85,11 +90,15 @@ def extract_text(image_path):
                             '  "issues": ["string", ...] | [],\n'
                             '  "recommendations": "string"\n'
                             "}\n\n"
-                            "**Rules:**\n"
+                            "**OCR Evaluation Rules:**\n"
+                            "- Extract text with the highest possible accuracy.\n"
                             "- If a field is missing or unreadable, return null instead of incorrect values.\n"
-                            "- Provide insights on extraction accuracy.\n"
-                            "- Identify potential OCR issues (misreads, missing fields).\n"
-                            "- Generate recommendations for accuracy improvement.\n"
+                            "- Provide insights specifically about the OCR accuracy:\n"
+                            "  - Was the text extracted clearly?\n"
+                            "  - Were there any misread characters or missing fields?\n"
+                            "  - Any unusual variations in font or format?\n"
+                            "- Identify potential OCR-related issues (e.g., partial extractions, incorrect character swaps, missing segments).\n"
+                            "- Generate **specific** recommendations for improving OCR extraction (e.g., re-scanning with better contrast, cropping the document edges, retrying with higher resolution).\n"
                         )},
                         {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}}
                     ]
@@ -97,23 +106,29 @@ def extract_text(image_path):
             ]
         )
 
+        # Handle API response safely
+        if not completion or not hasattr(completion, "choices") or not completion.choices:
+            logging.error("No valid response received from API")
+            return {"error": "No valid response received from API"}
+
         # Extract JSON response directly
-        raw_response = completion.choices[0].message.content
-        if raw_response:
-            raw_response = raw_response.strip()
-        else:
+        raw_response = completion.choices[0].message.content if completion.choices[0].message else None
+        if not raw_response:
+            logging.error("Empty response received from API")
             return {"error": "Empty response received from API"}
 
-        print("API Raw Response:", raw_response)  # Debugging purpose
+        raw_response = raw_response.strip()
+        logging.info(f"Gemini API Response: {raw_response}")  # Debugging purpose
 
         # Ensure it's properly formatted JSON
         try:
-            json_match = re.search(r"```json\n(.*?)\n```", raw_response, re.DOTALL)
-            if json_match:
-                extracted_data = json.loads(json_match.group(1).strip())
-            else:
-                extracted_data = json.loads(raw_response)
+            # Remove Markdown-style JSON formatting if present
+            cleaned_response = re.sub(r"```json\n|\n```", "", raw_response).strip()
+
+            # Try to parse JSON
+            extracted_data = json.loads(cleaned_response)
         except json.JSONDecodeError as e:
+            logging.error(f"Failed to parse JSON response: {str(e)}")
             return {"error": f"Failed to parse JSON response: {str(e)}", "raw_response": raw_response}
 
         # Post-process extracted data
@@ -164,14 +179,21 @@ def save_validation_json(image_path, extracted_data):
         json.dump(validation_json, json_file, indent=4)
 
 def generate_ocr_response(data):
-    """Builds structured response with AI-generated insights and confidence scores."""
+    """Builds structured response with Gemini's insights & recommendations."""
     return {
-        "extractedText": data,
-        "confidenceScore": data.get("confidence_score", 0) / 100,
-        "detailedInsight": data.get("insights", "No additional insights provided."),
-        "issues": data.get("issues", []),
-        "recommendations": data.get("recommendations", "No specific recommendations.")
+        "extractedText": {
+            "document_type": data.get("document_type"),
+            "name": data.get("name"),
+            "date_of_birth": data.get("date_of_birth"),
+            "gender": data.get("gender"),
+            "id_number": data.get("id_number"),
+            "confidence_score": data.get("confidence_score", 0),
+            "insights": data.get("insights", "No insights available."),  # Use Gemini's insights
+            "issues": data.get("issues", []),
+            "recommendations": data.get("recommendations", "No recommendations provided.")  # Use Gemini's recommendations
+        }
     }
+
 
 if __name__ == "__main__":
     image_filename = sys.argv[1]

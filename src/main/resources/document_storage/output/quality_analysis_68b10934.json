@@ -1,0 +1,38 @@
+{
+    "technical_analysis": {
+        "resolution": {
+            "width": 399,
+            "height": 220,
+            "score": 0.08778
+        },
+        "brightness": {
+            "value": 202.4678286625655,
+            "score": 0.41201703009752555
+        },
+        "contrast": {
+            "value": 69.55969717638736,
+            "score": 0.869496214704842
+        },
+        "blur": {
+            "laplacian_var": 5234.557383607297,
+            "score": 1.0
+        },
+        "noise": {
+            "score": 0.45656486580947375
+        },
+        "finalQualityScore": 0.5282931355414209
+    },
+    "content_analysis": {
+        "readability": 0,
+        "completeness": 0,
+        "blur_sharpness": "",
+        "lighting_issues": "",
+        "color_accuracy": "",
+        "document_alignment": "",
+        "noise_artifacts": ""
+    },
+    "acceptable": false,
+    "recommendations": [],
+    "finalQualityScore": 0.5282931355414209,
+    "success": true
+}
