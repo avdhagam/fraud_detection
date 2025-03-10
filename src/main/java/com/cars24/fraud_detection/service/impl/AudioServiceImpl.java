@@ -28,7 +28,7 @@ public class AudioServiceImpl implements AudioService {
     @Autowired
     private WorkflowInitiator workflowInitiator;
     private static final Logger logger = Logger.getLogger(AudioServiceImpl.class.getName());
-    private static final String STORAGE_PATH = "/Users/avanidhagam/Desktop/fraud_detection-feature-avani/src/main/resources/audio_storage";
+    private static final String STORAGE_PATH = "/Users/avanidhagam/Desktop/fraud/realworking/fraud_detection-feature-avani/src/main/resources/audio_storage";
 
     @Override
     public AudioResponse processAudioRequest(AudioRequest audioRequest) throws JsonProcessingException, AudioProcessingException {
