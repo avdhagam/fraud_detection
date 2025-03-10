@@ -4,7 +4,6 @@ import com.cars24.fraud_detection.data.request.AudioRequest;
 import com.cars24.fraud_detection.data.response.AudioResponse;
 import com.cars24.fraud_detection.exception.AudioProcessingException;
 import com.cars24.fraud_detection.service.AudioService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +26,7 @@ public class AudioController {
     }
 
     @PostMapping("/trigger")
-    public ResponseEntity<AudioResponse> trigger(@RequestParam("file") MultipartFile file) throws AudioProcessingException, JsonProcessingException {
+    public ResponseEntity<AudioResponse> trigger(@RequestParam("file") MultipartFile file) throws IOException, AudioProcessingException {
         logger.info("Received audio file upload request");
         AudioRequest audioRequest = new AudioRequest();
         audioRequest.setAudioFile(file);

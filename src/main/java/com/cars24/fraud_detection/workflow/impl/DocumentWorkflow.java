@@ -4,282 +4,187 @@ import com.cars24.fraud_detection.data.request.AudioRequest;
 import com.cars24.fraud_detection.data.request.DocumentRequest;
 import com.cars24.fraud_detection.data.response.AudioResponse;
 import com.cars24.fraud_detection.data.response.DocumentResponse;
-import com.cars24.fraud_detection.exception.AudioProcessingException;
 import com.cars24.fraud_detection.exception.DocumentProcessingException;
 import com.cars24.fraud_detection.utils.PythonExecutor;
 import com.cars24.fraud_detection.workflow.WorkflowInitiator;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
-import java.io.IOException;
+
+import java.io.File;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.*;
 
 @Component
 public class DocumentWorkflow implements WorkflowInitiator {
-
-    @Value("${document.storage.path:src/main/resources/document_storage/}")
-    private String storagePath;
-
-    @Value("${document.archive.path:src/main/resources/document_storage/archive/}")
-    private String archivePath;
-
-    @Value("${python.scripts.ocr.path:src/main/resources/python_workflows/DocumentOcr.py}")
-    private String ocrScriptPath;
-
-    @Value("${python.scripts.quality.path:src/main/resources/python_workflows/DocumentQuality.py}")
-    private String qualityScriptPath;
-
-    @Value("${python.scripts.forgery.path:src/main/resources/python_workflows/DocumentForgery.py}")
-    private String forgeryScriptPath;
-
-    @Value("${python.scripts.validation.path:src/main/resources/python_workflows/DocumentValidation.py}")
-    private String validationScriptPath;
-
-    @Value("${risk.scoring.quality.weight:0.3}")
-    private double qualityWeight;
-
-    @Value("${risk.scoring.forgery.weight:0.4}")
-    private double forgeryWeight;
-
-    @Value("${risk.scoring.validation.weight:0.3}")
-    private double validationWeight;
-
     private static final Logger log = LoggerFactory.getLogger(DocumentWorkflow.class);
 
     private final PythonExecutor pythonExecutor;
-
-    private static final int FUTURE_TIMEOUT_SECONDS = 30;
-    private static final int MAX_ARCHIVE_RETRIES = 3;
+    private static final String STORAGE_PATH = "src/main/resources/document_storage/";
 
     public DocumentWorkflow(PythonExecutor pythonExecutor) {
         this.pythonExecutor = pythonExecutor;
     }
 
     @Override
-    public AudioResponse processAudio(AudioRequest request) throws AudioProcessingException{
-        // Not implemented in this class
-        log.warn("Audio processing not implemented in DocumentWorkflow");
-        return null;
-    }
-
-    @Override
     public DocumentResponse processDocument(DocumentRequest request) {
-        validateRequest(request);
         ExecutorService executor = Executors.newFixedThreadPool(3);
-        String documentPath = null;
 
         try {
-            // Ensure archive directory exists
-            Files.createDirectories(Paths.get(archivePath));
+            // ✅ Step 1: Store the document
+            final String documentPath = saveDocument(request.getDocumentData(), request.getFileName());
+            log.info("Document stored at: {}", documentPath);
 
-            // Store the document
-            final String finalDocumentPath = saveDocument(request.getDocumentData(), request.getFileName());
-            documentPath = finalDocumentPath; // Store in non-final variable for finally block
-            log.info("Document stored at: {}", finalDocumentPath);
-
-            // Run OCR first (so validation gets correct data)
+            // ✅ Step 2: Run OCR first (so validation gets correct data)
             Future<Map<String, Object>> ocrFuture = executor.submit(() ->
-                    pythonExecutor.runPythonScript(ocrScriptPath, finalDocumentPath)
+                    pythonExecutor.runPythonScript("src/main/resources/python_workflows/DocumentOcr.py", documentPath)
             );
 
-            Map<String, Object> ocrResult = getFutureResult(ocrFuture, "OCR Extraction");
-            log.info("OCR Extraction Completed: {}", ocrResult);
-
-            // Extract the OCR JSON path from the OCR result
-            String ocrJsonPath = (String) ocrResult.get("ocr_json_path"); // Get value of the string
-            if (ocrJsonPath == null || ocrJsonPath.isEmpty()) {
-                throw new DocumentProcessingException("OCR JSON path not found in OCR result.");
+            Map<String, Object> ocrResult;
+            try {
+                ocrResult = ocrFuture.get(10, TimeUnit.SECONDS); // Timeout after 10s
+                log.info("OCR Extraction Completed: {}", ocrResult);
+            } catch (TimeoutException e) {
+                log.error("OCR processing timeout!", e);
+                throw new DocumentProcessingException("OCR processing timed out.");
             }
 
-            // Run quality, forgery, and validation in parallel
+            // ✅ Step 3: Run quality, forgery, and validation in parallel
             Future<Map<String, Object>> qualityFuture = executor.submit(() ->
-                    pythonExecutor.runPythonScript(qualityScriptPath, finalDocumentPath)
+                    pythonExecutor.runPythonScript("src/main/resources/python_workflows/DocumentQuality.py", documentPath)
             );
 
             Future<Map<String, Object>> forgeryFuture = executor.submit(() ->
-                    pythonExecutor.runPythonScript(forgeryScriptPath, finalDocumentPath)
+                    pythonExecutor.runPythonScript("src/main/resources/python_workflows/DocumentForgery.py", documentPath)
             );
 
             Future<Map<String, Object>> validationFuture = executor.submit(() ->
-                    pythonExecutor.runPythonScript(validationScriptPath, ocrJsonPath)
+                    pythonExecutor.runPythonScript("src/main/resources/python_workflows/DocumentValidation.py", documentPath, ocrResult)
             );
 
-            // Collect results with timeouts to prevent blocking
+            // ✅ Step 4: Collect results with timeouts to prevent blocking
             Map<String, Object> qualityResult = getFutureResult(qualityFuture, "Quality Analysis");
             Map<String, Object> forgeryResult = getFutureResult(forgeryFuture, "Forgery Detection");
             Map<String, Object> validationResult = getFutureResult(validationFuture, "Validation");
 
-            // Compute risk score
+            // ✅ Step 5: Compute risk score
             double fraudRiskScore = computeRiskScore(qualityResult, forgeryResult, validationResult);
+            Map<String, Object> aggregatedResults = aggregateResults(ocrResult, qualityResult, forgeryResult, validationResult);
 
-            // Determine risk level & decision
-            String riskLevel = fraudRiskScore > 0.7 ? "HIGH" : fraudRiskScore > 0.4 ? "MEDIUM" : "LOW";
-            String decision = fraudRiskScore > 0.7 ? "REJECT" : "APPROVE";
-            String nextSteps = fraudRiskScore > 0.7 ? "Request re-submission or manual verification" :
-                    fraudRiskScore > 0.4 ? "Manual review recommended" : "No further action needed";
-
-            // Move the processed document to the archive - now properly handles exceptions
-            moveToArchive(finalDocumentPath);
+            log.info("Final Aggregated Results: {}", aggregatedResults);
 
             return new DocumentResponse(
-                    UUID.randomUUID().toString(),
+                    UUID.randomUUID().toString(), // Generate a unique Document ID
                     true,
+                    aggregatedResults,
                     fraudRiskScore,
-                    riskLevel,
-                    decision,
-                    nextSteps,
-                    "Processing completed successfully",
-                    ocrResult,
-                    qualityResult,
-                    forgeryResult,
-                    validationResult
+                    extractIndividualScores(qualityResult, forgeryResult, validationResult),
+                    "Processing Successful"
             );
 
         } catch (Exception e) {
             log.error("Error processing document: {}", e.getMessage(), e);
             throw new DocumentProcessingException("Document processing failed: " + e.getMessage());
         } finally {
-            executor.shutdown();
-            try {
-                if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
-                    log.warn("Executor did not terminate in time, forcing shutdown...");
-                    executor.shutdownNow();
-                }
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                log.error("Executor shutdown was interrupted", e);
-            }
-
-            // Clean up the original file if archiving failed
-            if (documentPath != null) {
-                try {
-                    Path path = Paths.get(documentPath);
-                    if (Files.exists(path)) {
-                        Files.delete(path);
-                        log.info("Cleaned up document file: {}", documentPath);
-                    }
-                } catch (IOException e) {
-                    log.warn("Failed to clean up document file: {}", documentPath, e);
-                }
-            }
+            executor.shutdown(); // ✅ Ensure executor is properly shut down
         }
     }
 
+    @Override
+    public AudioResponse processAudio(AudioRequest request) {
+        return null;
+    }
 
-    private void validateRequest(DocumentRequest request) {
-        if (request == null) {
-            throw new IllegalArgumentException("Document request cannot be null");
-        }
-
-        if (request.getDocumentData() == null || request.getDocumentData().length == 0) {
-            throw new IllegalArgumentException("Document data cannot be empty");
-        }
-
-        if (!StringUtils.hasText(request.getFileName())) {
-            throw new IllegalArgumentException("File name cannot be empty");
+    /**
+     * ✅ Helper method to safely get future results with timeout.
+     */
+    private Map<String, Object> getFutureResult(Future<Map<String, Object>> future, String processName) {
+        try {
+            return future.get(10, TimeUnit.SECONDS); // Timeout after 10s
+        } catch (TimeoutException e) {
+            log.error("{} processing timeout!", processName, e);
+            return Map.of("error", processName + " timed out"); // Return default response
+        } catch (Exception e) {
+            log.error("Error during {} processing: {}", processName, e.getMessage(), e);
+            return Map.of("error", processName + " failed");
         }
     }
 
     /**
-     * Moves processed documents to the archive folder with retry mechanism.
-     *
-     * @param documentPath The path of the document to archive
-     * @throws DocumentProcessingException if archiving repeatedly fails
+     * Stores the document and returns its file path.
      */
-    private void moveToArchive(String documentPath) throws DocumentProcessingException {
-        Path source = Paths.get(documentPath);
-        Path destination = Paths.get(archivePath, source.getFileName().toString());
-
-        Exception lastException = null;
-        for (int attempt = 0; attempt < MAX_ARCHIVE_RETRIES; attempt++) {
-            try {
-                Files.move(source, destination, StandardCopyOption.REPLACE_EXISTING);
-                log.info("Document moved to archive: {}", destination);
-
-                // Delete temporary file after successful move
-                Files.deleteIfExists(source);
-                return;
-            } catch (IOException e) {
-                lastException = e;
-                log.warn("Archive attempt {} failed: {}", attempt + 1, e.getMessage());
-                try {
-                    Thread.sleep(100 * (attempt + 1));
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    throw new DocumentProcessingException("Archive operation interrupted", ie);
-                }
-            }
-        }
-
-        log.error("Failed to move document to archive after {} attempts", MAX_ARCHIVE_RETRIES, lastException);
-        throw new DocumentProcessingException("Failed to move document to archive", lastException);
-    }
-
-
-    private Map<String, Object> getFutureResult(Future<Map<String, Object>> future, String processName) {
-        try {
-            return future.get(FUTURE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        } catch (TimeoutException e) {
-            log.error("{} processing timeout!", processName, e);
-            throw new DocumentProcessingException(processName + " processing timed out after " + FUTURE_TIMEOUT_SECONDS + " seconds");
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.error("{} processing interrupted", processName, e);
-            throw new DocumentProcessingException(processName + " processing was interrupted");
-        } catch (ExecutionException e) {
-            log.error("Error during {} processing: {}", processName, e.getMessage(), e);
-            throw new DocumentProcessingException(processName + " processing failed: " + e.getCause().getMessage());
-        }
-    }
-
     private String saveDocument(byte[] fileData, String fileName) {
         try {
-            Files.createDirectories(Paths.get(storagePath)); // Ensure directory exists
+            Files.createDirectories(Paths.get(STORAGE_PATH)); // ✅ Ensure directory exists
 
             String uniqueFileName = UUID.randomUUID().toString() + "_" + fileName;
-            Path filePath = Paths.get(storagePath, uniqueFileName);
-            Files.write(filePath, fileData);
+            File file = new File(STORAGE_PATH + uniqueFileName);
+            Files.write(file.toPath(), fileData);
 
-            return filePath.toString();
+            return file.getAbsolutePath();
         } catch (Exception e) {
             log.error("Error storing document: {}", e.getMessage(), e);
-            throw new DocumentProcessingException("Failed to store document: " + e.getMessage(), e);
+            throw new DocumentProcessingException("Failed to store document.");
         }
     }
 
+    /**
+     * Aggregates all extracted results into a single map.
+     */
+    private Map<String, Object> aggregateResults(Map<String, Object> ocr, Map<String, Object> quality,
+                                                 Map<String, Object> forgery, Map<String, Object> validation) {
+        return Map.of(
+                "ocrResults", ocr,
+                "qualityResults", quality,
+                "forgeryResults", forgery,
+                "validationResults", validation
+        );
+    }
+
+    /**
+     * Computes fraud risk score based on different metrics.
+     */
     private double computeRiskScore(Map<String, Object> quality, Map<String, Object> forgery, Map<String, Object> validation) {
         try {
-            double qualityScore = parseDouble(quality.get("finalQualityScore"));
-            double forgeryScore = parseDouble(forgery.get("finalForgeryRiskScore"));
-            double validationScore = parseDouble(validation.get("finalValidationScore"));
+            double qualityScore = parseDouble(quality.get("score"));
+            double forgeryScore = parseDouble(forgery.get("risk"));
+            double validationScore = parseDouble(validation.get("confidence"));
 
-            double score = (qualityScore * qualityWeight) + (forgeryScore * forgeryWeight) + (validationScore * validationWeight);
-            log.debug("Computed risk score: {} (quality: {}, forgery: {}, validation: {})",
-                    score, qualityScore, forgeryScore, validationScore);
-
-            return score;
+            return (qualityScore * 0.3) + (forgeryScore * 0.4) + (validationScore * 0.3);
         } catch (Exception e) {
-            log.error("Error computing risk score", e);
-            return 0.0;
+            log.error("Error computing risk score: {}", e.getMessage(), e);
+            return 0.0; // Default score if calculation fails
         }
     }
 
+    /**
+     * Extracts individual risk scores from different validation checks.
+     */
+    private Map<String, Double> extractIndividualScores(Map<String, Object> quality, Map<String, Object> forgery, Map<String, Object> validation) {
+        Map<String, Double> scores = new HashMap<>();
+        scores.put("qualityScore", parseDouble(quality.get("score")));
+        scores.put("forgeryScore", parseDouble(forgery.get("risk")));
+        scores.put("validationScore", parseDouble(validation.get("confidence")));
+        return scores;
+    }
+
+    /**
+     * Safely converts an object to a double.
+     */
     private double parseDouble(Object value) {
-        try {
-            return value instanceof Number ? ((Number) value).doubleValue() :
-                    value != null ? Double.parseDouble(value.toString()) : 0.0;
-        } catch (NumberFormatException e) {
-            log.warn("Invalid number format for value: {}", value);
-            return 0.0; // Default to 0 to prevent crashes
+        if (value instanceof Number) {
+            return ((Number) value).doubleValue();
+        } else if (value != null) {
+            try {
+                return Double.parseDouble(value.toString());
+            } catch (NumberFormatException e) {
+                log.warn("Invalid number format for value: {}", value);
+            }
         }
+        return 0.0;
     }
 }

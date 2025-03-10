@@ -4,215 +4,149 @@ import com.cars24.fraud_detection.data.request.AudioRequest;
 import com.cars24.fraud_detection.data.request.DocumentRequest;
 import com.cars24.fraud_detection.data.response.AudioResponse;
 import com.cars24.fraud_detection.data.response.DocumentResponse;
-import com.cars24.fraud_detection.exception.AudioProcessingException;
 import com.cars24.fraud_detection.utils.PythonExecutor;
 import com.cars24.fraud_detection.workflow.WorkflowInitiator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-
 @Slf4j
 @Service
 @Primary
 public class AudioWorkflow implements WorkflowInitiator {
 
-    @Value("${python.script.llm-extraction:src/main/resources/python_workflows/LLMextractionvalidation.py}")
-    private String llmScriptPath;
-
-    @Value("${python.script.audio-analysis:src/main/resources/python_workflows/AudioAnalysis.py}")
-    private String analysisScriptPath;
-
-    private final ObjectMapper objectMapper;
-    private final PythonExecutor pythonExecutor;
-
-    @Autowired
-    public AudioWorkflow(ObjectMapper objectMapper, PythonExecutor pythonExecutor) {
-        this.objectMapper = objectMapper;
-        this.pythonExecutor = pythonExecutor;
-    }
+    private static final Logger logger = LoggerFactory.getLogger(AudioWorkflow.class);
 
     @Override
     public DocumentResponse processDocument(DocumentRequest request) {
-        // Not implemented in this class
-        log.warn("Document processing not implemented in AudioWorkflow");
         return null;
     }
 
     @Override
-    public AudioResponse processAudio(AudioRequest request) throws AudioProcessingException {
-        validateRequest(request);
-        String requestId = request.getUuid();
+    public AudioResponse processAudio(AudioRequest request) throws JsonProcessingException {
+        logger.info("Starting audio processing for requestId: {}", request.getUuid());
 
-        log.info("Starting audio processing for requestId: {}", requestId);
+        // Run the LLMextractionvalidation.py script and get the result
+        String llmScriptPath = "src/main/resources/python_workflows/LLMextractionvalidation.py";
+        logger.info("Executing LLM extraction script: {} for audio file: {}", llmScriptPath, request.getAudioFile());
 
-        try {
-            // Execute both Python scripts in parallel
-            CompletableFuture<Map<String, Object>> llmExtractionFuture =
-                    CompletableFuture.supplyAsync(() -> {
-                        try {
-                            return executePythonScript(llmScriptPath, requestId);
-                        } catch (AudioProcessingException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
+        Map<String, Object> llmExtractionResult = runPythonScript(llmScriptPath, request.getUuid());
 
-            CompletableFuture<Map<String, Object>> audioAnalysisFuture =
-                    CompletableFuture.supplyAsync(() -> {
-                        try {
-                            return executePythonScript(analysisScriptPath, requestId);
-                        } catch (AudioProcessingException e) {
-                            throw new RuntimeException(e);
-                        }
-                    });
+        Object obj = llmExtractionResult.get("output");
 
-            // Wait for LLM extraction to complete
-            Map<String, Object> llmExtractionResult = llmExtractionFuture.get();
-            JsonNode rootNode = parseJson(llmExtractionResult.get("output"));
 
-            if (rootNode == null) {
-                throw new AudioProcessingException("Invalid LLM extraction result for requestId: " + requestId);
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode rootNode = objectMapper.readTree(obj.toString());
+
+            // Extract values from extracted_result
+            JsonNode extractedResult = rootNode.get("extracted_result");
+            String referenceName = extractedResult.get("reference_name").asText();
+            String subjectName = extractedResult.get("subject_name").asText();
+            String subjectAddress = extractedResult.get("subject_address").asText();
+            String relationToSubject = extractedResult.get("relation_to_subject").asText();
+            String subjectOccupation = extractedResult.get("subject_occupation").asText();
+
+            // Extract scoring result
+            double overallScore = rootNode.get("scoring_results").get("overall_score").asDouble();
+
+            // Extract transcript
+            List<String> transcriptList = new ArrayList<>();
+            JsonNode transcriptNode = rootNode.path("transcript");
+            for (JsonNode entry : transcriptNode) {
+                transcriptList.add(entry.path("text").asText());
             }
 
-            // Create response from LLM extraction results
-            AudioResponse response = extractAudioResponse(rootNode, requestId);
-            response.setLlmExtraction(llmExtractionResult);
-
-            // Wait for audio analysis to complete
-            Map<String, Object> audioAnalysisResult = audioAnalysisFuture.get();
-            response.setAudioAnalysis(audioAnalysisResult);
-
-            log.info("Audio processing completed successfully for requestId: {}", requestId);
-            return response;
-        } catch (ExecutionException e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof AudioProcessingException) {
-                throw (AudioProcessingException) cause;
-            }
-            log.error("ExecutionException processing audio for requestId: {}", requestId, e);
-            throw new AudioProcessingException("Audio processing failed: " + e.getMessage(), e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.error("Thread interrupted while processing audio for requestId: {}", requestId, e);
-            throw new AudioProcessingException("Audio processing interrupted", e);
-        } catch (Exception e) {
-            log.error("Unexpected error processing audio for requestId: {}", requestId, e);
-            throw new AudioProcessingException("Audio processing failed: " + e.getMessage(), e);
-        }
-    }
-
-    private void validateRequest(AudioRequest request) throws AudioProcessingException {
-        if (request == null) {
-            throw new AudioProcessingException("Audio request cannot be null");
-        }
-
-        if (!StringUtils.hasText(request.getUuid())) {
-            throw new AudioProcessingException("Request UUID is required");
-        }
-
-        if (!StringUtils.hasText(request.getFilepath())) {
-            throw new AudioProcessingException("Audio file path is required");
-        }
-    }
-
-    private Map<String, Object> executePythonScript(String scriptPath, String uuid) throws AudioProcessingException {
-        try {
-            log.info("Executing Python script: {} for requestId: {}", scriptPath, uuid);
-            Map<String, Object> result = pythonExecutor.runPythonScript(scriptPath, uuid);
-
-            if (result == null || result.isEmpty()) {
-                throw new AudioProcessingException("Python script returned empty response");
+            // Extract explanations
+            JsonNode explanationNode = rootNode.path("scoring_results").path("explanation");
+            List<String> explanations = new ArrayList<>();
+            Iterator<Map.Entry<String, JsonNode>> fields = explanationNode.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> field = fields.next();
+                explanations.add(field.getKey() + ": " + field.getValue().asText());
             }
 
-            return result;
-        } catch (Exception e) {
-            log.error("Error executing Python script: {} for requestId: {}", scriptPath, uuid, e);
-            throw new AudioProcessingException("Python script execution failed: " + e.getMessage(), e);
+            JsonNode fieldScoresNode = rootNode.path("scoring_results").path("field_by_field_scores");
+            Map<String, Double> fieldScores = new HashMap<>();
+            Iterator<Map.Entry<String, JsonNode>> scoreFields = fieldScoresNode.fields();
+            while (scoreFields.hasNext()) {
+                Map.Entry<String, JsonNode> field = scoreFields.next();
+                fieldScores.put(field.getKey(), field.getValue().asDouble());
+            }
+
+
+            // Store extracted values (Example: storing in a map)
+            Map<String, Object> extractedData = new HashMap<>();
+            extractedData.put("reference_name", referenceName);
+            extractedData.put("subject_name", subjectName);
+            extractedData.put("subject_address", subjectAddress);
+            extractedData.put("relation_to_subject", relationToSubject);
+            extractedData.put("subject_occupation", subjectOccupation);
+            extractedData.put("overall_score", overallScore);
+            extractedData.put("transcript", transcriptList);
+            extractedData.put("explanation", explanations);
+            extractedData.put("field_by_field_scores", fieldScores);
+
+            // Log extracted values
+            log.info("Extracted Data: {}", extractedData);
+
+
+
+        if (llmExtractionResult == null || llmExtractionResult.isEmpty()) {
+            logger.warn("LLM extraction script returned an empty response for requestId: {}", request.getUuid());
+        } else {
+            logger.info("LLM extraction completed successfully for requestId: {}", request.getUuid());
         }
+
+        // Create AudioResponse
+        AudioResponse response = new AudioResponse();
+        response.setUuid(request.getUuid());
+        response.setLlmExtraction(llmExtractionResult);
+        response.setTranscript((List<String>) extractedData.get("transcript"));
+        response.setReferenceName((String) extractedData.get("reference_name"));
+        response.setSubjectName((String) extractedData.get("subject_name"));
+        response.setSubjectAddress((String) extractedData.get("subject_address"));
+        response.setRelationToSubject((String) extractedData.get("relation_to_subject"));
+        response.setSubjectOccupation((String) extractedData.get("subject_occupation"));
+        response.setOverallScore((Double) extractedData.get("overall_score"));
+        response.setExplanation((List<String>) extractedData.get("explanation"));
+        response.setFieldByFieldScores((Map<String, Double>) extractedData.get("field_by_field_scores"));
+
+        // Run the audio analysis script and get the result
+        String analysisScriptPath = "src/main/resources/python_workflows/AudioAnalysis.py";
+        logger.info("Executing audio analysis script: {} for audio file: {}", analysisScriptPath, request.getAudioFile());
+
+        Map<String, Object> audioAnalysisResult = runPythonScript(analysisScriptPath, request.getUuid());
+
+        if (audioAnalysisResult == null || audioAnalysisResult.isEmpty()) {
+            logger.warn("Audio analysis script returned an empty response for requestId: {}", request.getUuid());
+        } else {
+            logger.info("Audio analysis completed successfully for requestId: {}", request.getUuid());
+        }
+
+        response.setAudioAnalysis(audioAnalysisResult);
+        logger.info("Audio processing completed for requestId: {}", request.getUuid());
+
+        return response;
     }
 
-    private JsonNode parseJson(Object jsonData) throws AudioProcessingException {
-        try {
-            return jsonData != null ? objectMapper.readTree(jsonData.toString()) : null;
-        } catch (JsonProcessingException e) {
-            log.error("Error parsing JSON data", e);
-            throw new AudioProcessingException("JSON parsing failed: " + e.getMessage(), e);
-        }
-    }
+    private Map<String, Object> runPythonScript(String scriptPath, String uuid) {
+        logger.debug("Running Python script: {} with audio file: {}", scriptPath, uuid);
 
-    private AudioResponse extractAudioResponse(JsonNode rootNode, String uuid) throws AudioProcessingException {
-        try {
-            JsonNode extractedResult = rootNode.path("extracted_result");
-            JsonNode scoringResults = rootNode.path("scoring_results");
+        PythonExecutor executor = new PythonExecutor();
+        Map<String, Object> result = executor.runPythonScript(scriptPath, uuid);
 
-            AudioResponse response = new AudioResponse();
-            response.setUuid(uuid);
-            response.setReferenceName(getNodeTextValue(extractedResult, "reference_name"));
-            response.setSubjectName(getNodeTextValue(extractedResult, "subject_name"));
-            response.setSubjectAddress(getNodeTextValue(extractedResult, "subject_address"));
-            response.setRelationToSubject(getNodeTextValue(extractedResult, "relation_to_subject"));
-            response.setSubjectOccupation(getNodeTextValue(extractedResult, "subject_occupation"));
-            response.setOverallScore(scoringResults.path("overall_score").asDouble(0.0));
-            response.setTranscript(extractTranscript(rootNode.path("transcript")));
-            response.setExplanation(extractExplanations(scoringResults.path("explanation")));
-            response.setFieldByFieldScores(extractFieldScores(scoringResults.path("field_by_field_scores")));
-
-            return response;
-        } catch (Exception e) {
-            log.error("Error extracting audio response for requestId: {}", uuid, e);
-            throw new AudioProcessingException("Error extracting audio response: " + e.getMessage(), e);
-        }
-    }
-
-    private String getNodeTextValue(JsonNode node, String field) {
-        JsonNode fieldNode = node.path(field);
-        return fieldNode.isMissingNode() || fieldNode.isNull() ? "" : fieldNode.asText("");
-    }
-
-    private List<String> extractTranscript(JsonNode transcriptNode) {
-        if (transcriptNode == null || transcriptNode.isEmpty()) {
-            return Collections.emptyList();
+        if (result == null || result.isEmpty()) {
+            logger.warn("Python script {} returned an empty result for audio file: {}", scriptPath, uuid);
+        } else {
+            logger.info("Python script {} execution successful", scriptPath);
         }
 
-        List<String> transcriptList = new ArrayList<>();
-        for (JsonNode entry : transcriptNode) {
-            transcriptList.add(String.format("Speaker: %s | Start: %.2f | End: %.2f | Text: %s",
-                    entry.path("speaker").asText("Unknown"),
-                    entry.path("start_time").asDouble(0.0),
-                    entry.path("end_time").asDouble(0.0),
-                    entry.path("text").asText("")));
-        }
-        return transcriptList;
-    }
-
-    private List<String> extractExplanations(JsonNode explanationNode) {
-        if (explanationNode == null || explanationNode.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        List<String> explanations = new ArrayList<>();
-        explanationNode.fields().forEachRemaining(field ->
-                explanations.add(field.getKey() + ": " + field.getValue().asText("")));
-        return explanations;
-    }
-
-    private Map<String, Double> extractFieldScores(JsonNode fieldScoresNode) {
-        if (fieldScoresNode == null || fieldScoresNode.isEmpty()) {
-            return Collections.emptyMap();
-        }
-
-        Map<String, Double> fieldScores = new HashMap<>();
-        fieldScoresNode.fields().forEachRemaining(field ->
-                fieldScores.put(field.getKey(), field.getValue().asDouble(0.0)));
-        return fieldScores;
+        return result;
     }
 }
