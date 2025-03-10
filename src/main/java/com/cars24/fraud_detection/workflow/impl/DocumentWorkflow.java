@@ -1,10 +1,14 @@
 package com.cars24.fraud_detection.workflow.impl;
 
+import com.cars24.fraud_detection.data.request.AudioRequest;
 import com.cars24.fraud_detection.data.request.DocumentRequest;
+import com.cars24.fraud_detection.data.response.AudioResponse;
 import com.cars24.fraud_detection.data.response.DocumentResponse;
+import com.cars24.fraud_detection.exception.AudioProcessingException;
 import com.cars24.fraud_detection.exception.DocumentProcessingException;
 import com.cars24.fraud_detection.utils.PythonExecutor;
 import com.cars24.fraud_detection.workflow.WorkflowInitiator;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,6 +62,13 @@ public class DocumentWorkflow implements WorkflowInitiator {
 
     public DocumentWorkflow(PythonExecutor pythonExecutor) {
         this.pythonExecutor = pythonExecutor;
+    }
+
+    @Override
+    public AudioResponse processAudio(AudioRequest request) throws AudioProcessingException{
+        // Not implemented in this class
+        log.warn("Audio processing not implemented in DocumentWorkflow");
+        return null;
     }
 
     @Override
@@ -162,6 +173,7 @@ public class DocumentWorkflow implements WorkflowInitiator {
             }
         }
     }
+
 
     private void validateRequest(DocumentRequest request) {
         if (request == null) {
