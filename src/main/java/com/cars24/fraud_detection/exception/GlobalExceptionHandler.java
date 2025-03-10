@@ -60,4 +60,15 @@ public class GlobalExceptionHandler {
         errorResponse.put("details", ex.getMessage()); // Can be removed in production for security reasons
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
     }
+
+    /**
+     * Handles audio processing exceptions.
+     */
+    @ExceptionHandler(AudioProcessingException.class)
+    public ResponseEntity<Map<String, String>> handleAudioProcessingException(AudioProcessingException ex) {
+        log.error("AudioProcessingException: {}", ex.getMessage());
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("error", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+    }
 }
