@@ -1,8 +1,6 @@
 package com.cars24.fraud_detection.exception;
 
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -12,9 +10,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestControllerAdvice
-
+@Slf4j
 public class GlobalExceptionHandler {
-    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     /**
      * Handles document processing exceptions.
@@ -62,5 +59,16 @@ public class GlobalExceptionHandler {
         errorResponse.put("error", "An unexpected error occurred.");
         errorResponse.put("details", ex.getMessage()); // Can be removed in production for security reasons
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+    }
+
+    /**
+     * Handles audio processing exceptions.
+     */
+    @ExceptionHandler(AudioProcessingException.class)
+    public ResponseEntity<Map<String, String>> handleAudioProcessingException(AudioProcessingException ex) {
+        log.error("AudioProcessingException: {}", ex.getMessage());
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("error", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
 }

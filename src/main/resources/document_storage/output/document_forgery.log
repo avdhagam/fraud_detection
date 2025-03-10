@@ -430,3 +430,65 @@
   }
 }
 2025-03-10 00:40:00,208 - INFO - Forgery analysis results saved to: src\main\resources\document_storage\output\forgery_analysis_9037b2e1.json
+2025-03-10 12:33:04,622 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-03-10 12:33:04,626 - ERROR - Forgery analysis error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}
+2025-03-10 16:41:18,411 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-03-10 16:41:18,424 - ERROR - Forgery analysis error: 'NoneType' object is not subscriptable
+2025-03-10 16:46:10,900 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-03-10 16:46:16,293 - INFO - Forgery API Raw Response:  ```json
+{
+  "Forgery Risk Score": 0.2,
+  "Final Decision": "Low Risk",
+  "Tampering Analysis": {
+    "Score": 0.1,
+    "Insights": "No signs of image manipulation or suspicious artifacts detected."
+  },
+  "Metadata Analysis": {
+    "Score": 0.2,
+    "Insights": "Metadata appears consistent and does not indicate document modification."
+  },
+  "Format Consistency": {
+    "Score": 0.3,
+    "Insights": "Font, alignment, and layout match the standard document structure."
+  },
+  "Security Features": {
+    "Score": 0.4,
+    "Insights": "All security features, including watermarks and holograms, are present and valid."
+  },
+  "Background Integrity": {
+    "Score": 0.5,
+    "Insights": "No unnatural noise patterns or splicing artifacts detected in the background."
+  }
+}
+```
+2025-03-10 16:46:16,294 - INFO - Cleaned API Response: {
+  "Forgery Risk Score": 0.2,
+  "Final Decision": "Low Risk",
+  "Tampering Analysis": {
+    "Score": 0.1,
+    "Insights": "No signs of image manipulation or suspicious artifacts detected."
+  },
+  "Metadata Analysis": {
+    "Score": 0.2,
+    "Insights": "Metadata appears consistent and does not indicate document modification."
+  },
+  "Format Consistency": {
+    "Score": 0.3,
+    "Insights": "Font, alignment, and layout match the standard document structure."
+  },
+  "Security Features": {
+    "Score": 0.4,
+    "Insights": "All security features, including watermarks and holograms, are present and valid."
+  },
+  "Background Integrity": {
+    "Score": 0.5,
+    "Insights": "No unnatural noise patterns or splicing artifacts detected in the background."
+  }
+}
+2025-03-10 16:46:16,296 - INFO - Forgery analysis results saved to: src\main\resources\document_storage\output\forgery_analysis_b5236f00.json
+2025-03-10 16:59:34,743 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-03-10 16:59:34,746 - ERROR - Forgery analysis error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}
+2025-03-10 17:06:19,776 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-03-10 17:06:19,779 - ERROR - Forgery analysis error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}
+2025-03-10 17:08:25,959 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-03-10 17:08:25,964 - ERROR - Forgery analysis error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}

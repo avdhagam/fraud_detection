@@ -316,3 +316,42 @@
   }
 }
 ```
+2025-03-10 12:33:04,347 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-03-10 12:33:04,353 - ERROR - Quality assessment error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}
+2025-03-10 16:41:17,855 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-03-10 16:41:17,869 - ERROR - Quality assessment error: 'NoneType' object is not subscriptable
+2025-03-10 16:46:10,841 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-03-10 16:46:16,031 - INFO - Quality API Raw Response:  ```json
+{
+  "readability_score": 0.8,
+  "completeness_score": 1,
+  "blur_score": 0.9,
+  "lighting_score": 0.8,
+  "color_accuracy_score": 1,
+  "alignment_score": 1,
+  "noise_artifacts_score": 0.9,
+  "overall_quality_score": 0.9,
+  "final_decision": "Acceptable",
+  "insights": {
+    "readability": "Text is generally clear and legible, but some characters appear slightly distorted.",
+    "completeness": "All document sections are fully visible.",
+    "blur": "Some areas, particularly the edges, exhibit slight blurriness.",
+    "lighting": "Overall lighting is adequate, but there are some shadows and uneven brightness.",
+    "color_accuracy": "Colors appear natural and accurate.",
+    "alignment": "The document is well-aligned, with no significant tilt or misalignment.",
+    "noise_artifacts": "There are a few unwanted marks and background noise, but they do not significantly affect readability."
+  },
+  "recommendations": {
+    "readability": "Use a higher resolution scan to improve character clarity.",
+    "blur": "Rescan the document to reduce blurriness.",
+    "lighting": "Use indirect lighting or adjust the angle of the document to minimize shadows and uneven brightness.",
+    "noise_artifacts": "Remove any unwanted marks or background noise using image editing software."
+  }
+}
+```
+2025-03-10 16:59:34,446 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-03-10 16:59:34,453 - ERROR - Quality assessment error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}
+2025-03-10 17:06:19,540 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-03-10 17:06:19,546 - ERROR - Quality assessment error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}
+2025-03-10 17:08:25,980 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-03-10 17:08:25,984 - ERROR - Quality assessment error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}

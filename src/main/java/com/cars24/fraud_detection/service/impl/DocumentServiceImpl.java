@@ -6,6 +6,7 @@ import com.cars24.fraud_detection.data.request.DocumentRequest;
 import com.cars24.fraud_detection.data.response.DocumentResponse;
 import com.cars24.fraud_detection.exception.DocumentProcessingException;
 import com.cars24.fraud_detection.service.DocumentService;
+import com.cars24.fraud_detection.utils.FileUtils;
 import com.cars24.fraud_detection.workflow.WorkflowInitiator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,12 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentResponse processDocument(DocumentRequest request) {
         try {
             log.info("Processing document for user: {}", request.getUserId());
+
+            // Validate file type (JPG/PNG check)
+            if (!FileUtils.isValidFileType(request.getFileName())) {
+                log.warn("Invalid file type: {}. Only JPG and PNG are allowed.", request.getFileName());
+                throw new DocumentProcessingException("Unsupported file type. Only JPG and PNG are allowed.");
+            }
 
             //Run workflow (OCR, Validation, Quality, Forgery Detection)
             DocumentResponse response = workflowInitiator.processDocument(request);
@@ -56,8 +63,11 @@ public class DocumentServiceImpl implements DocumentService {
 
             return response;
 
+        }  catch (IllegalArgumentException e) {
+            log.warn("Invalid document request: {}", e.getMessage());
+            throw new DocumentProcessingException(e.getMessage());
         } catch (Exception e) {
-            log.error("Error processing document: {}", e.getMessage(), e);
+            log.error("Unexpected error while processing document: {}", e.getMessage(), e);
             throw new DocumentProcessingException("Failed to process document. Please try again.");
         }
     }
