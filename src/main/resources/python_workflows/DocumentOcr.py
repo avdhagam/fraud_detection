@@ -1,202 +1,124 @@
+import requests
+import base64
+import json
 import sys
 import os
-import base64
-import cv2
+import codecs
 import re
-import json
-import logging
-from openai import OpenAI
+import traceback
 
-# OpenRouter API Config
-API_KEY = "api key"  # Replace with actual API key
-BASE_URL = "https://openrouter.ai/api/v1"
+# Load API Key from environment variable
+GEMINI_API_KEY = "AIzaSyBoCMnuBY55guf4dxKj0cHwQiq4Mfyrn7w"  # Replace with your actual key or better, use environment variables
+GEMINI_OCR_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
 
-client = OpenAI(
-    base_url=BASE_URL,
-    api_key=API_KEY
-)
+# Ensure UTF-8 output encoding
+sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
 
-# Document Storage Paths
-DOCUMENT_STORAGE_PATH = os.path.join("src", "main", "resources", "document_storage")
-VALIDATION_STORAGE_PATH = os.path.join(DOCUMENT_STORAGE_PATH, "validation_json")
+# if not GEMINI_API_KEY or GEMINI_API_KEY == "AIzaSyAgBhKlHqLjf8Wc4m3SDfRQvsB5uXh955Q":
+#     print(json.dumps({"error": "Missing or invalid API Key. Set GEMINI_API_KEY as an environment variable."}, indent=4))
+#     sys.exit(1)
 
-# Ensure storage directories exist
-os.makedirs(VALIDATION_STORAGE_PATH, exist_ok=True)
-
-# Configure Logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-
-def preprocess_image(image_path):
-    """
-    Preprocess document image for better OCR accuracy:
-    - Convert to grayscale
-    - Apply adaptive thresholding
-    - Denoise using Gaussian blur
-    """
+def encode_image(image_path):
+    """Encodes an image file as base64."""
     try:
-        img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-        if img is None:
-            return None, f"Error: Unable to load image from {image_path}"
-
-
-        # Apply Gaussian Blur to remove noise
-        img = cv2.GaussianBlur(img, (5, 5), 0)
-
-        # Adaptive thresholding to enhance text clarity
-        img = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 31, 2)
-
-        # Save preprocessed image temporarily
-        processed_path = f"{os.path.splitext(image_path)[0]}_processed.jpg"
-        cv2.imwrite(processed_path, img)
-        return processed_path, None
+        with open(image_path, "rb") as image_file:
+            return base64.b64encode(image_file.read()).decode("utf-8")
     except Exception as e:
-        return None, f"Preprocessing error: {str(e)}"
+        print(json.dumps({"error": f"Failed to read image: {str(e)}", "traceback": traceback.format_exc()}, indent=4, ensure_ascii=False))
+        sys.exit(1)
 
-def extract_text(image_path):
-    """Extracts structured text from an Aadhaar or PAN card using OCR & AI."""
+def extract_text_from_image(image_path):
+    """Extracts text from an image using Gemini API and extracts in the correct way."""
+    if not os.path.exists(image_path):
+        print(json.dumps({"error": f"File not found: {image_path}"}, indent=4, ensure_ascii=False))
+        sys.exit(1)
+
+    image_data = encode_image(image_path)
+    headers = {"Content-Type": "application/json"}
+
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {"text": """
+                        Extract the following information from this document image and return the result as a JSON object:
+
+                        - document_type (string): The type of document (e.g., "Aadhaar", "Passport", "Driving License").
+                        - name (string): The full name of the individual.
+                        - date_of_birth (string): The date of birth in YYYY-MM-DD format.
+                        - gender (string): The gender of the individual ("Male", "Female", or "Other").
+                        - id_number (string): The document's ID number.
+
+                        Ensure the JSON response is valid and parsable.  If a field cannot be extracted, set its value to null.
+                        """},
+                    {"inline_data": {"mime_type": "image/jpeg", "data": image_data}}
+                ]
+            }
+        ]
+    }
+
     try:
-        if not os.path.exists(image_path):
-            return {"error": f"File not found: {image_path}"}
-        logging.info(f"Processing image: {image_path}")
+        response = requests.post(f"{GEMINI_OCR_URL}?key={GEMINI_API_KEY}", headers=headers, json=payload)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+        response_data = response.json()
 
-        # Preprocess the image
-        preprocessed_path, preprocess_error = preprocess_image(image_path)
-        if preprocess_error:
-            return {"error": preprocess_error, "insight": "Image preprocessing failed. OCR may be inaccurate."}
+        # Extracting text correctly from the response
+        extracted_text = ""
+        candidates = response_data.get("candidates", [])
+        if candidates and "content" in candidates[0]:
+            extracted_text = candidates[0]["content"]["parts"][0]["text"].strip()
 
-        # Encode image to base64
-        with open(preprocessed_path, "rb") as img_file:
-            image_base64 = base64.b64encode(img_file.read()).decode("utf-8")
+        if not extracted_text:
+            error_message = "No text extracted from image."
+            print(json.dumps({"error": error_message}, indent=4, ensure_ascii=False))
+            sys.exit(1)
 
-        # Request payload with refined prompt
-        completion = client.chat.completions.create(
-            model="google/gemini-pro-vision",
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": (
-                            "Perform high-accuracy OCR on this document image.\n"
-                            "Return ONLY a valid JSON response, without explanations or extra text.\n"
-                            "Ensure the JSON is structured as follows:\n"
-                            "{\n"
-                            '  "document_type": "Aadhaar" | "PAN" | "Unknown",\n'
-                            '  "name": "string" | null,\n'
-                            '  "date_of_birth": "YYYY-MM-DD" | "YYYY" | null,\n'
-                            '  "gender": "Male" | "Female" | "Other" | null,\n'
-                            '  "id_number": "string" | null,\n'
-                            '  "confidence_score": integer (0-100),\n'
-                            '  "insights": "string",\n'
-                            '  "issues": ["string", ...] | [],\n'
-                            '  "recommendations": "string"\n'
-                            "}\n\n"
-                            "**OCR Evaluation Rules:**\n"
-                            "- Extract text with the highest possible accuracy.\n"
-                            "- If a field is missing or unreadable, return null instead of incorrect values.\n"
-                            "- Provide insights specifically about the OCR accuracy:\n"
-                            "  - Was the text extracted clearly?\n"
-                            "  - Were there any misread characters or missing fields?\n"
-                            "  - Any unusual variations in font or format?\n"
-                            "- Identify potential OCR-related issues (e.g., partial extractions, incorrect character swaps, missing segments).\n"
-                            "- Generate **specific** recommendations for improving OCR extraction (e.g., re-scanning with better contrast, cropping the document edges, retrying with higher resolution).\n"
-                        )},
-                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}}
-                    ]
-                }
-            ]
-        )
+        # Remove markdown wrapping
+        extracted_text = re.sub(r"```json\n", "", extracted_text)
+        extracted_text = re.sub(r"\n```", "", extracted_text)
 
-        # Handle API response safely
-        if not completion or not hasattr(completion, "choices") or not completion.choices:
-            logging.error("No valid response received from API")
-            return {"error": "No valid response received from API"}
-
-        # Extract JSON response directly
-        raw_response = completion.choices[0].message.content if completion.choices[0].message else None
-        if not raw_response:
-            logging.error("Empty response received from API")
-            return {"error": "Empty response received from API"}
-
-        raw_response = raw_response.strip()
-        logging.info(f"Gemini API Response: {raw_response}")  # Debugging purpose
-
-        # Ensure it's properly formatted JSON
+        # Attempt to parse the extracted text as JSON
         try:
-            # Remove Markdown-style JSON formatting if present
-            cleaned_response = re.sub(r"```json\n|\n```", "", raw_response).strip()
+            structured_data = json.loads(extracted_text)
 
-            # Try to parse JSON
-            extracted_data = json.loads(cleaned_response)
+            # Ensure that you get structured data from the Gemini AI
+            document_type = structured_data.get("document_type")
+            name = structured_data.get("name")
+            date_of_birth = structured_data.get("date_of_birth")
+            gender = structured_data.get("gender")
+            id_number = structured_data.get("id_number")
+
+            # Save OCR output as JSON
+            ocr_output = {
+                "document_type": document_type,
+                "name": name,
+                "date_of_birth": date_of_birth,
+                "gender": gender,
+                "id_number": id_number,
+                "raw_text": extracted_text # Keep the raw text as well, just in case
+            }
+
         except json.JSONDecodeError as e:
-            logging.error(f"Failed to parse JSON response: {str(e)}")
-            return {"error": f"Failed to parse JSON response: {str(e)}", "raw_response": raw_response}
+            print(json.dumps({"error": f"Failed to parse JSON from Gemini: {str(e)}", "raw_response": extracted_text}, indent=4, ensure_ascii=False))
+            sys.exit(1)
 
-        # Post-process extracted data
-        extracted_data = postprocess_extracted_data(extracted_data)
+        ocr_json_path = os.path.splitext(image_path)[0] + "_ocr.json"
 
-        # Save extracted JSON for validation
-        save_validation_json(image_path, extracted_data)
+        with open(ocr_json_path, "w", encoding="utf-8") as json_file:
+            json.dump(ocr_output, json_file, ensure_ascii=False, indent=4)
 
-        return generate_ocr_response(extracted_data)  # Return final structured response
+        return {"ocr_json_path": ocr_json_path, "structured_data": ocr_output}
 
-    except Exception as e:
-        return {"error": str(e)}
-
-
-def postprocess_extracted_data(data):
-    """
-    Final cleanup on extracted data:
-    - Mask Aadhaar numbers (XXXX-XXXX-1234)
-    - Ensure no hallucinations (replace unlikely values with null)
-    - Adjust confidence-based validation
-    """
-    if data.get("document_type") == "Aadhaar":
-        if "id_number" in data and len(data["id_number"]) == 12 and data["id_number"].isdigit():
-            data["id_number"] = f"XXXX-XXXX-{data['id_number'][-4:]}"  # Mask Aadhaar
-
-    confidence = data.get("confidence_score", 100)
-
-    if 30 <= confidence < 50:
-        data.setdefault("issues", []).append("Some fields have low confidence. Manual review recommended.")
-
-    if confidence < 30:
-        for key in ["name", "date_of_birth", "gender", "id_number"]:
-            data[key] = None  # Set unreliable data to null
-
-    return data
-
-def save_validation_json(image_path, extracted_data):
-    """Save extracted fields JSON for validation.py."""
-    validation_json = {
-        "document_type": extracted_data.get("document_type"),
-        "name": extracted_data.get("name"),
-        "date_of_birth": extracted_data.get("date_of_birth"),
-        "gender": extracted_data.get("gender"),
-        "id_number": extracted_data.get("id_number")
-    }
-    output_path = os.path.join(VALIDATION_STORAGE_PATH, os.path.basename(image_path).replace(".jpg", ".json").replace(".png", ".json"))
-    with open(output_path, "w") as json_file:
-        json.dump(validation_json, json_file, indent=4)
-
-def generate_ocr_response(data):
-    """Builds structured response with Gemini's insights & recommendations."""
-    return {
-        "extractedText": {
-            "document_type": data.get("document_type"),
-            "name": data.get("name"),
-            "date_of_birth": data.get("date_of_birth"),
-            "gender": data.get("gender"),
-            "id_number": data.get("id_number"),
-            "confidence_score": data.get("confidence_score", 0),
-            "insights": data.get("insights", "No insights available."),  # Use Gemini's insights
-            "issues": data.get("issues", []),
-            "recommendations": data.get("recommendations", "No recommendations provided.")  # Use Gemini's recommendations
-        }
-    }
-
+    except requests.exceptions.RequestException as e:
+        error_message = f"API request failed: {str(e)}"
+        print(json.dumps({"error": error_message}, indent=4, ensure_ascii=False))
+        sys.exit(1)
 
 if __name__ == "__main__":
-    image_filename = sys.argv[1]
-    image_path = os.path.join(DOCUMENT_STORAGE_PATH, image_filename)
-    result = extract_text(image_path)
-    print(json.dumps(result, indent=4))
+    if len(sys.argv) != 2:
+        print(json.dumps({"error": "Usage: python DocumentOcr.py <image_path>"}, indent=4, ensure_ascii=False))
+        sys.exit(1)
+
+    image_path = sys.argv[1]
+    result = extract_text_from_image(image_path)
+    print(json.dumps(result, indent=4, ensure_ascii=False))

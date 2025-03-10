@@ -7,6 +7,7 @@ import com.cars24.fraud_detection.utils.PythonExecutor;
 import com.cars24.fraud_detection.workflow.WorkflowInitiator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -17,7 +18,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.*;
 
-@Component
+@Primary
+@Component("documentWorkflow")
 public class DocumentWorkflow implements WorkflowInitiator {
     private static final Logger log = LoggerFactory.getLogger(DocumentWorkflow.class);
 
@@ -45,6 +47,12 @@ public class DocumentWorkflow implements WorkflowInitiator {
             Map<String, Object> ocrResult = getFutureResult(ocrFuture, "OCR Extraction");
             log.info("OCR Extraction Completed: {}", ocrResult);
 
+            // Extract the OCR JSON path from the OCR result
+            String ocrJsonPath = (String) ocrResult.get("ocr_json_path"); // Get value of the string
+            if (ocrJsonPath == null || ocrJsonPath.isEmpty()) {
+                throw new DocumentProcessingException("OCR JSON path not found in OCR result.");
+            }
+
             // ✅ Step 3: Run quality, forgery, and validation in parallel
             Future<Map<String, Object>> qualityFuture = executor.submit(() ->
                     pythonExecutor.runPythonScript("src/main/resources/python_workflows/DocumentQuality.py", documentPath)
@@ -54,8 +62,9 @@ public class DocumentWorkflow implements WorkflowInitiator {
                     pythonExecutor.runPythonScript("src/main/resources/python_workflows/DocumentForgery.py", documentPath)
             );
 
+            // Pass the OCR JSON path to the validation script
             Future<Map<String, Object>> validationFuture = executor.submit(() ->
-                    pythonExecutor.runPythonScript("src/main/resources/python_workflows/DocumentValidation.py", documentPath, ocrResult)
+                    pythonExecutor.runPythonScript("src/main/resources/python_workflows/DocumentValidation.py", ocrJsonPath)
             );
 
             // ✅ Step 4: Collect results with timeouts to prevent blocking

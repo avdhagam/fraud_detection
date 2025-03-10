@@ -435,3 +435,41 @@
   },
   "modelVersion": "gemini-1.5-flash"
 }
+2025-03-10 11:38:42,653 - INFO - API Raw Response: {
+  "candidates": [
+    {
+      "content": {
+        "parts": [
+          {
+            "text": "```json\n{\n  \"resolution_clarity_score\": 90,\n  \"skew_orientation_score\": 100,\n  \"cropping_edges_score\": 95,\n  \"blur_glare_score\": 90,\n  \"overall_quality_score\": 93\n}\n```"
+          }
+        ],
+        "role": "model"
+      },
+      "finishReason": "STOP",
+      "avgLogprobs": -0.022299070358276368
+    }
+  ],
+  "usageMetadata": {
+    "promptTokenCount": 353,
+    "candidatesTokenCount": 75,
+    "totalTokenCount": 428,
+    "promptTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 95
+      },
+      {
+        "modality": "IMAGE",
+        "tokenCount": 258
+      }
+    ],
+    "candidatesTokensDetails": [
+      {
+        "modality": "TEXT",
+        "tokenCount": 75
+      }
+    ]
+  },
+  "modelVersion": "gemini-1.5-flash"
+}

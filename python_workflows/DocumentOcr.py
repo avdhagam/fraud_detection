@@ -13,7 +13,7 @@ GEMINI_OCR_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini
 sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
 
 if not GEMINI_API_KEY or GEMINI_API_KEY == "YOUR_API_KEY_HERE":
-    print(json.dumps({"error": "Missing or invalid API Key. Set GEMINI_API_KEY as an environment variable."}, indent=4))
+    print(json.dumps({"error": "Missing or invalid API Key. Set GEMINI_API_KEY as an environment variable."}, indent=4, ensure_ascii=False))
     sys.exit(1)
 
 def encode_image(image_path):
@@ -26,7 +26,7 @@ def encode_image(image_path):
         sys.exit(1)
 
 def extract_text_from_image(image_path):
-    """Extracts text from an image using Gemini API."""
+    """Extracts text from an image using Gemini API and structures the extracted data."""
     if not os.path.exists(image_path):
         print(json.dumps({"error": f"File not found: {image_path}"}, indent=4))
         sys.exit(1)
@@ -38,7 +38,17 @@ def extract_text_from_image(image_path):
         "contents": [
             {
                 "parts": [
-                    {"text": "Extract the text from this document image."},
+                    {"text": """
+                        Extract the following information from this document image and return the result as a JSON object:
+
+                        - document_type (string): The type of document (e.g., "Aadhaar", "Passport", "Driving License").
+                        - name (string): The full name of the individual.
+                        - date_of_birth (string): The date of birth in YYYY-MM-DD format. If the year is missing, make it 1900.
+                        - gender (string): The gender of the individual ("Male", "Female", or "Other").
+                        - id_number (string): The document's ID number.
+
+                        Ensure the JSON response is valid and parsable.  If a field cannot be extracted, set its value to null.
+                        """},
                     {"inline_data": {"mime_type": "image/jpeg", "data": image_data}}
                 ]
             }
@@ -61,14 +71,36 @@ def extract_text_from_image(image_path):
             print(json.dumps({"error": error_message}, indent=4, ensure_ascii=False))
             sys.exit(1)
 
+        # Attempt to parse the extracted text as JSON
+        try:
+            structured_data = json.loads(extracted_text)
+        except json.JSONDecodeError as e:
+            print(json.dumps({"error": f"Failed to parse JSON from Gemini: {str(e)}", "raw_response": extracted_text}, indent=4, ensure_ascii=False))
+            sys.exit(1)
+
+        # Ensure that you get structured data from the Gemini AI
+        document_type = structured_data.get("document_type")
+        name = structured_data.get("name")
+        date_of_birth = structured_data.get("date_of_birth")
+        gender = structured_data.get("gender")
+        id_number = structured_data.get("id_number")
+
         # Save OCR output as JSON
-        ocr_output = {"text": extracted_text}  # Only include the extracted text
+        ocr_output = {
+            "document_type": document_type,
+            "name": name,
+            "date_of_birth": date_of_birth,
+            "gender": gender,
+            "id_number": id_number,
+            "raw_text": extracted_text # Keep the raw text as well, just in case
+        }
+
         ocr_json_path = os.path.splitext(image_path)[0] + "_ocr.json"
 
         with open(ocr_json_path, "w", encoding="utf-8") as json_file:
             json.dump(ocr_output, json_file, ensure_ascii=False, indent=4)
 
-        return {"ocr_json_path": ocr_json_path, "text": extracted_text}
+        return {"ocr_json_path": ocr_json_path, "structured_data": ocr_output}
 
     except requests.exceptions.RequestException as e:
         error_message = f"API request failed: {str(e)}"

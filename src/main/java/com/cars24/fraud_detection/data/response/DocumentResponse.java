@@ -24,4 +24,5 @@ public class DocumentResponse {
     private Map<String, Object> qualityResults;
     private Map<String, Object> forgeryResults;
     private Map<String, Object> validationResults;
+
 }
