@@ -7,4 +7,5 @@ public class DocumentRequest {
     private String userId;
     private String fileName;
     private byte[] documentData;
+
 }
