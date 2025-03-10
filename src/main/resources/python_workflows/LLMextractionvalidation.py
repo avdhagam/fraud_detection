@@ -60,6 +60,7 @@ def extract_transcript_information(transcript):
         "HTTP-Referer": "https://your-app-domain.com",
         "X-Title": "Transcript Analysis App",
     }
+    #
 
     # Prompt for extraction
     extraction_prompt = f"""
