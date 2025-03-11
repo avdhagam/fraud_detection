@@ -421,3 +421,32 @@
   }
 }
 ```
+2025-03-11 14:30:21,340 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-03-11 14:30:27,592 - INFO - Quality API Raw Response:  ```json
+{
+  "readability_score": 0.8,
+  "completeness_score": 1,
+  "blur_score": 0.9,
+  "lighting_score": 0.8,
+  "color_accuracy_score": 1,
+  "alignment_score": 1,
+  "noise_artifacts_score": 0.9,
+  "overall_quality_score": 0.9,
+  "final_decision": "Acceptable",
+  "insights": {
+    "readability": "Text is generally clear and legible, but some characters appear slightly distorted.",
+    "completeness": "All document sections are fully visible.",
+    "blur": "Some areas, particularly the edges, exhibit slight blurriness.",
+    "lighting": "\u5168\u4f53\u7684\u306b\u826f\u597d\u3067\u3059\u304c\u3001\u4e00\u90e8\u306b\u5f71\u3084\u660e\u308b\u3055\u306e\u3080\u3089\u304c\u3042\u308a\u307e\u3059\u3002",
+    "color_accuracy": "Colors appear natural and accurate.",
+    "alignment": "The document is well-aligned, with no noticeable tilt or misalignment.",
+    "noise_artifacts": "There are a few minor marks and artifacts in the background, but they do not significantly affect readability."
+  },
+  "recommendations": {
+    "readability": "Use a higher resolution scan to improve character clarity.",
+    "blur": "Rescan the document to reduce blurriness.",
+    "lighting": "Adjust lighting conditions to minimize shadows and uneven brightness.",
+    "noise_artifacts": "Remove or minimize background marks and artifacts."
+  }
+}
+```
