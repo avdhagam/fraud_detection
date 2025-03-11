@@ -18,9 +18,12 @@ public class PythonExecutor {
 
     public Map<String, Object> runPythonScript(String scriptName, Object... args) {
         try {
-            // Prepare command: python3 scriptName arg1 arg2 ...
+            // Specify the full path to the virtual environment's Python executable
+            String pythonExecutable = "C:\\Users\\dayad\\Downloads\\cars24\\fraud_detection\\venv\\Scripts\\python.exe";
+
+            // Prepare command: python scriptName arg1 arg2 ...
             List<String> command = new ArrayList<>();
-            command.add("python3");
+            command.add(pythonExecutable);
             command.add(scriptName);
 
             for (Object arg : args) {
@@ -34,6 +37,11 @@ public class PythonExecutor {
             log.info("Executing Python script: {}", String.join(" ", command));
 
             ProcessBuilder processBuilder = new ProcessBuilder(command);
+
+            // Set the virtual environment in the PATH
+            processBuilder.environment().put("VIRTUAL_ENV", "C:\\Users\\dayad\\Downloads\\cars24\\fraud_detection\\venv");
+            processBuilder.environment().put("PATH", "C:\\Users\\dayad\\Downloads\\cars24\\fraud_detection\\venv\\Scripts;" + System.getenv("PATH"));
+
             processBuilder.redirectErrorStream(true); // Merge stderr with stdout
 
             Process process = processBuilder.start();
@@ -60,4 +68,5 @@ public class PythonExecutor {
             throw new PythonExecutionException("Error executing Python script", e);
         }
     }
+
 }

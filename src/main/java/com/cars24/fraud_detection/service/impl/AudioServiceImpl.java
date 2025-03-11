@@ -30,7 +30,7 @@ public class AudioServiceImpl implements AudioService {
         logger.info("Received AudioRequest object: " + audioRequest);
         MultipartFile file = audioRequest.getAudioFile();
         String uuid = UUID.randomUUID().toString();
-        String filePath = "/Users/avanidhagam/Desktop/work/fraud_detection/src/main/resources/audio_storage/" + uuid + ".mp3";
+        String filePath = "C:\\Users\\dayad\\Downloads\\cars24\\fraud_detection\\src\\main\\resources\\audio_storage\\" + uuid + ".mp3";
         File audioFile = new File(filePath);
         try {
             file.transferTo(audioFile);
