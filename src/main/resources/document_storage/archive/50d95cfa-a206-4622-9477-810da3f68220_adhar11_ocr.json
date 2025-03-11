@@ -1,0 +1,8 @@
+{
+    "document_type": "Aadhaar",
+    "name": "Sapna Singh",
+    "date_of_birth": "1990-00-00",
+    "gender": "Female",
+    "id_number": "4444 5555 6666",
+    "raw_text": "{\n  \"document_type\": \"Aadhaar\",\n  \"name\": \"Sapna Singh\",\n  \"date_of_birth\": \"1990-00-00\",\n  \"gender\": \"Female\",\n  \"id_number\": \"4444 5555 6666\"\n}"
+}
