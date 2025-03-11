@@ -77,8 +77,8 @@ def extract_transcript_information(transcript):
         dict: Extracted information in dictionary format.
     """
     # OpenRouter API key
-    api_key = "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"
-    #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
+    api_key = "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"
+
     # API URL
     url = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -166,7 +166,7 @@ def score_extraction_with_llm(result, ground_truth):
     # Initialize client with OpenRouter API
     client = OpenAI(
         base_url="https://openrouter.ai/api/v1",
-        api_key= "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",
+        api_key= "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",
     )
 
     # Convert result to string if it's a dict

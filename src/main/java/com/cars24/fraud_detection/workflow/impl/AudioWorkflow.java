@@ -7,6 +7,7 @@ import com.cars24.fraud_detection.data.response.DocumentResponse;
 import com.cars24.fraud_detection.utils.PythonExecutor;
 import com.cars24.fraud_detection.utils.PythonExecutor2;
 import com.cars24.fraud_detection.workflow.WorkflowInitiator;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,9 +42,14 @@ public class AudioWorkflow implements WorkflowInitiator {
 
         Object obj = llmExtractionResult.get("output");
 
+        logger.debug("Raw output from Python script: {}", obj);
 
-            ObjectMapper objectMapper = new ObjectMapper();
-            JsonNode rootNode = objectMapper.readTree(obj.toString());
+
+
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
+        JsonNode rootNode = objectMapper.readTree(obj.toString());
 
             // Extract values from extracted_result
             JsonNode extractedResult = rootNode.get("extracted_result");
