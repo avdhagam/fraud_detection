@@ -27,7 +27,7 @@ model = faster_whisper.WhisperModel(model_size, compute_type="float32")
 # Load Pyannote Speaker Diarization Model
 logger.info("Loading Pyannote speaker diarization model...")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-pipeline = SpeakerDiarization.from_pretrained("pyannote/speaker-diarization-3.0", use_auth_token="api")
+#pipeline = SpeakerDiarization.from_pretrained("pyannote/speaker-diarization-3.0", use_auth_token="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")
 pipeline = pipeline.to(device)
 
 def preprocess_audio(input_path: str) -> str:
