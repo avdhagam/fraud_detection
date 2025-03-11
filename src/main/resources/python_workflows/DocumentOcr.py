@@ -8,7 +8,7 @@ import re
 import traceback
 
 # Load API Key from environment variable
-GEMINI_API_KEY = "api"  # Replace with your actual key or better, use environment variables
+GEMINI_API_KEY = "AIzaSyBoCMnuBY55guf4dxKj0cHwQiq4Mfyrn7w"  # Replace with your actual key or better, use environment variables
 GEMINI_OCR_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
 
 # Ensure UTF-8 output encoding
