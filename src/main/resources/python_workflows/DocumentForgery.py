@@ -18,7 +18,7 @@ logging.basicConfig(
 )
 
 # OpenRouter API Config
-API_KEY = "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"
+API_KEY = "api"
 BASE_URL = "https://openrouter.ai/api/v1"
 client = OpenAI(base_url=BASE_URL, api_key=API_KEY)
 

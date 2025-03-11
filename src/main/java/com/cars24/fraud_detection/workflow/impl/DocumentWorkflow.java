@@ -4,7 +4,6 @@ import com.cars24.fraud_detection.data.request.AudioRequest;
 import com.cars24.fraud_detection.data.request.DocumentRequest;
 import com.cars24.fraud_detection.data.response.AudioResponse;
 import com.cars24.fraud_detection.data.response.DocumentResponse;
-import com.cars24.fraud_detection.exception.AudioProcessingException;
 import com.cars24.fraud_detection.exception.DocumentProcessingException;
 import com.cars24.fraud_detection.utils.PythonExecutor;
 import com.cars24.fraud_detection.workflow.WorkflowInitiator;
@@ -79,12 +78,16 @@ public class DocumentWorkflow implements WorkflowInitiator {
             documentPath = finalDocumentPath; // Store in non-final variable for finally block
             log.info("Document stored at: {}", finalDocumentPath);
 
+            //
+            long startOcr = System.currentTimeMillis();
             // Run OCR first (so validation gets correct data)
             Future<Map<String, Object>> ocrFuture = executor.submit(() ->
                     pythonExecutor.runPythonScript(ocrScriptPath, finalDocumentPath)
             );
 
             Map<String, Object> ocrResult = getFutureResult(ocrFuture, "OCR Extraction");
+            long endOcr = System.currentTimeMillis();
+            log.info("OCR Extraction Completed in {} ms", (endOcr - startOcr));
             log.info("OCR Extraction Completed: {}", ocrResult);
 
             // Extract the OCR JSON path from the OCR result
@@ -94,22 +97,36 @@ public class DocumentWorkflow implements WorkflowInitiator {
             }
 
             // Run quality, forgery, and validation in parallel
+            // Measure execution time for Quality Analysis
+            long startQuality = System.currentTimeMillis();
             Future<Map<String, Object>> qualityFuture = executor.submit(() ->
                     pythonExecutor.runPythonScript(qualityScriptPath, finalDocumentPath)
             );
 
+            // Measure execution time for Forgery Detection
+            long startForgery = System.currentTimeMillis();
             Future<Map<String, Object>> forgeryFuture = executor.submit(() ->
                     pythonExecutor.runPythonScript(forgeryScriptPath, finalDocumentPath)
             );
 
+            // Measure execution time for Validation
+            long startValidation = System.currentTimeMillis();
             Future<Map<String, Object>> validationFuture = executor.submit(() ->
                     pythonExecutor.runPythonScript(validationScriptPath, ocrJsonPath)
             );
 
             // Collect results with timeouts to prevent blocking
             Map<String, Object> qualityResult = getFutureResult(qualityFuture, "Quality Analysis");
+            long endQuality = System.currentTimeMillis();
+            log.info("Quality Analysis Completed in {} ms", (endQuality - startQuality));
+
             Map<String, Object> forgeryResult = getFutureResult(forgeryFuture, "Forgery Detection");
+            long endForgery = System.currentTimeMillis();
+            log.info("Forgery Detection Completed in {} ms", (endForgery - startForgery));
+
             Map<String, Object> validationResult = getFutureResult(validationFuture, "Validation");
+            long endValidation = System.currentTimeMillis();
+            log.info("Validation Completed in {} ms", (endValidation - startValidation));
 
             // Compute risk score
             double fraudRiskScore = computeRiskScore(qualityResult, forgeryResult, validationResult);
