@@ -20,32 +20,32 @@ public class DocumentEntity {
     private String fileName;
     private String filePath;
     private String status;  // PROCESSING, COMPLETED, FAILED
-    private String remarks; // Additional comments on processing status
-
-    private double finalRiskScore;
-    private String riskLevel;  // LOW, MEDIUM, HIGH
-    private String decision;   // Approve, Review, Reject
-    private String nextSteps;  // Recommended actions
-
-    // Each verification aspect is separately stored
     private Map<String, Object> ocrResults;
     private Map<String, Object> qualityResults;
     private Map<String, Object> forgeryResults;
     private Map<String, Object> validationResults;
+    private double finalRiskScore;
+
 
     public DocumentResponse toResponse() {
         return new DocumentResponse(
                 id,
-                "COMPLETED".equals(status),
+                true,  // Assuming document is valid once processed
+                Map.of(
+                        "ocrResults", ocrResults,
+                        "qualityResults", qualityResults,
+                        "forgeryResults", forgeryResults,
+                        "validationResults", validationResults
+                ),
                 finalRiskScore,
-                riskLevel,
-                decision,
-                nextSteps,
-                remarks,
-                ocrResults,
-                qualityResults,
-                forgeryResults,
-                validationResults
+                Map.of(
+                        "qualityScore", qualityResults != null ? (Double) qualityResults.getOrDefault("score", 0.0) : 0.0,
+                        "forgeryScore", forgeryResults != null ? (Double) forgeryResults.getOrDefault("score", 0.0) : 0.0,
+                        "validationScore", validationResults != null ? (Double) validationResults.getOrDefault("score", 0.0) : 0.0
+                ),
+                status  // Assuming status can be used as remarks
         );
     }
+
 }
+
