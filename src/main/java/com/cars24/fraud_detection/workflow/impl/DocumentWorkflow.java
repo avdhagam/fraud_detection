@@ -65,13 +65,6 @@ public class DocumentWorkflow implements WorkflowInitiator {
     }
 
     @Override
-    public AudioResponse processAudio(AudioRequest request) throws JsonProcessingException{
-        // Not implemented in this class
-        log.warn("Audio processing not implemented in DocumentWorkflow");
-        return null;
-    }
-
-    @Override
     public DocumentResponse processDocument(DocumentRequest request) {
         validateRequest(request);
         ExecutorService executor = Executors.newFixedThreadPool(3);
@@ -173,7 +166,6 @@ public class DocumentWorkflow implements WorkflowInitiator {
             }
         }
     }
-
 
     private void validateRequest(DocumentRequest request) {
         if (request == null) {
@@ -281,5 +273,10 @@ public class DocumentWorkflow implements WorkflowInitiator {
             log.warn("Invalid number format for value: {}", value);
             return 0.0; // Default to 0 to prevent crashes
         }
+    }
+
+    @Override
+    public AudioResponse processAudio(AudioRequest request) throws JsonProcessingException {
+        return null;
     }
 }

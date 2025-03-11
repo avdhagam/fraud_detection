@@ -355,3 +355,36 @@
 2025-03-10 17:06:19,546 - ERROR - Quality assessment error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}
 2025-03-10 17:08:25,980 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
 2025-03-10 17:08:25,984 - ERROR - Quality assessment error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}
+2025-03-11 10:56:29,002 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-03-11 10:56:29,012 - ERROR - Quality assessment error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}
+2025-03-11 11:06:46,591 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-03-11 11:06:46,595 - ERROR - Quality assessment error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}
+2025-03-11 11:17:10,134 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-03-11 11:17:16,757 - INFO - Quality API Raw Response:  ```json
+{
+  "readability_score": 0.8,
+  "completeness_score": 1,
+  "blur_score": 0.9,
+  "lighting_score": 0.8,
+  "color_accuracy_score": 0.9,
+  "alignment_score": 0.9,
+  "noise_artifacts_score": 0.8,
+  "overall_quality_score": 0.85,
+  "final_decision": "Acceptable",
+  "insights": {
+    "readability": "Text is generally clear and legible, but some characters appear slightly distorted.",
+    "completeness": "All document sections are fully visible.",
+    "blur": "Some areas of the document are slightly blurred, but text remains readable.",
+    "lighting": "Overall lighting is adequate, but there are some shadows and uneven brightness.",
+    "color_accuracy": "Colors appear natural and accurate.",
+    "alignment": "The document is well-aligned, with no significant tilt or misalignment.",
+    "noise_artifacts": "There are a few unwanted marks and background noise, but they do not significantly affect readability."
+  },
+  "recommendations": {
+    "readability": "Use a higher resolution scanner to capture sharper images.",
+    "blur": "Rescan the document to reduce blur.",
+    "lighting": "Use indirect lighting or adjust the scanner's brightness settings to reduce shadows and uneven brightness.",
+    "noise_artifacts": "Remove any unwanted marks or background noise using image editing software."
+  }
+}
+```

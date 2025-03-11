@@ -6,42 +6,46 @@ import com.cars24.fraud_detection.data.request.DocumentRequest;
 import com.cars24.fraud_detection.data.response.DocumentResponse;
 import com.cars24.fraud_detection.exception.DocumentProcessingException;
 import com.cars24.fraud_detection.service.DocumentService;
-import com.cars24.fraud_detection.utils.FileUtils;
 import com.cars24.fraud_detection.workflow.WorkflowInitiator;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
+import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 @Slf4j
 public class DocumentServiceImpl implements DocumentService {
 
     private final DocumentDao documentDao;
+
+    @Qualifier("documentWorkflow") // Specify which bean to use
     private final WorkflowInitiator workflowInitiator;
 
     @Value("${document.storage.path}")
     private String storagePath;
 
+    // Constructor injection with Qualifier
+    @Autowired
+    public DocumentServiceImpl(DocumentDao documentDao,
+                               @Qualifier("documentWorkflow") WorkflowInitiator workflowInitiator) {
+        this.documentDao = documentDao;
+        this.workflowInitiator = workflowInitiator;
+    }
+
     @Override
     public DocumentResponse processDocument(DocumentRequest request) {
         try {
-            log.info("Processing document for user: {}", request.getUserId());
+            log.info("Starting document processing for user: {}, File: {}", request.getUserId(), request.getFileName());
 
-            // Validate file type (JPG/PNG check)
-            if (!FileUtils.isValidFileType(request.getFileName())) {
-                log.warn("Invalid file type: {}. Only JPG and PNG are allowed.", request.getFileName());
-                throw new DocumentProcessingException("Unsupported file type. Only JPG and PNG are allowed.");
-            }
-
-            //Run workflow (OCR, Validation, Quality, Forgery Detection)
+            // Run workflow (OCR, Validation, Quality, Forgery Detection)
             DocumentResponse response = workflowInitiator.processDocument(request);
-            log.info("Workflow execution completed for file: {}", request.getFileName());
+            log.debug("Workflow execution completed for file: {}, Result: {}", request.getFileName(), response);
 
-            //Save document details to database
+            // Save document details to the database
             DocumentEntity entity = DocumentEntity.builder()
                     .userId(request.getUserId())
                     .fileName(request.getFileName())
@@ -57,38 +61,31 @@ public class DocumentServiceImpl implements DocumentService {
                     .nextSteps(response.getNextSteps())
                     .build();
 
-
             documentDao.saveDocument(entity);
             log.info("Document saved successfully in database: {} (Status: {})", request.getFileName(), entity.getStatus());
 
             return response;
 
-        }  catch (IllegalArgumentException e) {
-            log.warn("Invalid document request: {}", e.getMessage());
-            throw new DocumentProcessingException(e.getMessage());
         } catch (Exception e) {
-            log.error("Unexpected error while processing document: {}", e.getMessage(), e);
-            throw new DocumentProcessingException("Failed to process document. Please try again.");
+            log.error("Error processing document for user {}: {}", request.getUserId(), e.getMessage(), e);
+            throw new DocumentProcessingException("Failed to process document: " + e.getMessage());
         }
     }
 
     @Override
     public DocumentResponse getDocumentById(String documentId) {
-        log.info("Fetching document by ID: {}", documentId);
+        log.info("Fetching document details for ID: {}", documentId);
 
-        DocumentEntity documentEntity = documentDao.getDocumentById(documentId)
-                .orElseThrow(() -> {
-                    log.warn("Document not found: {}", documentId);
-                    return new DocumentProcessingException("Document not found");
-                });
+        Optional<DocumentEntity> documentEntityOpt = documentDao.getDocumentById(documentId);
 
-        log.info("Document fetched successfully: {}", documentId);
-        return documentEntity.toResponse();
+        if (documentEntityOpt.isEmpty()) {
+            log.warn("Document not found for ID: {}", documentId);
+            throw new DocumentProcessingException("Document not found for ID: " + documentId);
+        }
+
+        DocumentResponse response = documentEntityOpt.get().toResponse();
+        log.debug("Document retrieved successfully: {}", response);
+
+        return response;
     }
 }
-
-
-
-
-
-

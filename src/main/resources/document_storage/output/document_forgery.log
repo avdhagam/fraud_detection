@@ -492,3 +492,59 @@
 2025-03-10 17:06:19,779 - ERROR - Forgery analysis error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}
 2025-03-10 17:08:25,959 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
 2025-03-10 17:08:25,964 - ERROR - Forgery analysis error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}
+2025-03-11 10:56:29,454 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-03-11 10:56:29,456 - ERROR - Forgery analysis error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}
+2025-03-11 11:06:46,577 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-03-11 11:06:46,584 - ERROR - Forgery analysis error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}
+2025-03-11 11:17:10,074 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-03-11 11:17:15,671 - INFO - Forgery API Raw Response:  ```json
+{
+  "Forgery Risk Score": 0.2,
+  "Final Decision": "Low Risk",
+  "Tampering Analysis": {
+    "Score": 0.1,
+    "Insights": "No signs of image manipulation or suspicious artifacts detected."
+  },
+  "Metadata Analysis": {
+    "Score": 0.2,
+    "Insights": "Metadata appears consistent and does not indicate document modification."
+  },
+  "Format Consistency": {
+    "Score": 0.3,
+    "Insights": "Font, alignment, and layout are consistent with the standard document structure."
+  },
+  "Security Features": {
+    "Score": 0.4,
+    "Insights": "All security features, including watermarks and holograms, are present and valid."
+  },
+  "Background Integrity": {
+    "Score": 0.5,
+    "Insights": "No unnatural noise patterns or splicing artifacts detected in the background."
+  }
+}
+```
+2025-03-11 11:17:15,672 - INFO - Cleaned API Response: {
+  "Forgery Risk Score": 0.2,
+  "Final Decision": "Low Risk",
+  "Tampering Analysis": {
+    "Score": 0.1,
+    "Insights": "No signs of image manipulation or suspicious artifacts detected."
+  },
+  "Metadata Analysis": {
+    "Score": 0.2,
+    "Insights": "Metadata appears consistent and does not indicate document modification."
+  },
+  "Format Consistency": {
+    "Score": 0.3,
+    "Insights": "Font, alignment, and layout are consistent with the standard document structure."
+  },
+  "Security Features": {
+    "Score": 0.4,
+    "Insights": "All security features, including watermarks and holograms, are present and valid."
+  },
+  "Background Integrity": {
+    "Score": 0.5,
+    "Insights": "No unnatural noise patterns or splicing artifacts detected in the background."
+  }
+}
+2025-03-11 11:17:15,675 - INFO - Forgery analysis results saved to: src\main\resources\document_storage\output\forgery_analysis_92da4ec1.json
