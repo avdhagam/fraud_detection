@@ -48,7 +48,7 @@ def extract_transcript_information(transcript):
         dict: Extracted information in dictionary format.
     """
     # OpenRouter API key
-    api_key = os.environ.get("OPENROUTER_API_KEY", "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")
+    api_key = os.environ.get("OPENROUTER_API_KEY", "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")
 
     # API URL
     url = "https://openrouter.ai/api/v1/chat/completions"
@@ -137,7 +137,7 @@ def score_extraction_with_llm(result, ground_truth):
     # Initialize client with OpenRouter API
     client = OpenAI(
         base_url="https://openrouter.ai/api/v1",
-        api_key=os.environ.get("OPENROUTER_API_KEY", "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"),
+        api_key=os.environ.get("OPENROUTER_API_KEY", "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"),
     )
 
     # Convert result to string if it's a dict
@@ -283,8 +283,31 @@ def process_transcript(transcript, ground_truth):
 if __name__ == "__main__":
     # Sample transcript
     transcript = """
-    2.191  2.574 SPEAKER_01                                                        Hello? 4.213  4.597 SPEAKER_00                                                        Hello? 5.014  7.257 SPEAKER_00                                             Hi, is it Ashish? 7.257  7.581 SPEAKER_01                                                        Hello? 8.499 10.182 SPEAKER_00                                           Sorry, is it Arjun?10.181 11.864 SPEAKER_01                                                          Yes.11.863 14.066 SPEAKER_00                                Hi, Arjun, Shilpa from Car 24.15.307 15.730 SPEAKER_01                                                         Okay.16.769 18.611 SPEAKER_00                               It's a verification called C.Q.18.611 20.174 SPEAKER_00                                Matheo has given your address.21.415 21.897 SPEAKER_01                                                     Ah, okay.23.217 26.461 SPEAKER_00 Actually, he has taken a loan from us, so that is the reason.26.481 27.223 SPEAKER_00                                          How do you know him?28.944 29.806 SPEAKER_01                                          Ah, I'm a colleague.31.334 33.698 SPEAKER_00              Okay, is he doing a job or a business right now?35.100 35.703 SPEAKER_01                                                   No, no job.36.883 38.006 SPEAKER_00                                      And where does he stays?38.005 40.229 SPEAKER_00                                                  His address?40.289 43.674 SPEAKER_01                          He is now in Pattimathur, Ernakulam.45.217 46.420 SPEAKER_00                                 Sorry, sorry, can you repeat?47.080 48.483 SPEAKER_00                                       Pattimathur, Ernakulam.49.224 50.146 SPEAKER_00                                              Okay, thank you.51.167 51.267 SPEAKER_00                                                         Okay.
-    """
+   start    end    speaker                                                     utterance
+ 2.191  2.574 SPEAKER_01                                                        Hello?
+ 4.213  4.597 SPEAKER_00                                                        Hello?
+ 5.014  7.257 SPEAKER_00                                             Hi, is it Ashish?
+ 7.257  7.581 SPEAKER_01                                                        Hello?
+ 8.499 10.182 SPEAKER_00                                           Sorry, is it Arjun?
+10.181 11.864 SPEAKER_01                                                          Yes.
+11.863 14.066 SPEAKER_00                                Hi, Arjun, Shilpa from Car 24.
+15.307 15.730 SPEAKER_01                                                         Okay.
+16.769 18.611 SPEAKER_00                               It's a verification called C.Q.
+18.611 20.174 SPEAKER_00                                Matheo has given your address.
+21.415 21.897 SPEAKER_01                                                     Ah, okay.
+23.217 26.461 SPEAKER_00 Actually, he has taken a loan from us, so that is the reason.
+26.481 27.223 SPEAKER_00                                          How do you know him?
+28.944 29.806 SPEAKER_01                                          Ah, I'm a colleague.
+31.334 33.698 SPEAKER_00              Okay, is he doing a job or a business right now?
+35.100 35.703 SPEAKER_01                                                   No, no job.
+36.883 38.006 SPEAKER_00                                      And where does he stays?
+38.005 40.229 SPEAKER_00                                                  His address?
+40.289 43.674 SPEAKER_01                          He is now in Pattimathur, Ernakulam.
+45.217 46.420 SPEAKER_00                                 Sorry, sorry, can you repeat?
+47.080 48.483 SPEAKER_00                                       Pattimathur, Ernakulam.
+49.224 50.146 SPEAKER_00                                              Okay, thank you.
+51.167 51.267 SPEAKER_00                                                         Okay.
+"""
 
     # Ground truth
     ground_truth = {

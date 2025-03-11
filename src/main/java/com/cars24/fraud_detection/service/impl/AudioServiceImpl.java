@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,7 +36,11 @@ public class AudioServiceImpl implements AudioService {
 
         // Save the audio file using the new logic
         String filePath = saveAudio(file);
-        String uuid = filePath.substring(filePath.lastIndexOf('/') + 1).replace(".mp3", "");
+
+        // Correctly extract the UUID using Paths
+        Path path = Paths.get(filePath);
+        String fileName = path.getFileName().toString();
+        String uuid = fileName.replace(".mp3", "");
 
         audioRequest.setFilepath(filePath);
         audioRequest.setUuid(uuid);
