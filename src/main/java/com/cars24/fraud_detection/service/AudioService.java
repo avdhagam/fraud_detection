@@ -7,4 +7,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 public interface AudioService {
     AudioResponse processAudioRequest(AudioRequest audioRequest) throws JsonProcessingException, AudioProcessingException;
+
+    AudioResponse getAudioResults(String id);
 }

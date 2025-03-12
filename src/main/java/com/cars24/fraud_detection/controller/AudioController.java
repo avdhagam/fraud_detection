@@ -34,9 +34,10 @@ public class AudioController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/get")
-    public String getmapping(){
-        logger.info("Received GET request");
-        return "hello";
+    @GetMapping("/{id}")
+    public ResponseEntity<AudioResponse> getAudioResult(@PathVariable String id) {
+        logger.info("Received get request");
+        AudioResponse response = audioService.getAudioResults(id);
+        return ResponseEntity.ok(response);
     }
 }
