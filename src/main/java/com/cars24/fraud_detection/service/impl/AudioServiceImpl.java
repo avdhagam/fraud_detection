@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Logger;
 
@@ -66,6 +67,37 @@ public class AudioServiceImpl implements AudioService {
         logger.info("Saved AudioEntity object to database");
 
         return audioResponse;
+    }
+
+    private AudioResponse mapToResponse(AudioEntity entity) {
+        AudioResponse response = new AudioResponse();
+        response.setUuid(entity.getId());
+        response.setTranscript(entity.getTranscript());
+        response.setReferenceName(entity.getReferenceName());
+        response.setSubjectName(entity.getSubjectName());
+        response.setSubjectAddress(entity.getSubjectAddress());
+        response.setRelationToSubject(entity.getRelationToSubject());
+        response.setSubjectOccupation(entity.getSubjectOccupation());
+        response.setOverallScore(entity.getOverallScore());
+        response.setExplanation(entity.getExplanation());
+        response.setFieldByFieldScores(entity.getFieldByFieldScores());
+        response.setAudioAnalysis(entity.getAudioAnalysis());
+        return response;
+    }
+    @Override
+    public AudioResponse getAudioResults(String id) {
+        logger.info("Fetching audio analysis for ID: " + id);
+
+        Optional<AudioEntity> audioEntityOpt = audioDao.getAudioById(id);
+        if (audioEntityOpt.isEmpty()) {
+            logger.warning("Audio analysis not found for ID: " + id);
+            throw new RuntimeException("Audio analysis not found for ID: " + id);
+        }
+
+        AudioEntity audioEntity = audioEntityOpt.get();
+        logger.info("Fetched audio entity: " + audioEntity);
+
+        return mapToResponse(audioEntity);
     }
 
     private String saveAudio(MultipartFile file) throws AudioProcessingException {
