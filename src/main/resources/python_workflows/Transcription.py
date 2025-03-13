@@ -1,120 +1,154 @@
-import logging
-import os
+
+import requests
+import json
 import numpy as np
-import faster_whisper
-import noisereduce as nr
-from pydub import AudioSegment
-from scipy.io import wavfile
-from pyannote.audio.pipelines.speaker_diarization import SpeakerDiarization
-from pyannote.core import Segment
-import torch
+import librosa
+
 import tempfile
+from pydub import AudioSegment
+from sklearn.cluster import KMeans, SpectralClustering, AgglomerativeClustering, DBSCAN
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from scipy.spatial.distance import cdist
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
-# Set FFmpeg path manually
-# ffmpeg_path = r"C:\Users\rashm\Documents\ffmpeg\ffmpeg-7.1-essentials_build\bin\ffmpeg.exe"
-# AudioSegment.converter = ffmpeg_path
-# os.environ["PATH"] += os.pathsep + os.path.dirname(ffmpeg_path)
+# logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
-# Load Faster Whisper model (medium, float32 for CPU)
-model_size = "medium"
-logger.info(f"Loading Faster Whisper model: {model_size}, compute_type=float32")
-model = faster_whisper.WhisperModel(model_size, compute_type="float32")
+# Deepgram API Key
+DEEPGRAM_API_KEY = "09cd1982446e4aeca26de7cd6cba5b7b63f668bb"
 
-# Load Pyannote Speaker Diarization Model
-logger.info("Loading Pyannote speaker diarization model...")
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-pipeline = SpeakerDiarization.from_pretrained("pyannote/speaker-diarization-3.0", use_auth_token="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")
-pipeline = pipeline.to(device)
+def convert_mp3_to_wav(mp3_path):
+    """Converts an MP3 file to a temporary WAV file."""
+    temp_wav = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
+    audio = AudioSegment.from_mp3(mp3_path)
+    audio.export(temp_wav.name, format="wav")
+    #logging.info(f"Converted MP3 to temporary WAV: {temp_wav.name}")
+    return temp_wav
 
-def preprocess_audio(input_path: str) -> str:
-    """Converts audio to WAV (16kHz, mono) & applies noise reduction."""
-    logger.info(f"Preprocessing audio: {input_path}")
+def transcribe_audio_with_timestamps(wav_file):
+    """Transcribes audio using Deepgram and returns utterances with timestamps."""
+    url = "https://api.deepgram.com/v1/listen?model=whisper-large&language=en-IN&punctuate=true&smart_format=true&utterances=true&words=true&diarize=true"
+    headers = {"Authorization": f"Token {DEEPGRAM_API_KEY}", "Content-Type": "audio/wav"}
 
-    # Load and process the audio
-    audio = AudioSegment.from_file(input_path)
-    audio = audio.set_frame_rate(16000).set_channels(1)
+    # with open(wav_file.name, "rb") as audio_file:
+    #     response = requests.post(url, headers=headers, data=audio_file)
+    #
+    # if response.status_code == 200:
+    #     return response.json()
+    # else:
+    #     logging.error("Failed to process audio. Deepgram API Error.")
+    #     return None
 
-    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-        temp_wav_path = tmp.name
+    with open(wav_file.name, "rb") as audio_file:
+        try:
+            response = requests.post(url, headers=headers, data=audio_file)
+            response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
 
-    audio.export(temp_wav_path, format="wav")
+            try:
+                json_data = response.json()
+                return json_data
+            except json.JSONDecodeError as e:
+                # logging.error(f"JSON Decode Error: {e}")
+                # logging.error(f"Response Content: {response.text}")  # LOG THE RESPONSE CONTENT!
+                return None  # or raise the exception if you want the program to halt
+        except requests.exceptions.RequestException as e:
+            # logging.error(f"Request Error: {e}")
+            return None
+        except Exception as e:
+            # logging.error(f"An unexpected error occurred: {e}")
+            return None
 
-    rate, data = wavfile.read(temp_wav_path)
-    reduced_noise = nr.reduce_noise(y=data.astype(np.float32), sr=rate, prop_decrease=0.1)
+def extract_features(audio_path, start, end, sr=16000):
+    """Extracts audio features for speaker clustering."""
+    y, sr = librosa.load(audio_path, sr=sr, offset=start, duration=(end - start))
+    if len(y) == 0:
+        return None
+    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20)
+    delta_mfcc = librosa.feature.delta(mfcc)
+    spectral_contrast = librosa.feature.spectral_contrast(y=y, sr=sr)
+    chroma = librosa.feature.chroma_stft(y=y, sr=sr)
+    rms = librosa.feature.rms(y=y)
+    features = np.concatenate([
+        np.mean(mfcc.T, axis=0), np.mean(delta_mfcc.T, axis=0),
+        np.mean(spectral_contrast.T, axis=0), np.mean(chroma.T, axis=0),
+        np.mean(rms.T, axis=0)
+    ])
+    return features
 
-    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
-        cleaned_wav_path = tmp.name
+def estimate_speaker_count(embeddings):
+    """Estimates the optimal number of speakers using K-Means distortion analysis."""
+    distortions = []
+    K = range(1, 6)
+    for k in K:
+        model = KMeans(n_clusters=k, random_state=42).fit(embeddings)
+        distortions.append(sum(np.min(cdist(embeddings, model.cluster_centers_, 'euclidean'), axis=1)) / embeddings.shape[0])
+    optimal_k = np.argmin(np.gradient(distortions)) + 1
+    return max(2, optimal_k)
 
-    wavfile.write(cleaned_wav_path, rate, reduced_noise.astype(np.int16))
+def cluster_speakers(embeddings, num_speakers):
+    """Clusters audio features to determine speaker labels."""
+    scaler = StandardScaler()
+    embeddings_scaled = scaler.fit_transform(embeddings)
+    pca = PCA(n_components=min(5, embeddings_scaled.shape[1]))
+    embeddings_pca = pca.fit_transform(embeddings_scaled)
 
-    logger.info(f"Preprocessing complete. Saved at: {cleaned_wav_path}")
-    return cleaned_wav_path
+    clustering_algorithms = {
+        "KMeans": KMeans(n_clusters=num_speakers, random_state=42),
+        "Spectral": SpectralClustering(n_clusters=num_speakers, affinity='nearest_neighbors'),
+        "Agglomerative": AgglomerativeClustering(n_clusters=num_speakers, linkage="ward"),
+        "DBSCAN": DBSCAN(eps=1.5, min_samples=2)
+    }
 
-def diarize_audio(audio_path: str):
-    """Performs speaker diarization."""
-    logger.info(f"Performing speaker diarization on: {audio_path}")
-    pipeline.instantiate({})
-    diarization = pipeline(audio_path)
-    speaker_segments = []
+    best_labels = None
+    for name, model in clustering_algorithms.items():
+        try:
+            labels = model.fit_predict(embeddings_pca)
+            if len(set(labels)) > 1:  # Ensure multiple speakers are detected
+                best_labels = labels
+                break
+        except Exception as e:
+            # logging.warning(f"{name} clustering failed: {e}")
+            return "error"
+    return best_labels if best_labels is not None else np.zeros(len(embeddings))
 
-    for segment, _, speaker in diarization.itertracks(yield_label=True):
-        speaker_segments.append({
-            "start": round(segment.start, 2),
-            "end": round(segment.end, 2),
-            "speaker": speaker
-        })
-
-    logger.info("Speaker diarization completed.")
-    return speaker_segments
-
-def merge_transcription_with_speakers(transcription, speakers):
-    """Merges Whisper transcription with speaker diarization results."""
-    merged_output = []
-
-    for segment in transcription:
-        start, end = segment["start"], segment["end"]
-        text = segment["text"]
-
-        speaker = next(
-            (sp["speaker"] for sp in speakers if sp["start"] <= start <= sp["end"]),
-            "SPEAKER_02"
-        )
-
-        merged_output.append({
-            "start": start,
-            "end": end,
-            "speaker": speaker,
-            "text": text
-        })
-    return merged_output
-
-def format_transcription_string(merged_results):
-    """Formats the transcription output into the required string format."""
-    output = "start      end        speaker                  utterance\n"
-    for segment in merged_results:
-        output += f"{segment['start']: <10} {segment['end']: <10} {segment['speaker']: <25} {segment['text']}\n"
+def format_transcription_output(utterances, speaker_labels):
+    """Formats transcription output in a structured string format."""
+    output = '"""\n    start   end    speaker                                                              utterance\n\n'
+    for idx, utterance in enumerate(utterances):
+        speaker = f"SPEAKER_{speaker_labels[idx % len(speaker_labels)]:02d}"
+        output += f"    {utterance['start']:.3f}  {utterance['end']:.3f} {speaker:<70}{utterance['transcript']}\n"
+    output+='"""'
     return output
 
-def transcribe_audio_from_file(file_path: str):
-    """Main function to transcribe audio without FastAPI (for direct execution & import)."""
-    logger.info(f"Transcribing audio file: {file_path}")
+def get_transcripts(mp3_path):
+    temp_wav = convert_mp3_to_wav(mp3_path)
 
-    processed_audio = preprocess_audio(file_path)
-    segments, info = model.transcribe(processed_audio, language="en")
-    segments = list(segments)
+    try:
+        speaker_transcription_result = transcribe_audio_with_timestamps(temp_wav)
+        if speaker_transcription_result:
+            utterances = speaker_transcription_result.get("results", {}).get("utterances", [])
 
-    logger.info(f"Model processed audio: duration={info.duration:.2f}s, language={info.language}")
+            if not utterances:
+                # logging.info("No utterances found.")
+                return "No utterances found."
+            else:
+                embeddings = [extract_features(temp_wav.name, utt['start'], utt['end']) for utt in utterances if utt['end'] - utt['start'] > 0.5]
+                embeddings = [emb for emb in embeddings if emb is not None]
 
-    transcript = [{"start": round(segment.start, 2), "end": round(segment.end, 2), "text": segment.text.strip()} for segment in segments]
-    speaker_labels = diarize_audio(processed_audio)
-    merged_results = merge_transcription_with_speakers(transcript, speaker_labels)
-    formatted_output = format_transcription_string(merged_results)
+                if embeddings:
+                    num_speakers = estimate_speaker_count(np.array(embeddings))
 
-    logger.info("Final formatted transcription response:")
-    logger.info(f"\n{formatted_output}")
+                    speaker_labels = cluster_speakers(np.array(embeddings), num_speakers)
+                    formatted_output = format_transcription_output(utterances, speaker_labels)
 
-    return formatted_output
+                    # logging.info(f"Detected {num_speakers} speakers.")
+                    return formatted_output  # Return the formatted string
+                else:
+                    # logging.warning("No embeddings found for clustering.")
+                    return "No embeddings found for clustering."
+        else:
+            # logging.error("Failed to process audio.")
+            return "Failed to process audio."
+    finally:
+        temp_wav.close()
+        # logging.info(f"Deleting temporary file: {temp_wav.name}")

@@ -4,6 +4,35 @@ import re
 import requests
 from openai import OpenAI
 
+import sys
+
+from pathlib import Path
+import Transcription # Import transcript.py for processing
+
+# Define base path for stored audio files
+root_path = Path(__file__).resolve().parent.parent  # Moves up two levels
+base_path = root_path / "audio_storage"
+
+# def get_uuid():
+#     if len(sys.argv)>1:
+#         return sys.argv[1]
+#     else:
+#         print("Error: UUID not provided")
+#         sys.exit(1)
+#
+# uuid = get_uuid()
+
+def get_audio_file_path(uuid):
+    """Reconstruct the full path of the audio file using UUID."""
+    file_name = f"{uuid}.mp3"  # Assuming files are stored as UUID.mp3
+    file_path = base_path / file_name
+
+    if not file_path.exists():
+        print(f"Error: File {file_name} not found in {base_path}")
+        sys.exit(1)
+
+    return str(file_path)
+
 def parse_transcript_to_structured_format(transcript_text):
     """
     Parse the raw transcript text into a structured array of transcript segments.
@@ -48,8 +77,8 @@ def extract_transcript_information(transcript):
         dict: Extracted information in dictionary format.
     """
     # OpenRouter API key
-    api_key = os.environ.get("OPENROUTER_API_KEY", "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")
-
+    api_key = "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"
+    #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
     # API URL
     url = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -137,7 +166,7 @@ def score_extraction_with_llm(result, ground_truth):
     # Initialize client with OpenRouter API
     client = OpenAI(
         base_url="https://openrouter.ai/api/v1",
-        api_key=os.environ.get("OPENROUTER_API_KEY", "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"),
+        api_key= "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",
     )
 
     # Convert result to string if it's a dict
@@ -211,6 +240,7 @@ def score_extraction_with_llm(result, ground_truth):
 
     # Clean the response - remove markdown code blocks if present
     # This pattern matches ```json and ``` at the beginning and end
+    # cleaned_result = re.sub(r'^```json\s*|\s*```$', '', score_result, flags=re.MULTILINE)
     cleaned_result = re.sub(r'^```json\s*|\s*```$', '', score_result, flags=re.MULTILINE)
 
     # Try to parse the JSON response
@@ -279,35 +309,34 @@ def process_transcript(transcript, ground_truth):
         "scoring_results": scoring_results
     }
 
+
 # Example usage
 if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python llmextractor.py <UUID>")
+        sys.exit(1)
+
+    uuid = sys.argv[1]  # UUID received from API
+    audio_path = get_audio_file_path(uuid)
+
+    # Call the transcription function from transcript.py
+    transcript = Transcription.get_transcripts(audio_path)
+
+
+
+    # print("\nFinal Transcription Output:\n")
+    # print(type(transcript))
+    # print(transcript)
+
+    # Print final output (or return to API)
+
+    #print(transcript)
+
     # Sample transcript
-    transcript = """
-   start    end    speaker                                                     utterance
- 2.191  2.574 SPEAKER_01                                                        Hello?
- 4.213  4.597 SPEAKER_00                                                        Hello?
- 5.014  7.257 SPEAKER_00                                             Hi, is it Ashish?
- 7.257  7.581 SPEAKER_01                                                        Hello?
- 8.499 10.182 SPEAKER_00                                           Sorry, is it Arjun?
-10.181 11.864 SPEAKER_01                                                          Yes.
-11.863 14.066 SPEAKER_00                                Hi, Arjun, Shilpa from Car 24.
-15.307 15.730 SPEAKER_01                                                         Okay.
-16.769 18.611 SPEAKER_00                               It's a verification called C.Q.
-18.611 20.174 SPEAKER_00                                Matheo has given your address.
-21.415 21.897 SPEAKER_01                                                     Ah, okay.
-23.217 26.461 SPEAKER_00 Actually, he has taken a loan from us, so that is the reason.
-26.481 27.223 SPEAKER_00                                          How do you know him?
-28.944 29.806 SPEAKER_01                                          Ah, I'm a colleague.
-31.334 33.698 SPEAKER_00              Okay, is he doing a job or a business right now?
-35.100 35.703 SPEAKER_01                                                   No, no job.
-36.883 38.006 SPEAKER_00                                      And where does he stays?
-38.005 40.229 SPEAKER_00                                                  His address?
-40.289 43.674 SPEAKER_01                          He is now in Pattimathur, Ernakulam.
-45.217 46.420 SPEAKER_00                                 Sorry, sorry, can you repeat?
-47.080 48.483 SPEAKER_00                                       Pattimathur, Ernakulam.
-49.224 50.146 SPEAKER_00                                              Okay, thank you.
-51.167 51.267 SPEAKER_00                                                         Okay.
-"""
+    # transcript = """
+    # 2.191  2.574 SPEAKER_01                                                        Hello? 4.213  4.597 SPEAKER_00                                                        Hello? 5.014  7.257 SPEAKER_00                                             Hi, is it Ashish? 7.257  7.581 SPEAKER_01                                                        Hello? 8.499 10.182 SPEAKER_00                                           Sorry, is it Arjun?10.181 11.864 SPEAKER_01                                                          Yes.11.863 14.066 SPEAKER_00                                Hi, Arjun, Shilpa from Car 24.15.307 15.730 SPEAKER_01                                                         Okay.16.769 18.611 SPEAKER_00                               It's a verification called C.Q.18.611 20.174 SPEAKER_00                                Matheo has given your address.21.415 21.897 SPEAKER_01                                                     Ah, okay.23.217 26.461 SPEAKER_00 Actually, he has taken a loan from us, so that is the reason.26.481 27.223 SPEAKER_00                                          How do you know him?28.944 29.806 SPEAKER_01                                          Ah, I'm a colleague.31.334 33.698 SPEAKER_00              Okay, is he doing a job or a business right now?35.100 35.703 SPEAKER_01                                                   No, no job.36.883 38.006 SPEAKER_00                                      And where does he stays?38.005 40.229 SPEAKER_00                                                  His address?40.289 43.674 SPEAKER_01                          He is now in Pattimathur, Ernakulam.45.217 46.420 SPEAKER_00                                 Sorry, sorry, can you repeat?47.080 48.483 SPEAKER_00                                       Pattimathur, Ernakulam.49.224 50.146 SPEAKER_00                                              Okay, thank you.51.167 51.267 SPEAKER_00                                                         Okay.
+    # """
+
 
     # Ground truth
     ground_truth = {
@@ -322,4 +351,4 @@ if __name__ == "__main__":
     results = process_transcript(transcript, ground_truth)
 
     # Print the results in JSON format
-    print(json.dumps(results, indent=2))
+    print(json.dumps(results))
