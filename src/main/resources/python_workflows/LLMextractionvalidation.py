@@ -304,11 +304,16 @@ def process_transcript(transcript, ground_truth):
     # Score the extracted information
     scoring_results = score_extraction_with_llm(extracted_result, ground_truth)
 
+    # Determine status based on overall score
+    overall_score = scoring_results.get("overall_score", 0)
+    status = "accept" if overall_score >= 0.7 else "reject"
+
     # Combine results into the required format
     return {
         "transcript": structured_transcript,
         "extracted_result": extracted_result,
-        "scoring_results": scoring_results
+        "scoring_results": scoring_results,
+        "status": status
     }
 
 
