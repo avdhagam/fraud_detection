@@ -58,9 +58,16 @@ public class AudioWorkflow implements WorkflowInitiator {
             String subjectAddress = extractedResult.get("subject_address").asText();
             String relationToSubject = extractedResult.get("relation_to_subject").asText();
             String subjectOccupation = extractedResult.get("subject_occupation").asText();
+        String status;
+        double overallScore = rootNode.get("scoring_results").get("overall_score").asDouble();
+        if (rootNode.has("status")) {
+            // If status field exists in Python output, use it
+            status = rootNode.get("status").asText();
+        } else {
+            // Calculate status based on score if not provided
+            status = overallScore >= 0.7 ? "accept" : "reject";
+        }
 
-            // Extract scoring result
-            double overallScore = rootNode.get("scoring_results").get("overall_score").asDouble();
 
             // Extract transcript
             List<String> transcriptList = new ArrayList<>();
@@ -98,6 +105,7 @@ public class AudioWorkflow implements WorkflowInitiator {
             extractedData.put("transcript", transcriptList);
             extractedData.put("explanation", explanations);
             extractedData.put("field_by_field_scores", fieldScores);
+            extractedData.put("status",status);
 
             // Log extracted values
             log.info("Extracted Data: {}", extractedData);
@@ -114,6 +122,7 @@ public class AudioWorkflow implements WorkflowInitiator {
         AudioResponse response = new AudioResponse();
         response.setUuid(request.getUuid());
         response.setLlmExtraction(llmExtractionResult);
+        response.setStatus((String) extractedData.get("status"));
         response.setTranscript((List<String>) extractedData.get("transcript"));
         response.setReferenceName((String) extractedData.get("reference_name"));
         response.setSubjectName((String) extractedData.get("subject_name"));

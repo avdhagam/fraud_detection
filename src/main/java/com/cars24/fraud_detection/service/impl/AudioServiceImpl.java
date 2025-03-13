@@ -61,6 +61,7 @@ public class AudioServiceImpl implements AudioService {
         audioEntity.setExplanation(audioResponse.getExplanation());
         audioEntity.setFieldByFieldScores(audioResponse.getFieldByFieldScores());
         audioEntity.setAudioAnalysis(audioResponse.getAudioAnalysis());
+        audioEntity.setStatus(audioResponse.getStatus());
         logger.info("Created AudioEntity object: " + audioEntity);
 
         audioDao.saveAudio(audioEntity);
