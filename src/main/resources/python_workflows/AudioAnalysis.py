@@ -8,20 +8,23 @@ from pathlib import Path
 
 def get_uuid():
     if len(sys.argv) > 1:
-        return sys.argv[1]
+        #print(f"THIS IS THE SYS ARGV {sys.argv}")
+        uuid_candidate = sys.argv[1]
+        #print(f"UUID BEFORE FAIL SAFE {uuid_candidate}")
+
+        # Extract just the filename (UUID) if a full path is mistakenly passed
+        return Path(uuid_candidate).stem
+
+
     else:
         print("Error: UUID not provided")
         sys.exit(1)
 
 uuid = get_uuid()
-
-# Define base path for audio files
-#base_path = "src/main/resources/audio_storage/"  # Update with actual path
-#audio_file = f"{base_path}{uuid}.mp3"
-
-# dynamically getting root directory
-root_path = Path(__file__).resolve().parent.parent  # Moves up two levels to `src/main/resources/`
+#print(f"UUID at point 0 is {uuid}")
+root_path = Path(__file__).resolve().parent.parent# Update with actual path
 base_path = root_path / "audio_storage"
+
 
 def load_audio(file_path):
     try:
