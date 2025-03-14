@@ -14,7 +14,7 @@ public class AudioEntity {
 
     @Id
     private String id;
-    private Map<String, Object> llmExtraction;
+    //private Map<String, Object> llmExtraction;
     private List<String> transcript;
     private String referenceName;
     private String subjectName;

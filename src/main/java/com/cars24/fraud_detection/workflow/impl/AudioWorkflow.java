@@ -121,7 +121,7 @@ public class AudioWorkflow implements WorkflowInitiator {
         // Create AudioResponse
         AudioResponse response = new AudioResponse();
         response.setUuid(request.getUuid());
-        response.setLlmExtraction(llmExtractionResult);
+        //response.setLlmExtraction(llmExtractionResult);
         response.setStatus((String) extractedData.get("status"));
         response.setTranscript((List<String>) extractedData.get("transcript"));
         response.setReferenceName((String) extractedData.get("reference_name"));
