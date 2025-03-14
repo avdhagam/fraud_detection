@@ -13,7 +13,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class AudioResponse {
     private String uuid;
-    private Map<String, Object> llmExtraction;
+    //private Map<String, Object> llmExtraction;
     private Map<String, Object> audioAnalysis;
     private List<String> transcript;
     private String referenceName;

@@ -83,6 +83,7 @@ public class AudioServiceImpl implements AudioService {
         response.setExplanation(entity.getExplanation());
         response.setFieldByFieldScores(entity.getFieldByFieldScores());
         response.setAudioAnalysis(entity.getAudioAnalysis());
+        response.setStatus(entity.getStatus());
         return response;
     }
     @Override
