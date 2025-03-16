@@ -19,7 +19,6 @@ import java.util.logging.Logger;
 public class AudioController {
 
     private final AudioService audioService;
-    private static final Logger logger = Logger.getLogger(AudioController.class.getName());
 
     public AudioController(AudioService audioService) {
         this.audioService = audioService;
@@ -27,7 +26,7 @@ public class AudioController {
 
     @PostMapping("/trigger")
     public ResponseEntity<AudioResponse> trigger(@RequestParam("file") MultipartFile file) throws IOException, AudioProcessingException {
-        logger.info("Received audio file upload request");
+        log.info("Received audio file upload request");
         AudioRequest audioRequest = new AudioRequest();
         audioRequest.setAudioFile(file);
         AudioResponse response = audioService.processAudioRequest(audioRequest);
@@ -36,7 +35,7 @@ public class AudioController {
 
     @GetMapping("/{id}")
     public ResponseEntity<AudioResponse> getAudioResult(@PathVariable String id) {
-        logger.info("Received get request");
+        log.info("Received get request for audio result with id: {}", id);
         AudioResponse response = audioService.getAudioResults(id);
         return ResponseEntity.ok(response);
     }

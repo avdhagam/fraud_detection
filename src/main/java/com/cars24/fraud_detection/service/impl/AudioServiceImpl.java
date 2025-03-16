@@ -9,6 +9,7 @@ import com.cars24.fraud_detection.service.AudioService;
 import com.cars24.fraud_detection.workflow.WorkflowInitiator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -26,6 +27,7 @@ public class AudioServiceImpl implements AudioService {
     @Autowired
     private AudioDao audioDao;
     @Autowired
+    @Lazy
     private WorkflowInitiator workflowInitiator;
     private static final Logger logger = Logger.getLogger(AudioServiceImpl.class.getName());
     private static final String STORAGE_PATH = "src/main/resources/audio_storage";
