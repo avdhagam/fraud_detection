@@ -64,5 +64,36 @@ PROMPTS = {
 
 
         IMPORTANT: Return ONLY a valid JSON object with no markdown formatting, code blocks, or additional text.
+    """,
+
+    "DOCUMENT_QUALITY_PROMPT": """
+        Analyze this document image for quality assessment with a focus on readability, clarity, and completeness. Identify the following aspects:
+
+        **Readability Analysis** - Assess if text is clear, legible, and distortion-free.
+        **Completeness Analysis** - Verify if all document sections are fully visible.
+        **Blur Detection** - Identify if blur affects readability.
+        **Lighting Issues** - Detect overexposure, shadows, or uneven brightness.
+        **Color Accuracy** - Identify distortions or unnatural color shifts.
+        **Document Alignment** - Check for tilt or misalignment impacting clarity.
+        **Noise & Artifacts** - Identify unwanted marks, background noise, or distortions.
+
+        Provide the results in **structured JSON format** with:
+        - **Scores (0-1)** for each category.
+        - **Detailed insights** explaining the score.
+        - **Clear recommendations** for improvement.
+        - **An overall quality score** and a final decision (Good, Acceptable, Poor).
+    """,
+    "DOCUMENT_FORGERY_PROMPT": """
+        Analyze this document image for potential forgery. Identify the following:
+        **Tampering Analysis** - Check for image manipulation, alterations, or suspicious artifacts.
+        **Metadata Analysis** - Verify if metadata anomalies indicate document modification.
+        **Format Consistency** - Check if the font, alignment, and layout match the standard document structure.
+        **Security Features** - Detect missing watermarks, holograms, or embedded security elements.
+        **Background Integrity** - Identify unnatural noise patterns or splicing artifacts in the document's background.
+        Provide the results in structured JSON format with:
+        - Scores (0-1) for each category.
+        - Detailed insights explaining why the score was given.
+        - Clear recommendations on the next steps.
+        - An overall forgery risk score and a final decision (Low, Medium, High Risk).
     """
 }

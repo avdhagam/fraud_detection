@@ -7,6 +7,7 @@ import numpy as np
 import logging
 from openai import OpenAI
 import uuid
+import prompts
 
 from pathlib import Path
 script_path = Path(__file__).resolve() # finds absolute path of script
@@ -84,19 +85,7 @@ def analyze_forgery(image_path):
             logging.error(f"Error encoding image: {str(e)}")
             return {"error": f"Failed to encode image: {str(e)}", "success": False}
 
-        forgery_prompt = (
-            "Analyze this document image for potential forgery. Identify the following:\n\n"
-            "**Tampering Analysis** - Check for image manipulation, alterations, or suspicious artifacts.\n"
-            "**Metadata Analysis** - Verify if metadata anomalies indicate document modification.\n"
-            "**Format Consistency** - Check if the font, alignment, and layout match the standard document structure.\n"
-            "**Security Features** - Detect missing watermarks, holograms, or embedded security elements.\n"
-            "**Background Integrity** - Identify unnatural noise patterns or splicing artifacts in the document's background.\n\n"
-            "Provide the results in structured JSON format with:\n"
-            "- Scores (0-1) for each category.\n"
-            "- Detailed insights explaining why the score was given.\n"
-            "- Clear recommendations on the next steps.\n"
-            "- An overall forgery risk score and a final decision (Low, Medium, High Risk)."
-        )
+        forgery_prompt = prompts.PROMPTS["DOCUMENT_FORGERY_PROMPT"]
 
         completion = client.chat.completions.create(
             model="google/gemini-pro-vision",
