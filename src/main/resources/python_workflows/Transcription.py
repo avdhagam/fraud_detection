@@ -11,11 +11,17 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from scipy.spatial.distance import cdist
 
+import sys
+from pathlib import Path
+script_path = Path(__file__).resolve() # finds absolute path of script
+root_dir = script_path.parents[4]  # Calculate root directory by moving up four levels
+sys.path.append(str(root_dir)) # Add the project's root directory to the Python path
+import config
 
 # logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 # Deepgram API Key
-DEEPGRAM_API_KEY = "09cd1982446e4aeca26de7cd6cba5b7b63f668bb"
+DEEPGRAM_API_KEY = config.DEEPGRAM_API_KEY
 
 def convert_mp3_to_wav(mp3_path):
     """Converts an MP3 file to a temporary WAV file."""
