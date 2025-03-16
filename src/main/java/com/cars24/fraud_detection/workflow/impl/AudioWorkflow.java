@@ -4,6 +4,7 @@ import com.cars24.fraud_detection.data.request.AudioRequest;
 import com.cars24.fraud_detection.data.request.DocumentRequest;
 import com.cars24.fraud_detection.data.response.AudioResponse;
 import com.cars24.fraud_detection.data.response.DocumentResponse;
+import com.cars24.fraud_detection.utils.AudioStringConstants;
 import com.cars24.fraud_detection.utils.PythonExecutor;
 import com.cars24.fraud_detection.utils.PythonExecutor2;
 import com.cars24.fraud_detection.workflow.WorkflowInitiator;
@@ -52,7 +53,7 @@ public class AudioWorkflow implements WorkflowInitiator {
         JsonNode rootNode = objectMapper.readTree(obj.toString());
 
             // Extract values from extracted_result
-            JsonNode extractedResult = rootNode.get("extracted_result");
+            JsonNode extractedResult = rootNode.get(AudioStringConstants.EXTRACTED_RESULT);
             String referenceName = extractedResult.get("reference_name").asText();
             String subjectName = extractedResult.get("subject_name").asText();
             String subjectAddress = extractedResult.get("subject_address").asText();
