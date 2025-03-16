@@ -1,14 +1,20 @@
 import os
 os.environ["OMP_NUM_THREADS"] = "1"
+
 import json
 import re
 import requests
 from openai import OpenAI
-
 import sys
-
 from pathlib import Path
 import Transcription # Import transcript.py for processing
+import sys
+
+script_path = Path(__file__).resolve() # finds absolute path of script
+root_dir = script_path.parents[4]  # Calculate root directory by moving up four levels
+sys.path.append(str(root_dir)) # Add the project's root directory to the Python path
+import config
+
 
 # Define base path for stored audio files
 root_path = Path(__file__).resolve().parent.parent  # Moves up two levels
@@ -78,8 +84,11 @@ def extract_transcript_information(transcript):
         dict: Extracted information in dictionary format.
     """
     # OpenRouter API key
+    api_key = config.OPENROUTER_API_KEY
+    if not api_key:
+        print("Error: OPENROUTER_API_KEY is not set.")
+        sys.exit(1)
 
-    api_key = os.environ.get("OPENROUTER_API_KEY", "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")
     # API URL
     url = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -164,12 +173,15 @@ def score_extraction_with_llm(result, ground_truth):
     Returns:
         dict: Scoring results with field-by-field and overall scores
     """
-    # Initialize client with OpenRouter API
+    # API key
+    api_key = config.OPENROUTER_API_KEY
+    if not api_key:
+        print("Error: OPENROUTER_API_KEY is not set.")
+        sys.exit(1)
+
     client = OpenAI(
         base_url="https://openrouter.ai/api/v1",
-
-        api_key=os.environ.get("OPENROUTER_API_KEY", "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"),
-
+        api_key=api_key
     )
 
     # Convert result to string if it's a dict
