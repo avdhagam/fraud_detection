@@ -4,6 +4,7 @@ import com.cars24.fraud_detection.data.request.AudioRequest;
 import com.cars24.fraud_detection.data.request.DocumentRequest;
 import com.cars24.fraud_detection.data.response.AudioResponse;
 import com.cars24.fraud_detection.data.response.DocumentResponse;
+import com.cars24.fraud_detection.utils.AudioStringConstants;
 import com.cars24.fraud_detection.utils.PythonExecutor;
 import com.cars24.fraud_detection.utils.PythonExecutor2;
 import com.cars24.fraud_detection.workflow.WorkflowInitiator;
@@ -38,13 +39,11 @@ public class AudioWorkflow implements WorkflowInitiator {
         String llmScriptPath = "src/main/resources/python_workflows/LLMextractionvalidation.py";
         logger.info("Executing LLM extraction script: {} for audio file: {}", llmScriptPath, request.getAudioFile());
 
-        Map<String, Object> llmExtractionResult = runPythonScript(llmScriptPath, request.getUuid());
+        Map<String, Object> llmExtractionResult = processAudioScript(llmScriptPath, request.getUuid());
 
         Object obj = llmExtractionResult.get("output");
 
         logger.debug("Raw output from Python script: {}", obj);
-
-
 
 
         ObjectMapper objectMapper = new ObjectMapper();
@@ -52,32 +51,27 @@ public class AudioWorkflow implements WorkflowInitiator {
         JsonNode rootNode = objectMapper.readTree(obj.toString());
 
             // Extract values from extracted_result
-            JsonNode extractedResult = rootNode.get("extracted_result");
+            JsonNode extractedResult = rootNode.get(AudioStringConstants.EXTRACTED_RESULT);
             String referenceName = extractedResult.get("reference_name").asText();
             String subjectName = extractedResult.get("subject_name").asText();
             String subjectAddress = extractedResult.get("subject_address").asText();
             String relationToSubject = extractedResult.get("relation_to_subject").asText();
             String subjectOccupation = extractedResult.get("subject_occupation").asText();
-        String status;
-        double overallScore = rootNode.get("scoring_results").get("overall_score").asDouble();
-        if (rootNode.has("status")) {
-            // If status field exists in Python output, use it
-            status = rootNode.get("status").asText();
-        } else {
-            // Calculate status based on score if not provided
-            status = overallScore >= 0.7 ? "accept" : "reject";
-        }
 
+        double overallScore = rootNode.get(AudioStringConstants.SCORING_RESULTS).get("overall_score").asDouble();
+        String status = rootNode.has(AudioStringConstants.STATUS) ?
+                rootNode.get(AudioStringConstants.STATUS).asText() :
+                (overallScore >= 0.7 ? "accept" : "reject");
 
             // Extract transcript
             List<String> transcriptList = new ArrayList<>();
-            JsonNode transcriptNode = rootNode.path("transcript");
+            JsonNode transcriptNode = rootNode.path(AudioStringConstants.TRANSCRIPT);
             for (JsonNode entry : transcriptNode) {
                 transcriptList.add(entry.path("text").asText());
             }
 
             // Extract explanations
-            JsonNode explanationNode = rootNode.path("scoring_results").path("explanation");
+            JsonNode explanationNode = rootNode.path(AudioStringConstants.SCORING_RESULTS).path(AudioStringConstants.EXPLANATION);
             List<String> explanations = new ArrayList<>();
             Iterator<Map.Entry<String, JsonNode>> fields = explanationNode.fields();
             while (fields.hasNext()) {
@@ -85,7 +79,7 @@ public class AudioWorkflow implements WorkflowInitiator {
                 explanations.add(field.getKey() + ": " + field.getValue().asText());
             }
 
-            JsonNode fieldScoresNode = rootNode.path("scoring_results").path("field_by_field_scores");
+            JsonNode fieldScoresNode = rootNode.path(AudioStringConstants.SCORING_RESULTS).path(AudioStringConstants.FIELD_BY_FIELD_SCORES);
             Map<String, Double> fieldScores = new HashMap<>();
             Iterator<Map.Entry<String, JsonNode>> scoreFields = fieldScoresNode.fields();
             while (scoreFields.hasNext()) {
@@ -137,7 +131,7 @@ public class AudioWorkflow implements WorkflowInitiator {
         String analysisScriptPath = "src/main/resources/python_workflows/AudioAnalysis.py";
         logger.info("Executing audio analysis script: {} for audio file: {}", analysisScriptPath, request.getAudioFile());
 
-        Map<String, Object> audioAnalysisResult = runPythonScript(analysisScriptPath, request.getUuid());
+        Map<String, Object> audioAnalysisResult = processAudioScript(analysisScriptPath, request.getUuid());
 
         if (audioAnalysisResult == null || audioAnalysisResult.isEmpty()) {
             logger.warn("Audio analysis script returned an empty response for requestId: {}", request.getUuid());
@@ -151,9 +145,8 @@ public class AudioWorkflow implements WorkflowInitiator {
         return response;
     }
 
-    private Map<String, Object> runPythonScript(String scriptPath, String uuid) {
+    private Map<String, Object> processAudioScript(String scriptPath, String uuid) {
         logger.debug("Running Python script: {} with audio file: {}", scriptPath, uuid);
-
         PythonExecutor2 executor = new PythonExecutor2();
         Map<String, Object> result = executor.runPythonScript(scriptPath, uuid);
 
