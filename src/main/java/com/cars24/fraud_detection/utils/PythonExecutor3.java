@@ -7,48 +7,37 @@ import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 public class PythonExecutor3 {
-    private final ObjectMapper objectMapper = new ObjectMapper(); // JSON parser
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public Map<String, Object> runPythonScript(String scriptName, Object... args) {
         try {
-            // Determine Python command based on OS
             String pythonCommand = System.getProperty("os.name").toLowerCase().contains("win") ? "python" : "python3";
-
-            // Prepare command: python3 scriptName arg1 arg2 ...
             List<String> command = new ArrayList<>();
             command.add(pythonCommand);
             command.add(scriptName);
 
             for (Object arg : args) {
-                if (arg == null) {
-                    command.add("null"); // Handle null values explicitly
-                } else if (arg instanceof Map) {
-                    command.add(objectMapper.writeValueAsString(arg)); // Convert Map to JSON
-                } else {
-                    command.add(arg.toString());
-                }
+                command.add(arg.toString());
             }
 
             log.info("Executing Python script: {}", String.join(" ", command));
 
             ProcessBuilder processBuilder = new ProcessBuilder(command);
-            processBuilder.redirectErrorStream(true); // Merge stderr with stdout
+            processBuilder.redirectErrorStream(true);
             Process process = processBuilder.start();
 
-            // Capture output efficiently
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
-            StringBuilder outputBuilder = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                outputBuilder.append(line).append("\n");
-            }
-            String scriptOutput = outputBuilder.toString().trim();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            String scriptOutput = reader.lines().collect(Collectors.joining("\n"));
 
             int exitCode = process.waitFor();
             if (exitCode != 0) {
@@ -56,19 +45,26 @@ public class PythonExecutor3 {
                 throw new PythonExecutionException("Python script execution failed with exit code " + exitCode);
             }
 
-            log.info("Python script executed successfully: {}", scriptOutput);
-
-            // Try parsing JSON output safely
-            try {
-                if (scriptOutput.startsWith("{") && scriptOutput.endsWith("}")) {
-                    return objectMapper.readValue(scriptOutput, Map.class);
-                }
-            } catch (Exception e) {
-                log.warn("Output is not a valid JSON, returning as plain text.");
+            // Handle null or empty output gracefully
+            if (scriptOutput == null || scriptOutput.trim().isEmpty()) {
+                log.warn("Python script returned empty or null output.");
+                Map<String, Object> result = new HashMap<>();
+                result.put("output", ""); // Store an empty string as output
+                return result;
             }
 
-            // If not JSON, return plain text inside a Map
-            return Collections.singletonMap("output", scriptOutput.isEmpty() ? "No output from script" : scriptOutput);
+            // Attempt to parse the output as JSON
+            try {
+                Map<String, Object> result = objectMapper.readValue(scriptOutput, Map.class);
+                log.info("Python script executed successfully with parsed JSON result: {}", result);
+                return result;
+            } catch (Exception jsonEx) {
+                log.warn("Failed to parse Python output as JSON. Raw output:\n{}", scriptOutput);
+                Map<String, Object> result = new HashMap<>();
+                result.put("output", scriptOutput);
+                result.put("parse_error", "Could not parse output as JSON");
+                return result;
+            }
 
         } catch (Exception e) {
             log.error("Error executing Python script: {}", e.getMessage(), e);

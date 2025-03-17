@@ -1,0 +1,8 @@
+{
+    "document_type": "Aadhaar",
+    "name": "Kiran Kumari",
+    "date_of_birth": "2003-01-01",
+    "gender": "Female",
+    "id_number": "4382 5165 5729",
+    "raw_text": "{\n  \"document_type\": \"Aadhaar\",\n  \"name\": \"Kiran Kumari\",\n  \"date_of_birth\": \"2003-01-01\",\n  \"gender\": \"Female\",\n  \"id_number\": \"4382 5165 5729\"\n}"
+}

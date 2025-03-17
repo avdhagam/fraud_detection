@@ -16,8 +16,6 @@ import com.cars24.fraud_detection.exception.DocumentProcessingException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-
-import com.cars24.fraud_detection.utils.PythonExecutor3;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -38,7 +36,7 @@ class DocumentWorkflowDiffblueTest {
   private DocumentWorkflow documentWorkflow;
 
   @MockBean
-  private PythonExecutor3 pythonExecutor;
+  private PythonExecutor pythonExecutor;
 
   /**
    * Test {@link DocumentWorkflow#processDocument(DocumentRequest)}.
