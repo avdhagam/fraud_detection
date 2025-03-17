@@ -3,7 +3,9 @@ import json
 import re
 import requests
 from openai import OpenAI
+
 import sys
+
 from pathlib import Path
 import Transcription # Import transcript.py for processing
 
@@ -25,35 +27,53 @@ def get_audio_file_path(uuid):
 def parse_transcript_to_structured_format(transcript_text):
     """
     Parse the raw transcript text into a structured array of transcript segments.
+
+    Args:
+        transcript_text (str): Raw transcript text
+
+    Returns:
+        list: List of dictionaries with structured transcript data
     """
     structured_transcript = []
+
+    # Regular expression to match transcript segments
+    # Format: <start_time> <end_time> <speaker> <text>
     pattern = r'(\d+\.\d+)\s+(\d+\.\d+)\s+(SPEAKER_\d+)\s+(.+?)(?=\d+\.\d+\s+\d+\.\d+\s+SPEAKER_|\Z)'
+
     matches = re.finditer(pattern, transcript_text, re.DOTALL)
 
     for match in matches:
+        start_time = float(match.group(1))
+        end_time = float(match.group(2))
+        speaker = match.group(3)
+        text = match.group(4).strip()
+
         structured_transcript.append({
-            "start_time": float(match.group(1)),
-            "end_time": float(match.group(2)),
-            "speaker": match.group(3),
-            "text": match.group(4).strip()
+            "start_time": start_time,
+            "end_time": end_time,
+            "speaker": speaker,
+            "text": text
         })
 
     return structured_transcript
 
 def extract_and_score_transcript(transcript, ground_truth):
     """
-    Combine extraction and scoring into a single API call to reduce API usage.
+    Combined function to extract information from transcript and score against ground truth
+    using a single API call.
 
     Args:
-        transcript (str): The call transcript text.
-        ground_truth (dict): The ground truth information for scoring.
+        transcript (str): The call transcript
+        ground_truth (dict): The ground truth information
 
     Returns:
-        dict: Combined extraction and scoring results.
+        dict: Comprehensive results including extraction and scoring
     """
-    # Get API key from environment
-    api_key = os.environ.get("OPENROUTER_API_KEY", "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")
+    # Parse transcript into structured format
+    structured_transcript = parse_transcript_to_structured_format(transcript)
 
+    # OpenRouter API key
+    api_key = os.environ.get("OPENROUTER_API_KEY", "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")
     # API URL
     url = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -65,30 +85,27 @@ def extract_and_score_transcript(transcript, ground_truth):
         "X-Title": "Transcript Analysis App",
     }
 
-    # Ground truth as string
+    # Convert ground truth to string
     ground_truth_str = json.dumps(ground_truth)
 
-    # Combined prompt for both extraction and scoring in one go
+    # Combined prompt for extraction and scoring in a single API call
     combined_prompt = f"""
-    First, extract the following information from this transcript. Be extremely precise.
+    You have two tasks:
     
-    Keys to extract:
-    1. reference_name: Name of the person being called
-    2. subject_name: Name of the person who took the loan
-    3. subject_address: Full address of the subject
-    4. relation_to_subject: Relationship between reference and subject
-    5. subject_occupation: Current occupation of the subject
+    TASK 1: Extract the following information from this transcript:
+    - reference_name: Name of the person being called
+    - subject_name: Name of the person who took the loan
+    - subject_address: Full address of the subject
+    - relation_to_subject: Relationship between reference and subject
+    - subject_occupation: Current occupation of the subject
     
-    Transcript:
-    {transcript}
-    
-    Second, score your extraction against this ground truth:
+    TASK 2: Score the extracted information against this ground truth:
     {ground_truth_str}
     
     Scoring Guidelines:
     1. Names: 
        - 1.0 if exactly same
-       - 0.8 if very similar (e.g., Matheo vs Matthew)
+       - 0.8 if very similar (e.g., Matheo vs Matthew, CJ vs CJ Matthew)
        - Lower scores for significant differences
     
     2. Addresses: 
@@ -107,13 +124,40 @@ def extract_and_score_transcript(transcript, ground_truth):
        - 0.8 if semantically equivalent (e.g., "no job" vs "unemployed")
        - Lower scores for significantly different descriptions
     
-    Return a JSON with these fields:
-    1. extracted_result: A dictionary with the extracted information
-    2. field_by_field_scores: A dictionary with scores for each field (reference_name, subject_name, subject_address, relation_to_subject, subject_occupation)
-    3. overall_score: Average of all field scores
-    4. explanation: A dictionary with detailed explanations for each field score
+    Transcript:
+    {transcript}
     
-    IMPORTANT: Return ONLY a valid JSON object with no markdown formatting, code blocks, or additional text.
+    IMPORTANT: Respond with a JSON object that EXACTLY matches this structure:
+    {{
+        "extracted_result": {{
+            "reference_name": "...",
+            "subject_name": "...",
+            "subject_address": "...",
+            "relation_to_subject": "...",
+            "subject_occupation": "..."
+        }},
+        "scoring_results": {{
+            "transcript": "Scoring the extraction result against the ground truth.",
+            "field_by_field_scores": {{
+                "reference_name": 0.0,
+                "subject_name": 0.0,
+                "subject_address": 0.0,
+                "relation_to_subject": 0.0,
+                "subject_occupation": 0.0
+            }},
+            "overall_score": 0.0,
+            "explanation": {{
+                "reference_name": "...",
+                "subject_name": "...",
+                "subject_address": "...",
+                "relation_to_subject": "...",
+                "subject_occupation": "..."
+            }}
+        }}
+    }}
+    
+    The overall_score should be the average of all field scores.
+    
     """
 
     # Request payload
@@ -131,6 +175,7 @@ def extract_and_score_transcript(transcript, ground_truth):
     if response.status_code == 200:
         try:
             result = response.json()
+            # Extract the content from the response
             content = result.get("choices", [{}])[0].get("message", {}).get("content", "")
 
             # Clean the content (remove code blocks, trim)
@@ -138,46 +183,72 @@ def extract_and_score_transcript(transcript, ground_truth):
             content = re.sub(r'^```json\s*|\s*```$', '', content, flags=re.MULTILINE).strip()
 
             # Parse the JSON
-            parsed_result = json.loads(content)
+            analysis_results = json.loads(content)
+
+            # Calculate overall score if not provided
+            if "overall_score" not in analysis_results.get("scoring_results", {}):
+                field_scores = analysis_results.get("scoring_results", {}).get("field_by_field_scores", {})
+                if field_scores:
+                    overall_score = sum(field_scores.values()) / len(field_scores)
+                    analysis_results["scoring_results"]["overall_score"] = round(overall_score, 1)
 
             # Determine status based on overall score
-            overall_score = parsed_result.get("overall_score", 0)
+            overall_score = analysis_results.get("scoring_results", {}).get("overall_score", 0)
             status = "accept" if overall_score >= 0.7 else "reject"
 
-            # Add status to result
-            parsed_result["status"] = status
-
-            return parsed_result
-        except json.JSONDecodeError as e:
-            print(f"Error parsing API response: {e}")
-            # Try more aggressive JSON extraction
-            json_match = re.search(r'({.*})', content, re.DOTALL)
-            if json_match:
-                try:
-                    parsed_result = json.loads(json_match.group(1))
-                    overall_score = parsed_result.get("overall_score", 0)
-                    parsed_result["status"] = "accept" if overall_score >= 0.7 else "reject"
-                    return parsed_result
-                except:
-                    pass
-
-            return {
-                "error": "Failed to parse response",
-                "raw_response": content,
-                "status": "reject"
+            # Create the final result structure
+            final_result = {
+                "transcript": structured_transcript,
+                "extracted_result": analysis_results.get("extracted_result", {}),
+                "scoring_results": analysis_results.get("scoring_results", {
+                    "transcript": "Scoring the extraction result against the ground truth.",
+                    "field_by_field_scores": {},
+                    "overall_score": 0,
+                    "explanation": {}
+                }),
+                "status": status
             }
+
+            return final_result
+
+        except json.JSONDecodeError as e:
+            print(f"Error parsing result: {e}")
+            print(f"Raw content: {content}")
         except Exception as e:
             print(f"Unexpected error: {e}")
-            return {
-                "error": str(e),
-                "status": "reject"
-            }
     else:
         print(f"Error: API request failed with status code {response.status_code}")
-        return {
-            "error": f"API request failed with status code {response.status_code}",
-            "status": "reject"
-        }
+
+    # Return empty result with the correct structure if something fails
+    return {
+        "transcript": structured_transcript,
+        "extracted_result": {
+            "reference_name": "",
+            "subject_name": "",
+            "subject_address": "",
+            "relation_to_subject": "",
+            "subject_occupation": ""
+        },
+        "scoring_results": {
+            "transcript": "Scoring the extraction result against the ground truth.",
+            "field_by_field_scores": {
+                "reference_name": 0.0,
+                "subject_name": 0.0,
+                "subject_address": 0.0,
+                "relation_to_subject": 0.0,
+                "subject_occupation": 0.0
+            },
+            "overall_score": 0.0,
+            "explanation": {
+                "reference_name": "",
+                "subject_name": "",
+                "subject_address": "",
+                "relation_to_subject": "",
+                "subject_occupation": ""
+            }
+        },
+        "status": "reject"
+    }
 
 def process_transcript(transcript, ground_truth):
     """
@@ -190,28 +261,14 @@ def process_transcript(transcript, ground_truth):
     Returns:
         dict: Comprehensive results including extraction and scoring
     """
-    # Parse transcript into structured format
-    structured_transcript = parse_transcript_to_structured_format(transcript)
+    # Use the combined function to extract and score
+    return extract_and_score_transcript(transcript, ground_truth)
 
-    # Extract and score in a single API call
-    results = extract_and_score_transcript(transcript, ground_truth)
-
-    # Construct the final output in the same format as the original code
-    return {
-        "transcript": structured_transcript,
-        "extracted_result": results.get("extracted_result", {}),
-        "scoring_results": {
-            "field_by_field_scores": results.get("field_by_field_scores", {}),
-            "overall_score": results.get("overall_score", 0),
-            "explanation": results.get("explanation", {})
-        },
-        "status": results.get("status", "reject")
-    }
 
 # Example usage
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python llmextractor.py <UUID>")
+
         sys.exit(1)
 
     uuid = sys.argv[1]  # UUID received from API
@@ -223,7 +280,7 @@ if __name__ == "__main__":
     # Ground truth
     ground_truth = {
         "reference_name": "Arjun",
-        "subject_name": "Matthew",
+        "subject_name": " CJ Matthew",
         "subject_address": "45,sunshine blaze apartments, pattimathur ,ernakulam",
         "relation_to_subject": "work together",
         "subject_occupation": "unemployed"
