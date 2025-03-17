@@ -86,7 +86,6 @@ def extract_transcript_information(transcript, ground_truth):
     # OpenRouter API key
     api_key = config.OPENROUTER_API_KEY
     if not api_key:
-        print("Error: OPENROUTER_API_KEY is not set.")
         sys.exit(1)
 
     # API URL
@@ -137,7 +136,7 @@ def extract_transcript_information(transcript, ground_truth):
 
             return parsed_result
         except json.JSONDecodeError as e:
-            print(f"Error parsing API response: {e}")
+
             return {
                 "error": "Failed to parse response",
                 "status": "reject"
@@ -149,7 +148,7 @@ def extract_transcript_information(transcript, ground_truth):
                 "status": "reject"
             }
     else:
-        print(f"Error: API request failed with status code {response.status_code}")
+
         return {
             "error": f"API request failed with status code {response.status_code}",
             "status": "reject"
