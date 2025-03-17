@@ -4,8 +4,6 @@ os.environ["OMP_NUM_THREADS"] = "1"
 import json
 import re
 import requests
-from openai import OpenAI
-import sys
 from pathlib import Path
 import Transcription # Import transcript.py for processing
 import prompts
@@ -74,15 +72,16 @@ def parse_transcript_to_structured_format(transcript_text):
 
     return structured_transcript
 
-def extract_transcript_information(transcript):
+def extract_transcript_information(transcript, ground_truth):
     """
-    Extract key information from a call transcript using OpenRouter API.
+    Extract key information and score against ground truth in a single API call.
 
     Args:
         transcript (str): The call transcript text.
+        ground_truth (dict): The ground truth information.
 
     Returns:
-        dict: Extracted information in dictionary format.
+        dict: Extracted information and scoring results.
     """
     # OpenRouter API key
     api_key = config.OPENROUTER_API_KEY
@@ -101,15 +100,21 @@ def extract_transcript_information(transcript):
         "X-Title": "Transcript Analysis App",
     }
 
-    # Prompt for extraction
-    extraction_prompt_template = prompts.PROMPTS["EXTRACTION_PROMPT"]
-    extraction_prompt = extraction_prompt_template.format(transcript=transcript)
+    # Convert ground truth to string
+    ground_truth_str = json.dumps(ground_truth)
 
-    # Request payload
+    # Combined prompt for extraction and scoring
+    combined_prompt_template = prompts.PROMPTS["EXTRACTION_SCORING_PROMPT"]
+    combined_prompt = combined_prompt_template.format(
+        transcript=transcript,
+        ground_truth_str=ground_truth_str
+    )
+
+# Request payload
     payload = {
         "model": "google/gemini-2.0-flash-lite-001",
         "messages": [
-            {"role": "user", "content": extraction_prompt}
+            {"role": "user", "content": combined_prompt}
         ]
     }
 
@@ -120,128 +125,39 @@ def extract_transcript_information(transcript):
     if response.status_code == 200:
         try:
             result = response.json()
-            # Extract the content from the response
             content = result.get("choices", [{}])[0].get("message", {}).get("content", "")
 
-            # Clean the content (remove code blocks, trim)
-            content = content.strip()
+            # Clean and parse the JSON response
             content = re.sub(r'^```json\s*|\s*```$', '', content, flags=re.MULTILINE).strip()
-
-            # Parse the JSON
             parsed_result = json.loads(content)
+
+            # Determine status based on overall score
+            overall_score = parsed_result.get("overall_score", 0)
+            parsed_result["status"] = "accept" if overall_score >= 0.7 else "reject"
 
             return parsed_result
         except json.JSONDecodeError as e:
-            print(f"Error parsing extraction result: {e}")
-            print(f"Raw content: {content}")
-            return {}
+            print(f"Error parsing API response: {e}")
+            return {
+                "error": "Failed to parse response",
+                "status": "reject"
+            }
         except Exception as e:
             print(f"Unexpected error: {e}")
-            return {}
+            return {
+                "error": str(e),
+                "status": "reject"
+            }
     else:
         print(f"Error: API request failed with status code {response.status_code}")
-        return {}
-
-def score_extraction_with_llm(result, ground_truth):
-    """
-    Use the LLM to score the extracted information against ground truth
-
-    Args:
-        result (dict/str): The extracted information (JSON or string)
-        ground_truth (dict): The ground truth information
-
-    Returns:
-        dict: Scoring results with field-by-field and overall scores
-    """
-    # API key
-    api_key = config.OPENROUTER_API_KEY
-    if not api_key:
-        print("Error: OPENROUTER_API_KEY is not set.")
-        sys.exit(1)
-
-    client = OpenAI(
-        base_url="https://openrouter.ai/api/v1",
-        api_key=api_key
-    )
-
-    # Convert result to string if it's a dict
-    if isinstance(result, dict):
-        result_str = json.dumps(result)
-    else:
-        result_str = result
-
-    # Convert ground truth to string
-    ground_truth_str = json.dumps(ground_truth)
-
-    # Create the scoring prompt
-    scoring_prompt_template = prompts.PROMPTS["VALIDATION_SCORING_PROMPT"]
-    scoring_prompt = scoring_prompt_template.format(result_str=result_str, ground_truth_str=ground_truth_str)
-
-    # Create request with the scoring prompt
-    completion = client.chat.completions.create(
-        extra_headers={
-            "HTTP-Referer": "https://your-app-domain.com",
-            "X-Title": "Extraction Scoring App",
-        },
-        model="google/gemini-2.0-flash-lite-001",  # Or any other suitable model
-        messages=[
-            {
-                "role": "user",
-                "content": scoring_prompt
-            }
-        ]
-    )
-
-    # Get the response
-    score_result = completion.choices[0].message.content
-
-    # Clean the response - remove markdown code blocks if present
-    # This pattern matches ```json and ``` at the beginning and end
-    # cleaned_result = re.sub(r'^```json\s*|\s*```$', '', score_result, flags=re.MULTILINE)
-    cleaned_result = re.sub(r'^```json\s*|\s*```$', '', score_result, flags=re.MULTILINE)
-
-    # Try to parse the JSON response
-    try:
-        score_data = json.loads(cleaned_result)
-
-        # Ensure the response has the correct structure
-        if "field_scores" in score_data and not "field_by_field_scores" in score_data:
-            score_data["field_by_field_scores"] = score_data.pop("field_scores")
-
-        # Ensure explanation is a dictionary if it's a string
-        if "explanation" in score_data and isinstance(score_data["explanation"], str):
-            # Create a dictionary with the same explanation for each field
-            explanation_text = score_data["explanation"]
-            score_data["explanation"] = {
-                "reference_name": explanation_text,
-                "subject_name": explanation_text,
-                "subject_address": explanation_text,
-                "relation_to_subject": explanation_text,
-                "subject_occupation": explanation_text
-            }
-
-        return score_data
-    except json.JSONDecodeError:
-        # If still failing, try a more aggressive cleanup
-        # Extract anything that looks like JSON - content between { and }
-        json_match = re.search(r'({.*})', cleaned_result, re.DOTALL)
-        if json_match:
-            try:
-                score_data = json.loads(json_match.group(1))
-                return score_data
-            except json.JSONDecodeError:
-                pass
-
-        # If all parsing attempts fail
         return {
-            "error": "Failed to parse LLM response",
-            "raw_response": score_result,
-            "cleaned_response": cleaned_result
+            "error": f"API request failed with status code {response.status_code}",
+            "status": "reject"
         }
 
 def process_transcript(transcript, ground_truth):
     """
-    Process the transcript by extracting information and scoring against ground truth
+    Process the transcript by extracting information and scoring against ground truth in a single step.
 
     Args:
         transcript (str): The call transcript
@@ -253,22 +169,19 @@ def process_transcript(transcript, ground_truth):
     # Parse transcript into structured format
     structured_transcript = parse_transcript_to_structured_format(transcript)
 
-    # Extract information from transcript
-    extracted_result = extract_transcript_information(transcript)
+    # Extract and score in one step
+    results = extract_transcript_information(transcript, ground_truth)
 
-    # Score the extracted information
-    scoring_results = score_extraction_with_llm(extracted_result, ground_truth)
-
-    # Determine status based on overall score
-    overall_score = scoring_results.get("overall_score", 0)
-    status = "accept" if overall_score >= 0.7 else "reject"
-
-    # Combine results into the required format
+    # Construct the final output
     return {
         "transcript": structured_transcript,
-        "extracted_result": extracted_result,
-        "scoring_results": scoring_results,
-        "status": status
+        "extracted_result": results.get("extracted_result", {}),
+        "scoring_results": {
+            "field_by_field_scores": results.get("field_by_field_scores", {}),
+            "overall_score": results.get("overall_score", 0),
+            "explanation": results.get("explanation", {})
+        },
+        "status": results.get("status", "reject")
     }
 
 
