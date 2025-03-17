@@ -15,7 +15,7 @@ from scipy.spatial.distance import cdist
 # logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 # Deepgram API Key
-DEEPGRAM_API_KEY = "09cd1982446e4aeca26de7cd6cba5b7b63f668bb"
+DEEPGRAM_API_KEY = "a442dd8755020966943ed7824baf8968e3575377"
 
 def convert_mp3_to_wav(mp3_path):
     """Converts an MP3 file to a temporary WAV file."""
