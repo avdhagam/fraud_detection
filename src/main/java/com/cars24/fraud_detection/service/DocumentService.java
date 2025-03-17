@@ -10,6 +10,4 @@ import org.springframework.web.multipart.MultipartFile;
 public interface DocumentService {
     DocumentResponse processDocument(DocumentRequest request);
     DocumentResponse getDocumentById(String documentId);
-
-    //DocumentResponse processUserDocument(MultipartFile file, String userId);
 }

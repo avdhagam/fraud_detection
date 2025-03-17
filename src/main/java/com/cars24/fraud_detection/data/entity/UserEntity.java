@@ -12,7 +12,7 @@ import java.util.List;
 @Getter
 @Setter
 @Data
-@Document(collection = "users")  // MongoDB collection name
+@Document(collection = "users")
 public class UserEntity {
 
     @Id

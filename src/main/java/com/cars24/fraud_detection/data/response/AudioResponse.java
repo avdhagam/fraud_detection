@@ -2,6 +2,7 @@
 package com.cars24.fraud_detection.data.response;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,6 +12,7 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class AudioResponse {
     private String uuid;
 
@@ -29,6 +31,4 @@ public class AudioResponse {
     private Map<String, Double> fieldByFieldScores;
     private String status;
 
-    public AudioResponse(String id, String userReportId, List<String> transcript, String referenceName, String subjectName, String subjectAddress, String relationToSubject, String subjectOccupation, double overallScore, List<String> explanation, Map<String, Double> fieldByFieldScores, String status) {
-    }
 }

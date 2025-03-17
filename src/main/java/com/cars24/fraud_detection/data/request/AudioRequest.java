@@ -8,8 +8,6 @@ import java.util.Date;
 @Data
 public class AudioRequest {
 
-
-
         private MultipartFile audioFile;
         private String filepath;
         private String uuid;

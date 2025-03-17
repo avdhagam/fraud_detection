@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import java.io.ByteArrayOutputStream;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import com.itextpdf.kernel.font.PdfFontFactory;
+import com.itextpdf.kernel.font.PdfFont;
 
 public class PdfGeneratorUtil {
 
@@ -27,7 +29,7 @@ public class PdfGeneratorUtil {
         if (userData.has("audioCalls")) {
             document.add(new Paragraph("\nAudio Calls:").setBold());
             for (JsonNode call : userData.get("audioCalls")) {
-                document.add(new Paragraph("Call ID: " + call.get("id").asText()));
+                document.add(new Paragraph("\nCall ID: " + call.get("id").asText()).setBold());
 
                 if (call.has("transcript") && call.get("transcript").isArray()) {
                     ArrayNode transcriptArray = (ArrayNode) call.get("transcript");
@@ -36,34 +38,52 @@ public class PdfGeneratorUtil {
                                     .map(JsonNode::asText)
                                     .collect(Collectors.toList()));
 
-                    document.add(new Paragraph("Transcripts:"));
-                    document.add(new Paragraph(transcriptText));
+                    // Bold heading
+                    document.add(new Paragraph("Transcripts:").setBold());
+
+                    // Normal font for transcript text
+                    PdfFont normalFont = PdfFontFactory.createFont();
+                    document.add(new Paragraph(transcriptText).setFont(normalFont));
                 } else {
-                    document.add(new Paragraph("Transcripts: Not Available"));
+                    // Bold heading
+                    document.add(new Paragraph("Transcripts:").setBold());
+
+                    // Normal font for "Not Available"
+                    PdfFont normalFont = PdfFontFactory.createFont();
+                    document.add(new Paragraph("Not Available").setFont(normalFont));
                 }
 
-                document.add(new Paragraph("\nExtracted Details: " ));
-                document.add(new Paragraph("Reference Name: " + call.get("referenceName").asText()));
-                document.add(new Paragraph("Subject Name: " + call.get("subjectName").asText()));
-                document.add(new Paragraph("Subject Address: " + call.get("subjectAddress").asText()));
-                document.add(new Paragraph("Relation to Subject: " + call.get("relationToSubject").asText()));
-                document.add(new Paragraph("Subject Occupation: " + call.get("subjectOccupation").asText()));
-                document.add(new Paragraph("\nOverall Score: " + call.get("overallScore").asText()));
+                // Bold heading for Extracted Details
+                document.add(new Paragraph("\nExtracted Details:").setBold());
 
-                // Explanation and Field Scores
+                PdfFont normalFont = PdfFontFactory.createFont();  // Reset to normal font
+                document.add(new Paragraph("Reference Name: " + call.get("referenceName").asText()).setFont(normalFont));
+                document.add(new Paragraph("Subject Name: " + call.get("subjectName").asText()).setFont(normalFont));
+                document.add(new Paragraph("Subject Address: " + call.get("subjectAddress").asText()).setFont(normalFont));
+                document.add(new Paragraph("Relation to Subject: " + call.get("relationToSubject").asText()).setFont(normalFont));
+                document.add(new Paragraph("Subject Occupation: " + call.get("subjectOccupation").asText()).setFont(normalFont));
+
+                document.add(new Paragraph("\nOverall Score: " + call.get("overallScore").asText()).setBold());
+
+                // Bold heading for Explanation
                 if (call.has("explanation")) {
-                    document.add(new Paragraph("Explanation: " + call.get("explanation").asText()));
+                    document.add(new Paragraph("Explanation:").setBold());
+                    document.add(new Paragraph(call.get("explanation").asText()).setFont(normalFont));
                 }
+
+                // Bold heading for Field-by-Field Scores
                 if (call.has("fieldByFieldScores")) {
-                    document.add(new Paragraph("Field-by-Field Scores: " + call.get("fieldByFieldScores").toString()));
+                    document.add(new Paragraph("Field-by-Field Scores:").setBold());
+                    document.add(new Paragraph(call.get("fieldByFieldScores").toString()).setFont(normalFont));
                 }
 
-                // Audio Analysis
+                // Bold heading for Audio Analysis
                 if (call.has("audioAnalysis")) {
-                    document.add(new Paragraph("Audio Analysis: " + call.get("audioAnalysis").get("output").asText()));
+                    document.add(new Paragraph("Audio Analysis:").setBold());
+                    document.add(new Paragraph(call.get("audioAnalysis").get("output").asText()).setFont(normalFont));
                 }
 
-                document.add(new Paragraph("Status: " + call.get("status").asText()));
+                document.add(new Paragraph("Status: " + call.get("status").asText()).setBold());
             }
         }
 

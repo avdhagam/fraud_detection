@@ -8,7 +8,5 @@ import java.util.Optional;
 public interface AudioDao {
     void saveAudio(AudioEntity audio);
     Optional<AudioEntity> getAudioById(String audioId);
-
-    // ✅ New method to fetch all audios for a user
     List<AudioEntity> getAudiosByUserId(String userId);
 }
