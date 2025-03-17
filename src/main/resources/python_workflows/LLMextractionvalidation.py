@@ -13,6 +13,15 @@ import Transcription # Import transcript.py for processing
 root_path = Path(__file__).resolve().parent.parent  # Moves up two levels
 base_path = root_path / "audio_storage"
 
+# def get_uuid():
+#     if len(sys.argv)>1:
+#         return sys.argv[1]
+#     else:
+#         print("Error: UUID not provided")
+#         sys.exit(1)
+#
+# uuid = get_uuid()
+
 def get_audio_file_path(uuid):
     """Reconstruct the full path of the audio file using UUID."""
     file_name = f"{uuid}.mp3"  # Assuming files are stored as UUID.mp3
@@ -57,23 +66,19 @@ def parse_transcript_to_structured_format(transcript_text):
 
     return structured_transcript
 
-def extract_and_score_transcript(transcript, ground_truth):
+def extract_transcript_information(transcript):
     """
-    Combined function to extract information from transcript and score against ground truth
-    using a single API call.
+    Extract key information from a call transcript using OpenRouter API.
 
     Args:
-        transcript (str): The call transcript
-        ground_truth (dict): The ground truth information
+        transcript (str): The call transcript text.
 
     Returns:
-        dict: Comprehensive results including extraction and scoring
+        dict: Extracted information in dictionary format.
     """
-    # Parse transcript into structured format
-    structured_transcript = parse_transcript_to_structured_format(transcript)
-
     # OpenRouter API key
-    api_key = os.environ.get("OPENROUTER_API_KEY", "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")
+
+    api_key = os.environ.get("OPENROUTER_API_KEY", "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")
     # API URL
     url = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -85,86 +90,36 @@ def extract_and_score_transcript(transcript, ground_truth):
         "X-Title": "Transcript Analysis App",
     }
 
-    # Convert ground truth to string
-    ground_truth_str = json.dumps(ground_truth)
+    # Prompt for extraction
+    extraction_prompt = f"""
+    Extract the following information from this transcript. 
+    Be extremely precise and ensure the response is in valid JSON format.
+    
+    Keys to extract:
+    1. reference_name: Name of the person being called
+    2. subject_name: Name of the person who took the loan
+    3. subject_address: Full address of the subject
+    4. relation_to_subject: Relationship between reference and subject
+    5. subject_occupation: Current occupation of the subject
 
-    # Combined prompt for extraction and scoring in a single API call
-    combined_prompt = f"""
-    You have two tasks:
-    
-    TASK 1: Extract the following information from this transcript:
-    - reference_name: Name of the person being called
-    - subject_name: Name of the person who took the loan
-    - subject_address: Full address of the subject
-    - relation_to_subject: Relationship between reference and subject
-    - subject_occupation: Current occupation of the subject
-    
-    TASK 2: Score the extracted information against this ground truth:
-    {ground_truth_str}
-    
-    Scoring Guidelines:
-    1. Names: 
-       - 1.0 if exactly same
-       - 0.8 if very similar (e.g., Matheo vs Matthew, CJ vs CJ Matthew)
-       - Lower scores for significant differences
-    
-    2. Addresses: 
-       - 1.0 if exact match
-       - 0.8 if key location/area matches (e.g., same city/neighborhood)
-       - 0.6 if partial match (e.g., just the city or part of address)
-       - Lower scores for completely different locations
-    
-    3. Relation: 
-       - 1.0 if exact semantic match
-       - 0.8 if similar meaning (e.g., "colleague" vs "work together")
-       - Lower scores for significantly different meanings
-    
-    4. Occupation: 
-       - 1.0 if exact match
-       - 0.8 if semantically equivalent (e.g., "no job" vs "unemployed")
-       - Lower scores for significantly different descriptions
-    
     Transcript:
     {transcript}
-    
-    IMPORTANT: Respond with a JSON object that EXACTLY matches this structure:
+
+    IMPORTANT: Respond EXACTLY in this JSON format:
     {{
-        "extracted_result": {{
-            "reference_name": "...",
-            "subject_name": "...",
-            "subject_address": "...",
-            "relation_to_subject": "...",
-            "subject_occupation": "..."
-        }},
-        "scoring_results": {{
-            "transcript": "Scoring the extraction result against the ground truth.",
-            "field_by_field_scores": {{
-                "reference_name": 0.0,
-                "subject_name": 0.0,
-                "subject_address": 0.0,
-                "relation_to_subject": 0.0,
-                "subject_occupation": 0.0
-            }},
-            "overall_score": 0.0,
-            "explanation": {{
-                "reference_name": "...",
-                "subject_name": "...",
-                "subject_address": "...",
-                "relation_to_subject": "...",
-                "subject_occupation": "..."
-            }}
-        }}
+        "reference_name": "...",
+        "subject_name": "...",
+        "subject_address": "...",
+        "relation_to_subject": "...",
+        "subject_occupation": "..."
     }}
-    
-    The overall_score should be the average of all field scores.
-    
     """
 
     # Request payload
     payload = {
         "model": "google/gemini-2.0-flash-lite-001",
         "messages": [
-            {"role": "user", "content": combined_prompt}
+            {"role": "user", "content": extraction_prompt}
         ]
     }
 
@@ -183,72 +138,151 @@ def extract_and_score_transcript(transcript, ground_truth):
             content = re.sub(r'^```json\s*|\s*```$', '', content, flags=re.MULTILINE).strip()
 
             # Parse the JSON
-            analysis_results = json.loads(content)
+            parsed_result = json.loads(content)
 
-            # Calculate overall score if not provided
-            if "overall_score" not in analysis_results.get("scoring_results", {}):
-                field_scores = analysis_results.get("scoring_results", {}).get("field_by_field_scores", {})
-                if field_scores:
-                    overall_score = sum(field_scores.values()) / len(field_scores)
-                    analysis_results["scoring_results"]["overall_score"] = round(overall_score, 1)
-
-            # Determine status based on overall score
-            overall_score = analysis_results.get("scoring_results", {}).get("overall_score", 0)
-            status = "accept" if overall_score >= 0.7 else "reject"
-
-            # Create the final result structure
-            final_result = {
-                "transcript": structured_transcript,
-                "extracted_result": analysis_results.get("extracted_result", {}),
-                "scoring_results": analysis_results.get("scoring_results", {
-                    "transcript": "Scoring the extraction result against the ground truth.",
-                    "field_by_field_scores": {},
-                    "overall_score": 0,
-                    "explanation": {}
-                }),
-                "status": status
-            }
-
-            return final_result
-
+            return parsed_result
         except json.JSONDecodeError as e:
-            print(f"Error parsing result: {e}")
+            print(f"Error parsing extraction result: {e}")
             print(f"Raw content: {content}")
+            return {}
         except Exception as e:
             print(f"Unexpected error: {e}")
+            return {}
     else:
         print(f"Error: API request failed with status code {response.status_code}")
+        return {}
 
-    # Return empty result with the correct structure if something fails
-    return {
-        "transcript": structured_transcript,
-        "extracted_result": {
-            "reference_name": "",
-            "subject_name": "",
-            "subject_address": "",
-            "relation_to_subject": "",
-            "subject_occupation": ""
+def score_extraction_with_llm(result, ground_truth):
+    """
+    Use the LLM to score the extracted information against ground truth
+
+    Args:
+        result (dict/str): The extracted information (JSON or string)
+        ground_truth (dict): The ground truth information
+
+    Returns:
+        dict: Scoring results with field-by-field and overall scores
+    """
+    # Initialize client with OpenRouter API
+    client = OpenAI(
+        base_url="https://openrouter.ai/api/v1",
+
+        api_key=os.environ.get("OPENROUTER_API_KEY", "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"),
+
+    )
+
+    # Convert result to string if it's a dict
+    if isinstance(result, dict):
+        result_str = json.dumps(result)
+    else:
+        result_str = result
+
+    # Convert ground truth to string
+    ground_truth_str = json.dumps(ground_truth)
+
+    # Create the scoring prompt
+    scoring_prompt = f"""
+    I need you to carefully score the extraction result against the ground truth.
+    
+    RESULT:
+    {result_str}
+    
+    GROUND TRUTH:
+    {ground_truth_str}
+    
+    Scoring Guidelines:
+    1. Names: 
+       - 1.0 if exactly same
+       - 0.8 if very similar (e.g., Matheo vs Matthew)
+       - Lower scores for significant differences
+    
+    2. Addresses: 
+       - 1.0 if exact match
+       - 0.8 if key location/area matches (e.g., same city/neighborhood)
+       - 0.6 if partial match (e.g., just the city or part of address)
+       - Lower scores for completely different locations
+    
+    3. Relation: 
+       - 1.0 if exact semantic match
+       - 0.8 if similar meaning (e.g., "colleague" vs "work together")
+       - Lower scores for significantly different meanings
+    
+    4. Occupation: 
+       - 1.0 if exact match
+       - 0.8 if semantically equivalent (e.g., "no job" vs "unemployed")
+       - Lower scores for significantly different descriptions
+    
+    Return a JSON with these fields:
+    1. transcript
+    2. field_by_field_scores: A dictionary with scores for each field (reference_name, subject_name, subject_address, relation_to_subject, subject_occupation)
+    2. overall_score: Average of all field scores
+    3. explanation: A dictionary with detailed explanations for each field score
+    
+    
+    IMPORTANT: Return ONLY a valid JSON object with no markdown formatting, code blocks, or additional text.
+    """
+
+    # Create request with the scoring prompt
+    completion = client.chat.completions.create(
+        extra_headers={
+            "HTTP-Referer": "https://your-app-domain.com",
+            "X-Title": "Extraction Scoring App",
         },
-        "scoring_results": {
-            "transcript": "Scoring the extraction result against the ground truth.",
-            "field_by_field_scores": {
-                "reference_name": 0.0,
-                "subject_name": 0.0,
-                "subject_address": 0.0,
-                "relation_to_subject": 0.0,
-                "subject_occupation": 0.0
-            },
-            "overall_score": 0.0,
-            "explanation": {
-                "reference_name": "",
-                "subject_name": "",
-                "subject_address": "",
-                "relation_to_subject": "",
-                "subject_occupation": ""
+        model="google/gemini-2.0-flash-lite-001",  # Or any other suitable model
+        messages=[
+            {
+                "role": "user",
+                "content": scoring_prompt
             }
-        },
-        "status": "reject"
-    }
+        ]
+    )
+
+    # Get the response
+    score_result = completion.choices[0].message.content
+
+    # Clean the response - remove markdown code blocks if present
+    # This pattern matches ```json and ``` at the beginning and end
+    # cleaned_result = re.sub(r'^```json\s*|\s*```$', '', score_result, flags=re.MULTILINE)
+    cleaned_result = re.sub(r'^```json\s*|\s*```$', '', score_result, flags=re.MULTILINE)
+
+    # Try to parse the JSON response
+    try:
+        score_data = json.loads(cleaned_result)
+
+        # Ensure the response has the correct structure
+        if "field_scores" in score_data and not "field_by_field_scores" in score_data:
+            score_data["field_by_field_scores"] = score_data.pop("field_scores")
+
+        # Ensure explanation is a dictionary if it's a string
+        if "explanation" in score_data and isinstance(score_data["explanation"], str):
+            # Create a dictionary with the same explanation for each field
+            explanation_text = score_data["explanation"]
+            score_data["explanation"] = {
+                "reference_name": explanation_text,
+                "subject_name": explanation_text,
+                "subject_address": explanation_text,
+                "relation_to_subject": explanation_text,
+                "subject_occupation": explanation_text
+            }
+
+        return score_data
+    except json.JSONDecodeError:
+        # If still failing, try a more aggressive cleanup
+        # Extract anything that looks like JSON - content between { and }
+        json_match = re.search(r'({.*})', cleaned_result, re.DOTALL)
+        if json_match:
+            try:
+                score_data = json.loads(json_match.group(1))
+                return score_data
+            except json.JSONDecodeError:
+                pass
+
+        # If all parsing attempts fail
+        return {
+            "error": "Failed to parse LLM response",
+            "raw_response": score_result,
+            "cleaned_response": cleaned_result
+        }
 
 def process_transcript(transcript, ground_truth):
     """
@@ -261,14 +295,32 @@ def process_transcript(transcript, ground_truth):
     Returns:
         dict: Comprehensive results including extraction and scoring
     """
-    # Use the combined function to extract and score
-    return extract_and_score_transcript(transcript, ground_truth)
+    # Parse transcript into structured format
+    structured_transcript = parse_transcript_to_structured_format(transcript)
+
+    # Extract information from transcript
+    extracted_result = extract_transcript_information(transcript)
+
+    # Score the extracted information
+    scoring_results = score_extraction_with_llm(extracted_result, ground_truth)
+
+    # Determine status based on overall score
+    overall_score = scoring_results.get("overall_score", 0)
+    status = "accept" if overall_score >= 0.7 else "reject"
+
+    # Combine results into the required format
+    return {
+        "transcript": structured_transcript,
+        "extracted_result": extracted_result,
+        "scoring_results": scoring_results,
+        "status": status
+    }
 
 
 # Example usage
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-
+        print("Usage: python llmextractor.py <UUID>")
         sys.exit(1)
 
     uuid = sys.argv[1]  # UUID received from API
@@ -277,10 +329,26 @@ if __name__ == "__main__":
     # Call the transcription function from transcript.py
     transcript = Transcription.get_transcripts(audio_path)
 
+
+
+    # print("\nFinal Transcription Output:\n")
+    # print(type(transcript))
+    # print(transcript)
+
+    # Print final output (or return to API)
+
+    #print(transcript)
+
+    # Sample transcript
+    # transcript = """
+    # 2.191  2.574 SPEAKER_01                                                        Hello? 4.213  4.597 SPEAKER_00                                                        Hello? 5.014  7.257 SPEAKER_00                                             Hi, is it Ashish? 7.257  7.581 SPEAKER_01                                                        Hello? 8.499 10.182 SPEAKER_00                                           Sorry, is it Arjun?10.181 11.864 SPEAKER_01                                                          Yes.11.863 14.066 SPEAKER_00                                Hi, Arjun, Shilpa from Car 24.15.307 15.730 SPEAKER_01                                                         Okay.16.769 18.611 SPEAKER_00                               It's a verification called C.Q.18.611 20.174 SPEAKER_00                                Matheo has given your address.21.415 21.897 SPEAKER_01                                                     Ah, okay.23.217 26.461 SPEAKER_00 Actually, he has taken a loan from us, so that is the reason.26.481 27.223 SPEAKER_00                                          How do you know him?28.944 29.806 SPEAKER_01                                          Ah, I'm a colleague.31.334 33.698 SPEAKER_00              Okay, is he doing a job or a business right now?35.100 35.703 SPEAKER_01                                                   No, no job.36.883 38.006 SPEAKER_00                                      And where does he stays?38.005 40.229 SPEAKER_00                                                  His address?40.289 43.674 SPEAKER_01                          He is now in Pattimathur, Ernakulam.45.217 46.420 SPEAKER_00                                 Sorry, sorry, can you repeat?47.080 48.483 SPEAKER_00                                       Pattimathur, Ernakulam.49.224 50.146 SPEAKER_00                                              Okay, thank you.51.167 51.267 SPEAKER_00                                                         Okay.
+    # """
+
+
     # Ground truth
     ground_truth = {
         "reference_name": "Arjun",
-        "subject_name": " CJ Matthew",
+        "subject_name": "Matthew",
         "subject_address": "45,sunshine blaze apartments, pattimathur ,ernakulam",
         "relation_to_subject": "work together",
         "subject_occupation": "unemployed"
