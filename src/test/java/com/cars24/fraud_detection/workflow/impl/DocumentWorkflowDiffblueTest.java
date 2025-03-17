@@ -12,7 +12,7 @@ import static org.mockito.Mockito.when;
 import com.cars24.fraud_detection.data.request.AudioRequest;
 import com.cars24.fraud_detection.data.request.DocumentRequest;
 import com.cars24.fraud_detection.exception.DocumentProcessingException;
-import com.cars24.fraud_detection.utils.PythonExecutor;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
