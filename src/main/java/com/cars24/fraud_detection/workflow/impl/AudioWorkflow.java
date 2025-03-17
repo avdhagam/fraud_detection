@@ -5,9 +5,7 @@ import com.cars24.fraud_detection.data.request.DocumentRequest;
 import com.cars24.fraud_detection.data.response.AudioResponse;
 import com.cars24.fraud_detection.data.response.DocumentResponse;
 import com.cars24.fraud_detection.utils.PythonExecutor;
-import com.cars24.fraud_detection.utils.PythonExecutor2;
 import com.cars24.fraud_detection.workflow.WorkflowInitiator;
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,65 +40,80 @@ public class AudioWorkflow implements WorkflowInitiator {
 
         Object obj = llmExtractionResult.get("output");
 
-        logger.debug("Raw output from Python script: {}", obj);
-
-
-
 
         ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
         JsonNode rootNode = objectMapper.readTree(obj.toString());
 
-            // Extract values from extracted_result
-            JsonNode extractedResult = rootNode.get("extracted_result");
-            String referenceName = extractedResult.get("reference_name").asText();
-            String subjectName = extractedResult.get("subject_name").asText();
-            String subjectAddress = extractedResult.get("subject_address").asText();
-            String relationToSubject = extractedResult.get("relation_to_subject").asText();
-            String subjectOccupation = extractedResult.get("subject_occupation").asText();
+        // Extract values from extracted_result
+        JsonNode extractedResult = rootNode.get("extracted_result");
+        String referenceName = extractedResult.get("reference_name").asText();
+        String subjectName = extractedResult.get("subject_name").asText();
+        String subjectAddress = extractedResult.get("subject_address").asText();
+        String relationToSubject = extractedResult.get("relation_to_subject").asText();
+        String subjectOccupation = extractedResult.get("subject_occupation").asText();
 
-            // Extract scoring result
-            double overallScore = rootNode.get("scoring_results").get("overall_score").asDouble();
+        String status;
 
-            // Extract transcript
-            List<String> transcriptList = new ArrayList<>();
-            JsonNode transcriptNode = rootNode.path("transcript");
-            for (JsonNode entry : transcriptNode) {
-                transcriptList.add(entry.path("text").asText());
-            }
-
-            // Extract explanations
-            JsonNode explanationNode = rootNode.path("scoring_results").path("explanation");
-            List<String> explanations = new ArrayList<>();
-            Iterator<Map.Entry<String, JsonNode>> fields = explanationNode.fields();
-            while (fields.hasNext()) {
-                Map.Entry<String, JsonNode> field = fields.next();
-                explanations.add(field.getKey() + ": " + field.getValue().asText());
-            }
-
-            JsonNode fieldScoresNode = rootNode.path("scoring_results").path("field_by_field_scores");
-            Map<String, Double> fieldScores = new HashMap<>();
-            Iterator<Map.Entry<String, JsonNode>> scoreFields = fieldScoresNode.fields();
-            while (scoreFields.hasNext()) {
-                Map.Entry<String, JsonNode> field = scoreFields.next();
-                fieldScores.put(field.getKey(), field.getValue().asDouble());
-            }
+        // Extract scoring result
+        double overallScore = rootNode.get("scoring_results").get("overall_score").asDouble();
 
 
-            // Store extracted values (Example: storing in a map)
-            Map<String, Object> extractedData = new HashMap<>();
-            extractedData.put("reference_name", referenceName);
-            extractedData.put("subject_name", subjectName);
-            extractedData.put("subject_address", subjectAddress);
-            extractedData.put("relation_to_subject", relationToSubject);
-            extractedData.put("subject_occupation", subjectOccupation);
-            extractedData.put("overall_score", overallScore);
-            extractedData.put("transcript", transcriptList);
-            extractedData.put("explanation", explanations);
-            extractedData.put("field_by_field_scores", fieldScores);
+        if (rootNode.has("status")) {
 
-            // Log extracted values
-            log.info("Extracted Data: {}", extractedData);
+            // If status field exists in Python output, use it
+
+            status = rootNode.get("status").asText();
+
+        } else {
+
+            // Calculate status based on score if not provided
+
+            status = overallScore >= 0.7 ? "accept" : "reject";
+
+        }
+
+
+        // Extract transcript
+        List<String> transcriptList = new ArrayList<>();
+        JsonNode transcriptNode = rootNode.path("transcript");
+        for (JsonNode entry : transcriptNode) {
+            transcriptList.add(entry.path("text").asText());
+        }
+
+        // Extract explanations
+        JsonNode explanationNode = rootNode.path("scoring_results").path("explanation");
+        List<String> explanations = new ArrayList<>();
+        Iterator<Map.Entry<String, JsonNode>> fields = explanationNode.fields();
+        while (fields.hasNext()) {
+            Map.Entry<String, JsonNode> field = fields.next();
+            explanations.add(field.getKey() + ": " + field.getValue().asText());
+        }
+
+        JsonNode fieldScoresNode = rootNode.path("scoring_results").path("field_by_field_scores");
+        Map<String, Double> fieldScores = new HashMap<>();
+        Iterator<Map.Entry<String, JsonNode>> scoreFields = fieldScoresNode.fields();
+        while (scoreFields.hasNext()) {
+            Map.Entry<String, JsonNode> field = scoreFields.next();
+            fieldScores.put(field.getKey(), field.getValue().asDouble());
+        }
+
+
+        // Store extracted values (Example: storing in a map)
+        Map<String, Object> extractedData = new HashMap<>();
+        extractedData.put("reference_name", referenceName);
+        extractedData.put("subject_name", subjectName);
+        extractedData.put("subject_address", subjectAddress);
+        extractedData.put("relation_to_subject", relationToSubject);
+        extractedData.put("subject_occupation", subjectOccupation);
+        extractedData.put("overall_score", overallScore);
+        extractedData.put("transcript", transcriptList);
+        extractedData.put("explanation", explanations);
+        extractedData.put("field_by_field_scores", fieldScores);
+
+        extractedData.put("status",status);
+
+        // Log extracted values
+        log.info("Extracted Data: {}", extractedData);
 
 
 
@@ -114,6 +127,11 @@ public class AudioWorkflow implements WorkflowInitiator {
         AudioResponse response = new AudioResponse();
         response.setUuid(request.getUuid());
         response.setLlmExtraction(llmExtractionResult);
+
+        response.setUserReportId(request.getUserReportId());
+
+        response.setStatus((String) extractedData.get("status"));
+
         response.setTranscript((List<String>) extractedData.get("transcript"));
         response.setReferenceName((String) extractedData.get("reference_name"));
         response.setSubjectName((String) extractedData.get("subject_name"));
@@ -139,13 +157,15 @@ public class AudioWorkflow implements WorkflowInitiator {
         response.setAudioAnalysis(audioAnalysisResult);
         logger.info("Audio processing completed for requestId: {}", request.getUuid());
 
+        //response.setStatus(request.getStatus());
+
         return response;
     }
 
     private Map<String, Object> runPythonScript(String scriptPath, String uuid) {
         logger.debug("Running Python script: {} with audio file: {}", scriptPath, uuid);
 
-        PythonExecutor2 executor = new PythonExecutor2();
+        PythonExecutor executor = new PythonExecutor();
         Map<String, Object> result = executor.runPythonScript(scriptPath, uuid);
 
         if (result == null || result.isEmpty()) {

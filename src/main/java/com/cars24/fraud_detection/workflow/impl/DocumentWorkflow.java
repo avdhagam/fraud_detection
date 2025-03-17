@@ -8,6 +8,7 @@ import com.cars24.fraud_detection.exception.DocumentProcessingException;
 import com.cars24.fraud_detection.utils.PythonExecutor;
 import com.cars24.fraud_detection.workflow.WorkflowInitiator;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -91,7 +92,26 @@ public class DocumentWorkflow implements WorkflowInitiator {
             log.info("OCR Extraction Completed: {}", ocrResult);
 
             // Extract the OCR JSON path from the OCR result
-            String ocrJsonPath = (String) ocrResult.get("ocr_json_path"); // Get value of the string
+
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            Object outputObj = ocrResult.get("output");
+            Map<String, Object> outputMap;
+
+// Check if 'output' is a string and convert it to a Map
+            if (outputObj instanceof String) {
+                outputMap = objectMapper.readValue((String) outputObj, Map.class);
+            } else if (outputObj instanceof Map) {
+                outputMap = (Map<String, Object>) outputObj;
+            } else {
+                throw new DocumentProcessingException("Unexpected output format in OCR result.");
+            }
+
+            String ocrJsonPath = (String) outputMap.get("ocr_json_path");
+
+
+
+            //String ocrJsonPath = (String) ocrResult.get("ocr_json_path"); // Get value of the string
             if (ocrJsonPath == null || ocrJsonPath.isEmpty()) {
                 throw new DocumentProcessingException("OCR JSON path not found in OCR result.");
             }
@@ -141,6 +161,7 @@ public class DocumentWorkflow implements WorkflowInitiator {
             moveToArchive(finalDocumentPath);
 
             return new DocumentResponse(
+                    request.getUserReportId(),
                     UUID.randomUUID().toString(),
                     true,
                     fraudRiskScore,
@@ -152,6 +173,7 @@ public class DocumentWorkflow implements WorkflowInitiator {
                     qualityResult,
                     forgeryResult,
                     validationResult
+
             );
 
         } catch (Exception e) {

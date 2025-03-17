@@ -1,16 +1,19 @@
 package com.cars24.fraud_detection.controller;
 
+import com.cars24.fraud_detection.data.entity.AudioEntity;
 import com.cars24.fraud_detection.data.request.AudioRequest;
 import com.cars24.fraud_detection.data.response.AudioResponse;
 import com.cars24.fraud_detection.exception.AudioProcessingException;
 import com.cars24.fraud_detection.service.AudioService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import java.util.logging.Logger;
 
 @Slf4j
@@ -40,4 +43,22 @@ public class AudioController {
         AudioResponse response = audioService.getAudioResults(id);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/upload-audio")
+    public ResponseEntity<AudioResponse> uploadAudio(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("userReportId") String userReportId) throws IOException, AudioProcessingException {
+
+        logger.info("Received audio file upload request for user");
+
+        AudioRequest audioRequest = new AudioRequest();
+        audioRequest.setAudioFile(file);
+        audioRequest.setUserReportId(userReportId); // Ensure `AudioRequest` has this field
+
+        AudioResponse response = audioService.processAudioRequest(audioRequest);
+
+        return ResponseEntity.ok(response);
+    }
+
+
 }

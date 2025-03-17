@@ -16,6 +16,9 @@ public class DocumentDaoImpl implements DocumentDao {
 
     @Override
     public void saveDocument(DocumentEntity document) {
+        if (document.getUserReportId()== null) {
+            throw new IllegalArgumentException("User ID cannot be null when saving document!");
+        }
         documentRepo.save(document);
     }
 

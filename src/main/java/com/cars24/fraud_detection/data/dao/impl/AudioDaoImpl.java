@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -18,6 +19,9 @@ public class AudioDaoImpl implements AudioDao {
 
     @Override
     public void saveAudio(AudioEntity audio) {
+        if (audio.getUserReportId() == null) {
+            throw new IllegalArgumentException("User ID cannot be null when saving audio!");
+        }
         audioRepo.save(audio);
     }
 
@@ -25,6 +29,12 @@ public class AudioDaoImpl implements AudioDao {
     public Optional<AudioEntity> getAudioById(String audioId) {
         log.info("Fetching AudioEntity with ID: " + audioId);
         return audioRepo.findById(audioId);
+    }
+
+
+    @Override
+    public List<AudioEntity> getAudiosByUserId(String userReportId) {
+        return audioRepo.findByUserReportId(userReportId);
     }
 
 }

@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -32,7 +33,7 @@ public class AudioServiceImpl implements AudioService {
 
     @Override
     public AudioResponse processAudioRequest(AudioRequest audioRequest) throws JsonProcessingException, AudioProcessingException {
-        logger.info("Received AudioRequest object: " + audioRequest);
+        logger.info("Received AudioRequest object - 1: " + audioRequest);
         MultipartFile file = audioRequest.getAudioFile();
 
         // Save the audio file using the new logic
@@ -51,6 +52,11 @@ public class AudioServiceImpl implements AudioService {
 
         AudioEntity audioEntity = new AudioEntity();
         audioEntity.setId(audioResponse.getUuid());
+
+        audioEntity.setUserReportId(audioResponse.getUserReportId());
+
+        audioEntity.setLlmExtraction(audioResponse.getLlmExtraction());
+
         audioEntity.setTranscript(audioResponse.getTranscript());
         audioEntity.setReferenceName(audioResponse.getReferenceName());
         audioEntity.setSubjectName(audioResponse.getSubjectName());
@@ -61,6 +67,7 @@ public class AudioServiceImpl implements AudioService {
         audioEntity.setExplanation(audioResponse.getExplanation());
         audioEntity.setFieldByFieldScores(audioResponse.getFieldByFieldScores());
         audioEntity.setAudioAnalysis(audioResponse.getAudioAnalysis());
+        audioEntity.setStatus(audioResponse.getStatus());
         logger.info("Created AudioEntity object: " + audioEntity);
 
         audioDao.saveAudio(audioEntity);
@@ -72,6 +79,11 @@ public class AudioServiceImpl implements AudioService {
     private AudioResponse mapToResponse(AudioEntity entity) {
         AudioResponse response = new AudioResponse();
         response.setUuid(entity.getId());
+
+        response.setUserReportId(entity.getUserReportId());
+
+        response.setLlmExtraction(entity.getLlmExtraction());
+
         response.setTranscript(entity.getTranscript());
         response.setReferenceName(entity.getReferenceName());
         response.setSubjectName(entity.getSubjectName());
@@ -82,6 +94,7 @@ public class AudioServiceImpl implements AudioService {
         response.setExplanation(entity.getExplanation());
         response.setFieldByFieldScores(entity.getFieldByFieldScores());
         response.setAudioAnalysis(entity.getAudioAnalysis());
+        response.setStatus(entity.getStatus());
         return response;
     }
     @Override
@@ -131,4 +144,13 @@ public class AudioServiceImpl implements AudioService {
             throw new AudioProcessingException("Failed to store audio file: " + e.getMessage());
         }
     }
+
+
+    @Override
+    public List<AudioEntity> getAudiosByUserId(String userId) {
+
+        return audioDao.getAudiosByUserId(userId);
+    }
 }
+
+

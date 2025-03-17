@@ -16,7 +16,10 @@ public class DocumentEntity {
 
     @Id
     private String id;
-    private String userId;
+
+    private String userReportId;
+
+    private String documentId;
     private String fileName;
     private String filePath;
     private String status;  // PROCESSING, COMPLETED, FAILED
@@ -35,6 +38,7 @@ public class DocumentEntity {
 
     public DocumentResponse toResponse() {
         return new DocumentResponse(
+                userReportId,
                 id,
                 "COMPLETED".equals(status),
                 finalRiskScore,
@@ -48,4 +52,25 @@ public class DocumentEntity {
                 validationResults
         );
     }
+
+    public DocumentEntity(String userReportId, String documentId, String fileName, String filePath, String status, String remarks,
+                          double finalRiskScore, String riskLevel, String decision, String nextSteps,
+                          Map<String, Object> ocrResults, Map<String, Object> qualityResults,
+                          Map<String, Object> forgeryResults, Map<String, Object> validationResults) {
+        this.userReportId = userReportId;
+        this.documentId = documentId;
+        this.fileName = fileName;
+        this.filePath = filePath;
+        this.status = status;
+        this.remarks = remarks;
+        this.finalRiskScore = finalRiskScore;
+        this.riskLevel = riskLevel;
+        this.decision = decision;
+        this.nextSteps = nextSteps;
+        this.ocrResults = ocrResults;
+        this.qualityResults = qualityResults;
+        this.forgeryResults = forgeryResults;
+        this.validationResults = validationResults;
+    }
+
 }

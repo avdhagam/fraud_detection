@@ -3,7 +3,7 @@ import requests
 import json
 import numpy as np
 import librosa
-
+# import logging
 import tempfile
 from pydub import AudioSegment
 from sklearn.cluster import KMeans, SpectralClustering, AgglomerativeClustering, DBSCAN
@@ -22,7 +22,7 @@ def convert_mp3_to_wav(mp3_path):
     temp_wav = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
     audio = AudioSegment.from_mp3(mp3_path)
     audio.export(temp_wav.name, format="wav")
-    #logging.info(f"Converted MP3 to temporary WAV: {temp_wav.name}")
+    # logging.info(f"Converted MP3 to temporary WAV: {temp_wav.name}")
     return temp_wav
 
 def transcribe_audio_with_timestamps(wav_file):
@@ -30,33 +30,14 @@ def transcribe_audio_with_timestamps(wav_file):
     url = "https://api.deepgram.com/v1/listen?model=whisper-large&language=en-IN&punctuate=true&smart_format=true&utterances=true&words=true&diarize=true"
     headers = {"Authorization": f"Token {DEEPGRAM_API_KEY}", "Content-Type": "audio/wav"}
 
-    # with open(wav_file.name, "rb") as audio_file:
-    #     response = requests.post(url, headers=headers, data=audio_file)
-    #
-    # if response.status_code == 200:
-    #     return response.json()
-    # else:
-    #     logging.error("Failed to process audio. Deepgram API Error.")
-    #     return None
-
     with open(wav_file.name, "rb") as audio_file:
-        try:
-            response = requests.post(url, headers=headers, data=audio_file)
-            response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
+        response = requests.post(url, headers=headers, data=audio_file)
 
-            try:
-                json_data = response.json()
-                return json_data
-            except json.JSONDecodeError as e:
-                # logging.error(f"JSON Decode Error: {e}")
-                # logging.error(f"Response Content: {response.text}")  # LOG THE RESPONSE CONTENT!
-                return None  # or raise the exception if you want the program to halt
-        except requests.exceptions.RequestException as e:
-            # logging.error(f"Request Error: {e}")
-            return None
-        except Exception as e:
-            # logging.error(f"An unexpected error occurred: {e}")
-            return None
+    if response.status_code == 200:
+        return response.json()
+    else:
+        # logging.error("Failed to process audio. Deepgram API Error.")
+        return None
 
 def extract_features(audio_path, start, end, sr=16000):
     """Extracts audio features for speaker clustering."""
@@ -113,12 +94,49 @@ def cluster_speakers(embeddings, num_speakers):
 
 def format_transcription_output(utterances, speaker_labels):
     """Formats transcription output in a structured string format."""
-    output = '"""\n    start   end    speaker                                                              utterance\n\n'
+    output = "    start   end    speaker                                                              utterance\n\n"
     for idx, utterance in enumerate(utterances):
         speaker = f"SPEAKER_{speaker_labels[idx % len(speaker_labels)]:02d}"
         output += f"    {utterance['start']:.3f}  {utterance['end']:.3f} {speaker:<70}{utterance['transcript']}\n"
-    output+='"""'
     return output
+
+# Main execution
+# def get_transcripts(mp3_path):
+#     temp_wav = convert_mp3_to_wav(mp3_path)
+#
+#     try:
+#         speaker_transcription_result = transcribe_audio_with_timestamps(temp_wav)
+#         if speaker_transcription_result:
+#             utterances = speaker_transcription_result.get("results", {}).get("utterances", [])
+#
+#             if not utterances:
+#                 logging.info("No utterances found.")
+#             else:
+#                 embeddings = [extract_features(temp_wav.name, utt['start'], utt['end']) for utt in utterances if utt['end'] - utt['start'] > 0.5]
+#                 embeddings = [emb for emb in embeddings if emb is not None]
+#
+#                 if embeddings:
+#                     num_speakers = estimate_speaker_count(np.array(embeddings))
+#
+#                     speaker_labels = cluster_speakers(np.array(embeddings), num_speakers)
+#                     speaker_mapping = {spk: f"Speaker {idx+1}" for idx, spk in enumerate(set(speaker_labels))}
+#
+#                     logging.info(f"Detected {num_speakers} speakers.")
+#
+#                     formatted_output = format_transcription_output(utterances, speaker_labels)
+#                     logging.info("\n" + formatted_output)
+#                 else:
+#                     logging.warning("No embeddings found for clustering.")
+#         else:
+#             logging.error("Failed to process audio.")
+#     finally:
+#         temp_wav.close()
+#         logging.info(f"Deleting temporary file: {temp_wav.name}")
+
+# Run the script
+# if __name__ == "__main__":
+#     mp3_input_path = "C:\\Users\\dayad\\Downloads\\cars24\\fraud_detection\\src\\main\\resources\\audio_storage\\cc74d250-4403-496c-9c88-4d3618db56e1.mp3"
+#     main(mp3_input_path)
 
 def get_transcripts(mp3_path):
     temp_wav = convert_mp3_to_wav(mp3_path)

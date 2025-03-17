@@ -450,3 +450,185 @@
   }
 }
 ```
+2025-03-16 13:16:13,058 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-03-16 13:16:13,062 - ERROR - Quality assessment error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}
+2025-03-16 13:23:15,002 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-03-16 13:23:15,006 - ERROR - Quality assessment error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}
+2025-03-16 13:40:10,490 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-03-16 13:40:10,495 - ERROR - Quality assessment error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}
+2025-03-16 14:29:48,947 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-03-16 14:29:48,950 - ERROR - Quality assessment error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}
+2025-03-16 20:21:36,808 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-03-16 20:21:43,647 - INFO - Quality API Raw Response:  ```json
+{
+  "readability_score": 0.9,
+  "completeness_score": 1,
+  "blur_score": 0.8,
+  "lighting_score": 0.9,
+  "color_accuracy_score": 1,
+  "alignment_score": 1,
+  "noise_artifacts_score": 0.9,
+  "overall_quality_score": 0.9,
+  "final_decision": "Acceptable",
+  "insights": {
+    "readability": "Text is generally clear and legible, but some characters appear slightly distorted.",
+    "completeness": "All document sections are fully visible.",
+    "blur": "Some areas, particularly the edges, exhibit slight blurriness.",
+    "lighting": "Overall lighting is adequate, but there are some shadows and uneven brightness in certain areas.",
+    "color_accuracy": "Colors appear natural and accurately represented.",
+    "alignment": "The document is well-aligned, with no significant tilt or misalignment.",
+    "noise_artifacts": "There are a few unwanted marks and background noise, but they do not significantly affect readability."
+  },
+  "recommendations": {
+    "readability": "Use a higher resolution scan to improve character clarity.",
+    "blur": "Rescan the document to reduce blurriness.",
+    "lighting": "Adjust lighting conditions to minimize shadows and uneven brightness.",
+    "noise_artifacts": "Remove unwanted marks and background noise using image editing software."
+  }
+}
+```
+2025-03-16 21:11:52,808 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-03-16 21:11:59,551 - INFO - Quality API Raw Response:  ```json
+{
+  "readability_score": 0.9,
+  "completeness_score": 1,
+  "blur_score": 0.8,
+  "lighting_score": 0.9,
+  "color_accuracy_score": 1,
+  "alignment_score": 1,
+  "noise_artifacts_score": 0.9,
+  "overall_quality_score": 0.9,
+  "final_decision": "Acceptable",
+  "insights": {
+    "readability": "Text is generally clear and legible, but some characters appear slightly distorted.",
+    "completeness": "All document sections are fully visible.",
+    "blur": "Some areas, particularly the edges, exhibit slight blurriness.",
+    "lighting": "Overall lighting is adequate, but there are some shadows and uneven brightness in certain areas.",
+    "color_accuracy": "Colors appear natural and accurately represented.",
+    "alignment": "The document is well-aligned, with no significant tilt or misalignment.",
+    "noise_artifacts": "There are a few unwanted marks and background noise, but they do not significantly affect readability."
+  },
+  "recommendations": {
+    "readability": "Use a higher resolution scan to improve character clarity.",
+    "blur": "Rescan the document to reduce blurriness.",
+    "lighting": "Adjust lighting conditions to minimize shadows and uneven brightness.",
+    "noise_artifacts": "Remove unwanted marks and background noise using image editing software."
+  }
+}
+```
+2025-03-16 21:27:18,830 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-03-16 21:27:25,638 - INFO - Quality API Raw Response:  ```json
+{
+  "readability_score": 0.9,
+  "completeness_score": 1,
+  "blur_score": 0.8,
+  "lighting_score": 0.9,
+  "color_accuracy_score": 1,
+  "alignment_score": 1,
+  "noise_artifacts_score": 0.9,
+  "overall_quality_score": 0.9,
+  "final_decision": "Acceptable",
+  "insights": {
+    "readability": "Text is generally clear and legible, but some characters appear slightly distorted.",
+    "completeness": "All document sections are fully visible.",
+    "blur": "Some areas, particularly the edges, exhibit slight blurriness.",
+    "lighting": "Overall lighting is adequate, but there are some shadows and uneven brightness in certain areas.",
+    "color_accuracy": "Colors appear natural and accurately represented.",
+    "alignment": "The document is well-aligned, with no significant tilt or misalignment.",
+    "noise_artifacts": "There are a few unwanted marks and background noise, but they do not significantly affect readability."
+  },
+  "recommendations": {
+    "readability": "Use a higher resolution scan to improve character clarity.",
+    "blur": "Rescan the document to reduce blurriness.",
+    "lighting": "Adjust lighting conditions to minimize shadows and uneven brightness.",
+    "noise_artifacts": "Remove unwanted marks and background noise using image editing software."
+  }
+}
+```
+2025-03-16 21:31:53,881 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-03-16 21:31:59,426 - INFO - Quality API Raw Response:  ```json
+{
+  "readability_score": 0.9,
+  "completeness_score": 1,
+  "blur_score": 0.8,
+  "lighting_score": 0.9,
+  "color_accuracy_score": 1,
+  "alignment_score": 1,
+  "noise_artifacts_score": 0.9,
+  "overall_quality_score": 0.9,
+  "final_decision": "Acceptable",
+  "insights": {
+    "readability": "Text is generally clear and legible, but some characters appear slightly distorted.",
+    "completeness": "All document sections are fully visible.",
+    "blur": "Some areas, particularly the edges, exhibit slight blurriness.",
+    "lighting": "Overall lighting is adequate, but there are some shadows and uneven brightness in certain areas.",
+    "color_accuracy": "Colors appear natural and accurately represented.",
+    "alignment": "The document is well-aligned, with no significant tilt or misalignment.",
+    "noise_artifacts": "There are a few unwanted marks and background noise, but they do not significantly affect readability."
+  },
+  "recommendations": {
+    "readability": "Use a higher resolution scan to improve character clarity.",
+    "blur": "Rescan the document to reduce blurriness.",
+    "lighting": "Adjust lighting conditions to minimize shadows and uneven brightness.",
+    "noise_artifacts": "Remove unwanted marks and background noise using image editing software."
+  }
+}
+```
+2025-03-16 21:53:09,461 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-03-16 21:53:16,226 - INFO - Quality API Raw Response:  ```json
+{
+  "readability_score": 0.9,
+  "completeness_score": 1,
+  "blur_score": 0.8,
+  "lighting_score": 0.9,
+  "color_accuracy_score": 1,
+  "alignment_score": 1,
+  "noise_artifacts_score": 0.9,
+  "overall_quality_score": 0.9,
+  "final_decision": "Acceptable",
+  "insights": {
+    "readability": "Text is generally clear and legible, but some characters appear slightly distorted.",
+    "completeness": "All document sections are fully visible.",
+    "blur": "Some areas, particularly the edges, exhibit slight blurriness.",
+    "lighting": "Overall lighting is adequate, but there are some shadows and uneven brightness in certain areas.",
+    "color_accuracy": "Colors appear natural and accurately represented.",
+    "alignment": "The document is well-aligned, with no significant tilt or misalignment.",
+    "noise_artifacts": "There are a few unwanted marks and background noise, but they do not significantly affect readability."
+  },
+  "recommendations": {
+    "readability": "Use a higher resolution scan to improve character clarity.",
+    "blur": "Rescan the document to reduce blurriness.",
+    "lighting": "Adjust lighting conditions to minimize shadows and uneven brightness.",
+    "noise_artifacts": "Remove unwanted marks and background noise using image editing software."
+  }
+}
+```
+2025-03-16 22:00:45,095 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-03-16 22:00:52,183 - INFO - Quality API Raw Response:  ```json
+{
+  "readability_score": 0.9,
+  "completeness_score": 1,
+  "blur_score": 0.8,
+  "lighting_score": 0.9,
+  "color_accuracy_score": 1,
+  "alignment_score": 1,
+  "noise_artifacts_score": 0.9,
+  "overall_quality_score": 0.9,
+  "final_decision": "Acceptable",
+  "insights": {
+    "readability": "Text is generally clear and legible, but some characters appear slightly distorted.",
+    "completeness": "All document sections are fully visible.",
+    "blur": "Some areas, particularly the edges, exhibit slight blurriness.",
+    "lighting": "Overall lighting is adequate, but there are some shadows and uneven brightness in certain areas.",
+    "color_accuracy": "Colors appear natural and accurately represented.",
+    "alignment": "The document is well-aligned, with no significant tilt or misalignment.",
+    "noise_artifacts": "There are a few unwanted marks and background noise, but they do not significantly affect readability."
+  },
+  "recommendations": {
+    "readability": "Use a higher resolution scan to improve character clarity.",
+    "blur": "Rescan the document to reduce blurriness.",
+    "lighting": "Adjust lighting conditions to minimize shadows and uneven brightness.",
+    "noise_artifacts": "Remove unwanted marks and background noise using image editing software."
+  }
+}
+```
