@@ -14,7 +14,7 @@ public class AudioEntity {
 
     @Id
     private String id;
-    private Map<String, Object> llmExtraction;
+    //private Map<String, Object> llmExtraction;
     private List<String> transcript;
     private String referenceName;
     private String subjectName;
@@ -25,8 +25,9 @@ public class AudioEntity {
     private List<String> explanation;
     private Map<String, Double> fieldByFieldScores;
     private Map<String, Object> audioAnalysis;
+    private String status;
 
     public AudioResponse toResponse() {
-        return new AudioResponse(id, transcript, referenceName, subjectName, subjectAddress, relationToSubject, subjectOccupation, overallScore, explanation, fieldByFieldScores);
+        return new AudioResponse(id, transcript, referenceName, subjectName, subjectAddress, relationToSubject, subjectOccupation, overallScore, explanation, fieldByFieldScores,status);
     }
 }

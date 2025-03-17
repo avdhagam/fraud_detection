@@ -7,8 +7,17 @@ import codecs
 import re
 import traceback
 
+""" 
+#if config isnt recognized uncomment this part
+from pathlib import Path
+script_path = Path(__file__).resolve() # finds absolute path of script
+root_dir = script_path.parents[4]  # Calculate root directory by moving up four levels
+sys.path.append(str(root_dir))
+"""
+import config
+
 # Load API Key from environment variable
-GEMINI_API_KEY = "AIzaSyBoCMnuBY55guf4dxKj0cHwQiq4Mfyrn7w"  # Replace with your actual key or better, use environment variables
+GEMINI_API_KEY = config.GEMINI_API_KEY
 GEMINI_OCR_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
 
 # Ensure UTF-8 output encoding

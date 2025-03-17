@@ -13,7 +13,7 @@ import java.util.Map;
 @AllArgsConstructor
 public class AudioResponse {
     private String uuid;
-    private Map<String, Object> llmExtraction;
+    //private Map<String, Object> llmExtraction;
     private Map<String, Object> audioAnalysis;
     private List<String> transcript;
     private String referenceName;
@@ -24,7 +24,8 @@ public class AudioResponse {
     private double overallScore;
     private List<String> explanation;
     private Map<String, Double> fieldByFieldScores;
+    private String status;
 
-    public AudioResponse(String id, List<String> transcript, String referenceName, String subjectName, String subjectAddress, String relationToSubject, String subjectOccupation, double overallScore, List<String> explanation, Map<String, Double> fieldByFieldScores) {
+    public AudioResponse(String id, List<String> transcript, String referenceName, String subjectName, String subjectAddress, String relationToSubject, String subjectOccupation, double overallScore, List<String> explanation, Map<String, Double> fieldByFieldScores,String status) {
     }
 }

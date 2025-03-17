@@ -1,8 +1,45 @@
 import os
+os.environ["OMP_NUM_THREADS"] = "1"
+
 import json
 import re
 import requests
 from openai import OpenAI
+import sys
+from pathlib import Path
+import Transcription # Import transcript.py for processing
+import prompts
+import sys
+
+script_path = Path(__file__).resolve() # finds absolute path of script
+root_dir = script_path.parents[4]  # Calculate root directory by moving up four levels
+sys.path.append(str(root_dir)) # Add the project's root directory to the Python path
+import config
+
+
+# Define base path for stored audio files
+root_path = Path(__file__).resolve().parent.parent  # Moves up two levels
+base_path = root_path / "audio_storage"
+
+# def get_uuid():
+#     if len(sys.argv)>1:
+#         return sys.argv[1]
+#     else:
+#         print("Error: UUID not provided")
+#         sys.exit(1)
+#
+# uuid = get_uuid()
+
+def get_audio_file_path(uuid):
+    """Reconstruct the full path of the audio file using UUID."""
+    file_name = f"{uuid}.mp3"  # Assuming files are stored as UUID.mp3
+    file_path = base_path / file_name
+
+    if not file_path.exists():
+        print(f"Error: File {file_name} not found in {base_path}")
+        sys.exit(1)
+
+    return str(file_path)
 
 def parse_transcript_to_structured_format(transcript_text):
     """
@@ -48,7 +85,10 @@ def extract_transcript_information(transcript):
         dict: Extracted information in dictionary format.
     """
     # OpenRouter API key
-    api_key = os.environ.get("OPENROUTER_API_KEY", "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")
+    api_key = config.OPENROUTER_API_KEY
+    if not api_key:
+        print("Error: OPENROUTER_API_KEY is not set.")
+        sys.exit(1)
 
     # API URL
     url = "https://openrouter.ai/api/v1/chat/completions"
@@ -62,29 +102,8 @@ def extract_transcript_information(transcript):
     }
 
     # Prompt for extraction
-    extraction_prompt = f"""
-    Extract the following information from this transcript. 
-    Be extremely precise and ensure the response is in valid JSON format.
-    
-    Keys to extract:
-    1. reference_name: Name of the person being called
-    2. subject_name: Name of the person who took the loan
-    3. subject_address: Full address of the subject
-    4. relation_to_subject: Relationship between reference and subject
-    5. subject_occupation: Current occupation of the subject
-
-    Transcript:
-    {transcript}
-
-    IMPORTANT: Respond EXACTLY in this JSON format:
-    {{
-        "reference_name": "...",
-        "subject_name": "...",
-        "subject_address": "...",
-        "relation_to_subject": "...",
-        "subject_occupation": "..."
-    }}
-    """
+    extraction_prompt_template = prompts.PROMPTS["EXTRACTION_PROMPT"]
+    extraction_prompt = extraction_prompt_template.format(transcript=transcript)
 
     # Request payload
     payload = {
@@ -134,10 +153,15 @@ def score_extraction_with_llm(result, ground_truth):
     Returns:
         dict: Scoring results with field-by-field and overall scores
     """
-    # Initialize client with OpenRouter API
+    # API key
+    api_key = config.OPENROUTER_API_KEY
+    if not api_key:
+        print("Error: OPENROUTER_API_KEY is not set.")
+        sys.exit(1)
+
     client = OpenAI(
         base_url="https://openrouter.ai/api/v1",
-        api_key=os.environ.get("OPENROUTER_API_KEY", "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"),
+        api_key=api_key
     )
 
     # Convert result to string if it's a dict
@@ -150,46 +174,8 @@ def score_extraction_with_llm(result, ground_truth):
     ground_truth_str = json.dumps(ground_truth)
 
     # Create the scoring prompt
-    scoring_prompt = f"""
-    I need you to carefully score the extraction result against the ground truth.
-    
-    RESULT:
-    {result_str}
-    
-    GROUND TRUTH:
-    {ground_truth_str}
-    
-    Scoring Guidelines:
-    1. Names: 
-       - 1.0 if exactly same
-       - 0.8 if very similar (e.g., Matheo vs Matthew)
-       - Lower scores for significant differences
-    
-    2. Addresses: 
-       - 1.0 if exact match
-       - 0.8 if key location/area matches (e.g., same city/neighborhood)
-       - 0.6 if partial match (e.g., just the city or part of address)
-       - Lower scores for completely different locations
-    
-    3. Relation: 
-       - 1.0 if exact semantic match
-       - 0.8 if similar meaning (e.g., "colleague" vs "work together")
-       - Lower scores for significantly different meanings
-    
-    4. Occupation: 
-       - 1.0 if exact match
-       - 0.8 if semantically equivalent (e.g., "no job" vs "unemployed")
-       - Lower scores for significantly different descriptions
-    
-    Return a JSON with these fields:
-    1. transcript
-    2. field_by_field_scores: A dictionary with scores for each field (reference_name, subject_name, subject_address, relation_to_subject, subject_occupation)
-    2. overall_score: Average of all field scores
-    3. explanation: A dictionary with detailed explanations for each field score
-    
-    
-    IMPORTANT: Return ONLY a valid JSON object with no markdown formatting, code blocks, or additional text.
-    """
+    scoring_prompt_template = prompts.PROMPTS["VALIDATION_SCORING_PROMPT"]
+    scoring_prompt = scoring_prompt_template.format(result_str=result_str, ground_truth_str=ground_truth_str)
 
     # Create request with the scoring prompt
     completion = client.chat.completions.create(
@@ -211,6 +197,7 @@ def score_extraction_with_llm(result, ground_truth):
 
     # Clean the response - remove markdown code blocks if present
     # This pattern matches ```json and ``` at the beginning and end
+    # cleaned_result = re.sub(r'^```json\s*|\s*```$', '', score_result, flags=re.MULTILINE)
     cleaned_result = re.sub(r'^```json\s*|\s*```$', '', score_result, flags=re.MULTILINE)
 
     # Try to parse the JSON response
@@ -272,19 +259,46 @@ def process_transcript(transcript, ground_truth):
     # Score the extracted information
     scoring_results = score_extraction_with_llm(extracted_result, ground_truth)
 
+    # Determine status based on overall score
+    overall_score = scoring_results.get("overall_score", 0)
+    status = "accept" if overall_score >= 0.7 else "reject"
+
     # Combine results into the required format
     return {
         "transcript": structured_transcript,
         "extracted_result": extracted_result,
-        "scoring_results": scoring_results
+        "scoring_results": scoring_results,
+        "status": status
     }
+
 
 # Example usage
 if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage: python llmextractor.py <UUID>")
+        sys.exit(1)
+
+    uuid = sys.argv[1]  # UUID received from API
+    audio_path = get_audio_file_path(uuid)
+
+    # Call the transcription function from transcript.py
+    transcript = Transcription.get_transcripts(audio_path)
+
+
+
+    # print("\nFinal Transcription Output:\n")
+    # print(type(transcript))
+    # print(transcript)
+
+    # Print final output (or return to API)
+
+    #print(transcript)
+
     # Sample transcript
-    transcript = """
-    2.191  2.574 SPEAKER_01                                                        Hello? 4.213  4.597 SPEAKER_00                                                        Hello? 5.014  7.257 SPEAKER_00                                             Hi, is it Ashish? 7.257  7.581 SPEAKER_01                                                        Hello? 8.499 10.182 SPEAKER_00                                           Sorry, is it Arjun?10.181 11.864 SPEAKER_01                                                          Yes.11.863 14.066 SPEAKER_00                                Hi, Arjun, Shilpa from Car 24.15.307 15.730 SPEAKER_01                                                         Okay.16.769 18.611 SPEAKER_00                               It's a verification called C.Q.18.611 20.174 SPEAKER_00                                Matheo has given your address.21.415 21.897 SPEAKER_01                                                     Ah, okay.23.217 26.461 SPEAKER_00 Actually, he has taken a loan from us, so that is the reason.26.481 27.223 SPEAKER_00                                          How do you know him?28.944 29.806 SPEAKER_01                                          Ah, I'm a colleague.31.334 33.698 SPEAKER_00              Okay, is he doing a job or a business right now?35.100 35.703 SPEAKER_01                                                   No, no job.36.883 38.006 SPEAKER_00                                      And where does he stays?38.005 40.229 SPEAKER_00                                                  His address?40.289 43.674 SPEAKER_01                          He is now in Pattimathur, Ernakulam.45.217 46.420 SPEAKER_00                                 Sorry, sorry, can you repeat?47.080 48.483 SPEAKER_00                                       Pattimathur, Ernakulam.49.224 50.146 SPEAKER_00                                              Okay, thank you.51.167 51.267 SPEAKER_00                                                         Okay.
-    """
+    # transcript = """
+    # 2.191  2.574 SPEAKER_01                                                        Hello? 4.213  4.597 SPEAKER_00                                                        Hello? 5.014  7.257 SPEAKER_00                                             Hi, is it Ashish? 7.257  7.581 SPEAKER_01                                                        Hello? 8.499 10.182 SPEAKER_00                                           Sorry, is it Arjun?10.181 11.864 SPEAKER_01                                                          Yes.11.863 14.066 SPEAKER_00                                Hi, Arjun, Shilpa from Car 24.15.307 15.730 SPEAKER_01                                                         Okay.16.769 18.611 SPEAKER_00                               It's a verification called C.Q.18.611 20.174 SPEAKER_00                                Matheo has given your address.21.415 21.897 SPEAKER_01                                                     Ah, okay.23.217 26.461 SPEAKER_00 Actually, he has taken a loan from us, so that is the reason.26.481 27.223 SPEAKER_00                                          How do you know him?28.944 29.806 SPEAKER_01                                          Ah, I'm a colleague.31.334 33.698 SPEAKER_00              Okay, is he doing a job or a business right now?35.100 35.703 SPEAKER_01                                                   No, no job.36.883 38.006 SPEAKER_00                                      And where does he stays?38.005 40.229 SPEAKER_00                                                  His address?40.289 43.674 SPEAKER_01                          He is now in Pattimathur, Ernakulam.45.217 46.420 SPEAKER_00                                 Sorry, sorry, can you repeat?47.080 48.483 SPEAKER_00                                       Pattimathur, Ernakulam.49.224 50.146 SPEAKER_00                                              Okay, thank you.51.167 51.267 SPEAKER_00                                                         Okay.
+    # """
+
 
     # Ground truth
     ground_truth = {
@@ -299,4 +313,4 @@ if __name__ == "__main__":
     results = process_transcript(transcript, ground_truth)
 
     # Print the results in JSON format
-    print(json.dumps(results, indent=2))
+    print(json.dumps(results))

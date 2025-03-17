@@ -1,8 +1,0 @@
-{
-    "document_type": "Aadhaar",
-    "name": null,
-    "date_of_birth": "1993-12-25",
-    "gender": "Male",
-    "id_number": "3962 4463 577",
-    "raw_text": "{\n  \"document_type\": \"Aadhaar\",\n  \"name\": null,\n  \"date_of_birth\": \"1993-12-25\",\n  \"gender\": \"Male\",\n  \"id_number\": \"3962 4463 577\"\n}"
-}
