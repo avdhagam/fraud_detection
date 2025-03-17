@@ -6,7 +6,7 @@ import os
 import codecs
 import re
 import traceback
-
+import prompts
 
 from pathlib import Path
 script_path = Path(__file__).resolve() # finds absolute path of script
@@ -48,17 +48,7 @@ def extract_text_from_image(image_path):
         "contents": [
             {
                 "parts": [
-                    {"text": """
-                        Extract the following information from this document image and return the result as a JSON object:
-
-                        - document_type (string): The type of document (e.g., "Aadhaar", "Passport", "Driving License").
-                        - name (string): The full name of the individual.
-                        - date_of_birth (string): The date of birth in YYYY-MM-DD format.
-                        - gender (string): The gender of the individual ("Male", "Female", or "Other").
-                        - id_number (string): The document's ID number.
-
-                        Ensure the JSON response is valid and parsable.  If a field cannot be extracted, set its value to null.
-                        """},
+                    {"text":prompts.PROMPTS["OCR_PROMPT"]},
                     {"inline_data": {"mime_type": "image/jpeg", "data": image_data}}
                 ]
             }
