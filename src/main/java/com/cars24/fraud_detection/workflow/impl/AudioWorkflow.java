@@ -39,13 +39,11 @@ public class AudioWorkflow implements WorkflowInitiator {
         String llmScriptPath = "src/main/resources/python_workflows/LLMextractionvalidation.py";
         logger.info("Executing LLM extraction script: {} for audio file: {}", llmScriptPath, request.getAudioFile());
 
-        Map<String, Object> llmExtractionResult = runPythonScript(llmScriptPath, request.getUuid());
+        Map<String, Object> llmExtractionResult = processAudioScript(llmScriptPath, request.getUuid());
 
         Object obj = llmExtractionResult.get("output");
 
         logger.debug("Raw output from Python script: {}", obj);
-
-
 
 
         ObjectMapper objectMapper = new ObjectMapper();
@@ -133,7 +131,7 @@ public class AudioWorkflow implements WorkflowInitiator {
         String analysisScriptPath = "src/main/resources/python_workflows/AudioAnalysis.py";
         logger.info("Executing audio analysis script: {} for audio file: {}", analysisScriptPath, request.getAudioFile());
 
-        Map<String, Object> audioAnalysisResult = runPythonScript(analysisScriptPath, request.getUuid());
+        Map<String, Object> audioAnalysisResult = processAudioScript(analysisScriptPath, request.getUuid());
 
         if (audioAnalysisResult == null || audioAnalysisResult.isEmpty()) {
             logger.warn("Audio analysis script returned an empty response for requestId: {}", request.getUuid());
@@ -147,9 +145,8 @@ public class AudioWorkflow implements WorkflowInitiator {
         return response;
     }
 
-    private Map<String, Object> runPythonScript(String scriptPath, String uuid) {
+    private Map<String, Object> processAudioScript(String scriptPath, String uuid) {
         logger.debug("Running Python script: {} with audio file: {}", scriptPath, uuid);
-
         PythonExecutor2 executor = new PythonExecutor2();
         Map<String, Object> result = executor.runPythonScript(scriptPath, uuid);
 
