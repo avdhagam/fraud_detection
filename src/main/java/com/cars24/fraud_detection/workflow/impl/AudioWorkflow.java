@@ -59,26 +59,21 @@ public class AudioWorkflow implements WorkflowInitiator {
             String subjectAddress = extractedResult.get("subject_address").asText();
             String relationToSubject = extractedResult.get("relation_to_subject").asText();
             String subjectOccupation = extractedResult.get("subject_occupation").asText();
-        String status;
-        double overallScore = rootNode.get("scoring_results").get("overall_score").asDouble();
-        if (rootNode.has("status")) {
-            // If status field exists in Python output, use it
-            status = rootNode.get("status").asText();
-        } else {
-            // Calculate status based on score if not provided
-            status = overallScore >= 0.7 ? "accept" : "reject";
-        }
 
+        double overallScore = rootNode.get(AudioStringConstants.SCORING_RESULTS).get("overall_score").asDouble();
+        String status = rootNode.has(AudioStringConstants.STATUS) ?
+                rootNode.get(AudioStringConstants.STATUS).asText() :
+                (overallScore >= 0.7 ? "accept" : "reject");
 
             // Extract transcript
             List<String> transcriptList = new ArrayList<>();
-            JsonNode transcriptNode = rootNode.path("transcript");
+            JsonNode transcriptNode = rootNode.path(AudioStringConstants.TRANSCRIPT);
             for (JsonNode entry : transcriptNode) {
                 transcriptList.add(entry.path("text").asText());
             }
 
             // Extract explanations
-            JsonNode explanationNode = rootNode.path("scoring_results").path("explanation");
+            JsonNode explanationNode = rootNode.path(AudioStringConstants.SCORING_RESULTS).path(AudioStringConstants.EXPLANATION);
             List<String> explanations = new ArrayList<>();
             Iterator<Map.Entry<String, JsonNode>> fields = explanationNode.fields();
             while (fields.hasNext()) {
@@ -86,7 +81,7 @@ public class AudioWorkflow implements WorkflowInitiator {
                 explanations.add(field.getKey() + ": " + field.getValue().asText());
             }
 
-            JsonNode fieldScoresNode = rootNode.path("scoring_results").path("field_by_field_scores");
+            JsonNode fieldScoresNode = rootNode.path(AudioStringConstants.SCORING_RESULTS).path(AudioStringConstants.FIELD_BY_FIELD_SCORES);
             Map<String, Double> fieldScores = new HashMap<>();
             Iterator<Map.Entry<String, JsonNode>> scoreFields = fieldScoresNode.fields();
             while (scoreFields.hasNext()) {
