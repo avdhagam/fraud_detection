@@ -6,6 +6,7 @@ import com.cars24.fraud_detection.data.request.DocumentRequest;
 import com.cars24.fraud_detection.data.response.DocumentResponse;
 import com.cars24.fraud_detection.exception.DocumentProcessingException;
 import com.cars24.fraud_detection.service.DocumentService;
+import com.cars24.fraud_detection.utils.FileUtils;
 import com.cars24.fraud_detection.workflow.WorkflowInitiator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,22 +46,7 @@ public class DocumentServiceImpl implements DocumentService {
             DocumentResponse response = workflowInitiator.processDocument(request);
             log.debug("Workflow execution completed for file: {}, Result: {}", request.getFileName(), response);
 
-            // Save document details to the database
-            DocumentEntity entity = DocumentEntity.builder()
-                    .userId(request.getUserId())
-                    .fileName(request.getFileName())
-                    .status(response.isValid() ? "COMPLETED" : "FAILED")
-                    .remarks(response.getRemarks())
-                    .ocrResults(response.getOcrResults())
-                    .qualityResults(response.getQualityResults())
-                    .forgeryResults(response.getForgeryResults())
-                    .validationResults(response.getValidationResults())
-                    .finalRiskScore(response.getFinalRiskScore())
-                    .riskLevel(response.getRiskLevel())
-                    .decision(response.getDecision())
-                    .nextSteps(response.getNextSteps())
-                    .build();
-
+            DocumentEntity entity = FileUtils.buildDocumentEntity(request, response);
             documentDao.saveDocument(entity);
             log.info("Document saved successfully in database: {} (Status: {})", request.getFileName(), entity.getStatus());
 
@@ -87,5 +73,13 @@ public class DocumentServiceImpl implements DocumentService {
         log.debug("Document retrieved successfully: {}", response);
 
         return response;
+//        return documentDao.getDocumentById(documentId)
+//                .map(DocumentEntity::toResponse)
+//                .orElseThrow(() -> {
+//                    log.warn("Document not found for ID: {}", documentId);
+//                    return new DocumentProcessingException("Document not found for ID: " + documentId);
+//                });
     }
 }
+
+

@@ -5,7 +5,7 @@ import com.cars24.fraud_detection.data.request.DocumentRequest;
 import com.cars24.fraud_detection.data.response.AudioResponse;
 import com.cars24.fraud_detection.data.response.DocumentResponse;
 import com.cars24.fraud_detection.exception.DocumentProcessingException;
-import com.cars24.fraud_detection.utils.PythonExecutor3;
+import com.cars24.fraud_detection.utils.PythonExecutor;
 import com.cars24.fraud_detection.workflow.WorkflowInitiator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.slf4j.Logger;
@@ -54,12 +54,12 @@ public class DocumentWorkflow implements WorkflowInitiator {
 
     private static final Logger log = LoggerFactory.getLogger(DocumentWorkflow.class);
 
-    private final PythonExecutor3 pythonExecutor;
+    private final PythonExecutor pythonExecutor;
 
     private static final int FUTURE_TIMEOUT_SECONDS = 30;
     private static final int MAX_ARCHIVE_RETRIES = 3;
 
-    public DocumentWorkflow(PythonExecutor3 pythonExecutor) {
+    public DocumentWorkflow(PythonExecutor pythonExecutor) {
         this.pythonExecutor = pythonExecutor;
     }
 

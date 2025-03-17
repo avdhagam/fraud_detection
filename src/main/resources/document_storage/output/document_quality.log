@@ -450,3 +450,15 @@
   }
 }
 ```
+2025-03-17 11:54:13,691 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-03-17 11:54:13,695 - ERROR - Quality assessment error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}
+2025-03-17 12:38:25,522 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-03-17 12:38:25,526 - ERROR - Quality assessment error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}
+2025-03-17 12:51:01,871 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-03-17 12:51:01,873 - ERROR - Quality assessment error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}
+2025-03-17 13:23:55,660 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-03-17 13:23:55,664 - ERROR - Quality assessment error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}
+2025-03-17 13:28:57,439 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-03-17 13:28:57,443 - ERROR - Quality assessment error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}
+2025-03-17 13:41:05,262 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-03-17 13:41:05,266 - ERROR - Quality assessment error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}

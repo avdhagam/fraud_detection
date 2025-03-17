@@ -1,0 +1,8 @@
+{
+    "document_type": "Aadhaar",
+    "name": "Ayaan Khan",
+    "date_of_birth": "2007-07-15",
+    "gender": "Male",
+    "id_number": "123456789101112",
+    "raw_text": "{\n  \"document_type\": \"Aadhaar\",\n  \"name\": \"Ayaan Khan\",\n  \"date_of_birth\": \"2007-07-15\",\n  \"gender\": \"Male\",\n  \"id_number\": \"123456789101112\"\n}"
+}
