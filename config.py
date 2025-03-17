@@ -8,7 +8,6 @@ load_dotenv()
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 DEEPGRAM_API_KEY = os.getenv("DEEPGRAM_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-#OPENROUTER_API_KEY_DOCUMENTS = os.getenv("OPENROUTER_API_KEY_DOCUMENTS")
 
 if not OPENROUTER_API_KEY:
     print("Error: OPENROUTER_API_KEY is not set in .env file.")
