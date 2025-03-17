@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired; // Add this import
 
 import java.util.*;
 @Slf4j
@@ -25,6 +26,12 @@ import java.util.*;
 public class AudioWorkflow implements WorkflowInitiator {
 
     private static final Logger logger = LoggerFactory.getLogger(AudioWorkflow.class);
+    private final PythonExecutor2 pythonExecutor2;
+
+    @Autowired
+    public AudioWorkflow(PythonExecutor2 pythonExecutor2) {
+        this.pythonExecutor2 = pythonExecutor2;
+    }
 
     @Override
     public DocumentResponse processDocument(DocumentRequest request) {
@@ -147,8 +154,7 @@ public class AudioWorkflow implements WorkflowInitiator {
 
     private Map<String, Object> processAudioScript(String scriptPath, String uuid) {
         logger.debug("Running Python script: {} with audio file: {}", scriptPath, uuid);
-        PythonExecutor2 executor = new PythonExecutor2();
-        Map<String, Object> result = executor.runPythonScript(scriptPath, uuid);
+        Map<String, Object> result = pythonExecutor2.runPythonScript(scriptPath, uuid);
 
         if (result == null || result.isEmpty()) {
             logger.warn("Python script {} returned an empty result for audio file: {}", scriptPath, uuid);
