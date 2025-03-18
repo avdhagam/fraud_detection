@@ -1,12 +1,12 @@
 package com.cars24.fraud_detection.service.impl;
 
+import com.cars24.fraud_detection.config.DocumentTypeConfig;
 import com.cars24.fraud_detection.data.dao.DocumentDao;
 import com.cars24.fraud_detection.data.entity.DocumentEntity;
 import com.cars24.fraud_detection.data.request.DocumentRequest;
 import com.cars24.fraud_detection.data.response.DocumentResponse;
 import com.cars24.fraud_detection.exception.DocumentProcessingException;
 import com.cars24.fraud_detection.service.DocumentService;
-import com.cars24.fraud_detection.utils.FileUtils;
 import com.cars24.fraud_detection.workflow.WorkflowInitiator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,27 +26,46 @@ public class DocumentServiceImpl implements DocumentService {
     @Qualifier("documentWorkflow") // Specify which bean to use
     private final WorkflowInitiator workflowInitiator;
 
+    private final DocumentTypeConfig documentTypeConfig;
+
     @Value("${document.storage.path}")
     private String storagePath;
 
     // Constructor injection with Qualifier
     @Autowired
     public DocumentServiceImpl(DocumentDao documentDao,
-                               @Qualifier("documentWorkflow") WorkflowInitiator workflowInitiator) {
+                               @Qualifier("documentWorkflow") WorkflowInitiator workflowInitiator,DocumentTypeConfig documentTypeConfig){
         this.documentDao = documentDao;
         this.workflowInitiator = workflowInitiator;
+        this.documentTypeConfig = documentTypeConfig;
     }
 
     @Override
     public DocumentResponse processDocument(DocumentRequest request) {
         try {
-            log.info("Starting document processing for user: {}, File: {}", request.getUserId(), request.getFileName());
+            log.info("Available Document Types: {}", documentTypeConfig.getMapping());
 
+            log.info("Starting document processing for user: {}, File: {}", request.getUserId(), request.getFileName());
             // Run workflow (OCR, Validation, Quality, Forgery Detection)
             DocumentResponse response = workflowInitiator.processDocument(request);
             log.debug("Workflow execution completed for file: {}, Result: {}", request.getFileName(), response);
 
-            DocumentEntity entity = FileUtils.buildDocumentEntity(request, response);
+            // Save document details to the database
+            DocumentEntity entity = DocumentEntity.builder()
+                    .userId(request.getUserId())
+                    .fileName(request.getFileName())
+                    .status(response.isValid() ? "COMPLETED" : "FAILED")
+                    .remarks(response.getRemarks())
+                    .ocrResults(response.getOcrResults())
+                    .qualityResults(response.getQualityResults())
+                    .forgeryResults(response.getForgeryResults())
+                    .validationResults(response.getValidationResults())
+                    .finalRiskScore(response.getFinalRiskScore())
+                    .riskLevel(response.getRiskLevel())
+                    .decision(response.getDecision())
+                    .nextSteps(response.getNextSteps())
+                    .build();
+
             documentDao.saveDocument(entity);
             log.info("Document saved successfully in database: {} (Status: {})", request.getFileName(), entity.getStatus());
 
@@ -73,13 +92,5 @@ public class DocumentServiceImpl implements DocumentService {
         log.debug("Document retrieved successfully: {}", response);
 
         return response;
-//        return documentDao.getDocumentById(documentId)
-//                .map(DocumentEntity::toResponse)
-//                .orElseThrow(() -> {
-//                    log.warn("Document not found for ID: {}", documentId);
-//                    return new DocumentProcessingException("Document not found for ID: " + documentId);
-//                });
     }
 }
-
-
