@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.cars24.fraud_detection.config.DocumentTypeConfig;
 import com.cars24.fraud_detection.data.dao.impl.DocumentDaoImpl;
 import com.cars24.fraud_detection.data.entity.DocumentEntity;
 import com.cars24.fraud_detection.data.request.DocumentRequest;
@@ -20,6 +21,7 @@ import com.cars24.fraud_detection.workflow.impl.AudioWorkflow;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Map;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -50,6 +52,9 @@ class DocumentControllerDiffblueTest {
 
     @MockBean
     private DocumentService documentService;
+
+    @MockBean
+    private DocumentTypeConfig documentTypeConfig;
 
     /**
      * Test {@link DocumentController#getDocument(String)}.
@@ -135,8 +140,16 @@ class DocumentControllerDiffblueTest {
                 .validationResults(null)
                 .build();
         when(workflowInitiator.processDocument(Mockito.<DocumentRequest>any())).thenReturn(buildResult);
+
+        when(documentTypeConfig.getMapping()).thenReturn(Map.of(
+                "AADHAR", "Aadhar",
+                "ATTESTED_PAN", "Pan",
+                "UNATTESTED_PAN", "Pan"
+        ));
+
         DocumentController documentController = new DocumentController(
-                new DocumentServiceImpl(documentDao, workflowInitiator));
+                new DocumentServiceImpl(documentDao, workflowInitiator, documentTypeConfig), documentTypeConfig);
+
 
         // Act
         ResponseEntity<DocumentResponse> actualProcessDocumentResult = documentController
