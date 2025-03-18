@@ -1,14 +1,17 @@
 package com.cars24.fraud_detection.controller;
 
+import com.cars24.fraud_detection.data.entity.DocumentEntity;
 import com.cars24.fraud_detection.data.request.DocumentRequest;
 import com.cars24.fraud_detection.data.response.DocumentResponse;
 import com.cars24.fraud_detection.service.DocumentService;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/documents")
@@ -35,4 +38,19 @@ public class DocumentController {
         DocumentResponse response = documentService.getDocumentById(documentId);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/upload-document")
+    public ResponseEntity<DocumentResponse> uploadDocument(@RequestParam("file") MultipartFile file,
+                                                           @RequestParam("userReportId") String userReportId) throws IOException {
+        DocumentRequest request = new DocumentRequest();
+        request.setFileName(file.getOriginalFilename());
+        request.setDocumentData(file.getBytes());
+        request.setUserReportId(userReportId); // Ensure `DocumentRequest` has this field
+
+        DocumentResponse response = documentService.processDocument(request);
+
+        return ResponseEntity.ok(response);
+    }
+
+
 }

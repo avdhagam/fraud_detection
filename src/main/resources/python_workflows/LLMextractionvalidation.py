@@ -1,13 +1,19 @@
 import os
+os.environ["OMP_NUM_THREADS"] = "1"
+
 import json
 import re
 import requests
-from openai import OpenAI
-
-import sys
-
 from pathlib import Path
 import Transcription # Import transcript.py for processing
+import prompts
+import sys
+
+script_path = Path(__file__).resolve() # finds absolute path of script
+root_dir = script_path.parents[4]  # Calculate root directory by moving up four levels
+sys.path.append(str(root_dir)) # Add the project's root directory to the Python path
+import config
+
 
 # Define base path for stored audio files
 root_path = Path(__file__).resolve().parent.parent  # Moves up two levels
@@ -57,6 +63,7 @@ def parse_transcript_to_structured_format(transcript_text):
 
     return structured_transcript
 
+<<<<<<< HEAD
 def extract_and_score_transcript(transcript, ground_truth):
     """
     Combined function to extract information from transcript and score against ground truth
@@ -68,12 +75,32 @@ def extract_and_score_transcript(transcript, ground_truth):
 
     Returns:
         dict: Comprehensive results including extraction and scoring
+=======
+def extract_transcript_information(transcript, ground_truth):
+    """
+    Extract key information and score against ground truth in a single API call.
+
+    Args:
+        transcript (str): The call transcript text.
+        ground_truth (dict): The ground truth information.
+
+    Returns:
+        dict: Extracted information and scoring results.
+>>>>>>> 358758ac0303a57dca92f554bd388f2d3c19c1b4
     """
     # Parse transcript into structured format
     structured_transcript = parse_transcript_to_structured_format(transcript)
 
     # OpenRouter API key
+<<<<<<< HEAD
     api_key = os.environ.get("OPENROUTER_API_KEY", "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")
+=======
+    api_key = config.OPENROUTER_API_KEY
+    if not api_key:
+        print("Error: OPENROUTER_API_KEY is not set.")
+        sys.exit(1)
+
+>>>>>>> 358758ac0303a57dca92f554bd388f2d3c19c1b4
     # API URL
     url = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -88,6 +115,7 @@ def extract_and_score_transcript(transcript, ground_truth):
     # Convert ground truth to string
     ground_truth_str = json.dumps(ground_truth)
 
+<<<<<<< HEAD
     # Combined prompt for extraction and scoring in a single API call
     combined_prompt = f"""
     You have two tasks:
@@ -159,6 +187,14 @@ def extract_and_score_transcript(transcript, ground_truth):
     The overall_score should be the average of all field scores.
     
     """
+=======
+    # Combined prompt for extraction and scoring
+    combined_prompt_template = prompts.PROMPTS["EXTRACTION_SCORING_PROMPT"]
+    combined_prompt = combined_prompt_template.format(
+        transcript=transcript,
+        ground_truth_str=ground_truth_str
+    )
+>>>>>>> 358758ac0303a57dca92f554bd388f2d3c19c1b4
 
     # Request payload
     payload = {
@@ -175,6 +211,7 @@ def extract_and_score_transcript(transcript, ground_truth):
     if response.status_code == 200:
         try:
             result = response.json()
+<<<<<<< HEAD
             # Extract the content from the response
             content = result.get("choices", [{}])[0].get("message", {}).get("content", "")
 
@@ -249,10 +286,41 @@ def extract_and_score_transcript(transcript, ground_truth):
         },
         "status": "reject"
     }
+=======
+            content = result.get("choices", [{}])[0].get("message", {}).get("content", "")
+
+            # Clean and parse the JSON response
+            content = re.sub(r'^```json\s*|\s*```$', '', content, flags=re.MULTILINE).strip()
+            parsed_result = json.loads(content)
+
+            # Determine status based on overall score
+            overall_score = parsed_result.get("overall_score", 0)
+            parsed_result["status"] = "accept" if overall_score >= 0.7 else "reject"
+
+            return parsed_result
+        except json.JSONDecodeError as e:
+            print(f"Error parsing API response: {e}")
+            return {
+                "error": "Failed to parse response",
+                "status": "reject"
+            }
+        except Exception as e:
+            print(f"Unexpected error: {e}")
+            return {
+                "error": str(e),
+                "status": "reject"
+            }
+    else:
+        print(f"Error: API request failed with status code {response.status_code}")
+        return {
+            "error": f"API request failed with status code {response.status_code}",
+            "status": "reject"
+        }
+>>>>>>> 358758ac0303a57dca92f554bd388f2d3c19c1b4
 
 def process_transcript(transcript, ground_truth):
     """
-    Process the transcript by extracting information and scoring against ground truth
+    Process the transcript by extracting information and scoring against ground truth in a single step.
 
     Args:
         transcript (str): The call transcript
@@ -261,8 +329,28 @@ def process_transcript(transcript, ground_truth):
     Returns:
         dict: Comprehensive results including extraction and scoring
     """
+<<<<<<< HEAD
     # Use the combined function to extract and score
     return extract_and_score_transcript(transcript, ground_truth)
+=======
+    # Parse transcript into structured format
+    structured_transcript = parse_transcript_to_structured_format(transcript)
+
+    # Extract and score in one step
+    results = extract_transcript_information(transcript, ground_truth)
+
+    # Construct the final output
+    return {
+        "transcript": structured_transcript,
+        "extracted_result": results.get("extracted_result", {}),
+        "scoring_results": {
+            "field_by_field_scores": results.get("field_by_field_scores", {}),
+            "overall_score": results.get("overall_score", 0),
+            "explanation": results.get("explanation", {})
+        },
+        "status": results.get("status", "reject")
+    }
+>>>>>>> 358758ac0303a57dca92f554bd388f2d3c19c1b4
 
 
 # Example usage

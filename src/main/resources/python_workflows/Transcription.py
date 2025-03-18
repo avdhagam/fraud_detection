@@ -1,21 +1,30 @@
-
 import requests
 import json
 import numpy as np
 import librosa
-
 import tempfile
+
 from pydub import AudioSegment
 from sklearn.cluster import KMeans, SpectralClustering, AgglomerativeClustering, DBSCAN
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from scipy.spatial.distance import cdist
 
+import sys
+from pathlib import Path
 
-# logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+script_path = Path(__file__).resolve() # finds absolute path of script
+root_dir = script_path.parents[4]  # Calculate root directory by moving up four levels
+sys.path.append(str(root_dir)) # Add the project's root directory to the Python path
+
+import config
 
 # Deepgram API Key
+<<<<<<< HEAD
 DEEPGRAM_API_KEY = "a442dd8755020966943ed7824baf8968e3575377"
+=======
+DEEPGRAM_API_KEY = config.DEEPGRAM_API_KEY
+>>>>>>> 358758ac0303a57dca92f554bd388f2d3c19c1b4
 
 def convert_mp3_to_wav(mp3_path):
     """Converts an MP3 file to a temporary WAV file."""
@@ -30,32 +39,23 @@ def transcribe_audio_with_timestamps(wav_file):
     url = "https://api.deepgram.com/v1/listen?model=whisper-large&language=en-IN&punctuate=true&smart_format=true&utterances=true&words=true&diarize=true"
     headers = {"Authorization": f"Token {DEEPGRAM_API_KEY}", "Content-Type": "audio/wav"}
 
-    # with open(wav_file.name, "rb") as audio_file:
-    #     response = requests.post(url, headers=headers, data=audio_file)
-    #
-    # if response.status_code == 200:
-    #     return response.json()
-    # else:
-    #     logging.error("Failed to process audio. Deepgram API Error.")
-    #     return None
 
     with open(wav_file.name, "rb") as audio_file:
         try:
             response = requests.post(url, headers=headers, data=audio_file)
-            response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
+            response.raise_for_status()
 
             try:
                 json_data = response.json()
                 return json_data
             except json.JSONDecodeError as e:
-                # logging.error(f"JSON Decode Error: {e}")
-                # logging.error(f"Response Content: {response.text}")  # LOG THE RESPONSE CONTENT!
-                return None  # or raise the exception if you want the program to halt
+
+                return None
         except requests.exceptions.RequestException as e:
-            # logging.error(f"Request Error: {e}")
+
             return None
         except Exception as e:
-            # logging.error(f"An unexpected error occurred: {e}")
+
             return None
 
 def extract_features(audio_path, start, end, sr=16000):
@@ -141,14 +141,13 @@ def get_transcripts(mp3_path):
                     speaker_labels = cluster_speakers(np.array(embeddings), num_speakers)
                     formatted_output = format_transcription_output(utterances, speaker_labels)
 
-                    # logging.info(f"Detected {num_speakers} speakers.")
+
                     return formatted_output  # Return the formatted string
                 else:
-                    # logging.warning("No embeddings found for clustering.")
+
                     return "No embeddings found for clustering."
         else:
-            # logging.error("Failed to process audio.")
+
             return "Failed to process audio."
     finally:
         temp_wav.close()
-        # logging.info(f"Deleting temporary file: {temp_wav.name}")

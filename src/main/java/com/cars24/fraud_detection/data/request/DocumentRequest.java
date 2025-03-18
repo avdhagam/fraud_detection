@@ -4,6 +4,9 @@ import lombok.Data;
 
 @Data
 public class DocumentRequest {
+
+    private String userReportId;
+
     private String userId;
     private String fileName;
     private byte[] documentData;

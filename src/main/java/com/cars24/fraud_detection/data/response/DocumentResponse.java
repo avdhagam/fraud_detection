@@ -12,6 +12,9 @@ import java.util.Map;
 @AllArgsConstructor
 @Builder
 public class DocumentResponse {
+
+    private String userReportId;
+
     private String documentId;
     private boolean isValid;
     private double finalRiskScore;
@@ -24,5 +27,6 @@ public class DocumentResponse {
     private Map<String, Object> qualityResults;
     private Map<String, Object> forgeryResults;
     private Map<String, Object> validationResults;
+
 
 }

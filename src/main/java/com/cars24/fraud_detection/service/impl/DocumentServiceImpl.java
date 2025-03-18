@@ -12,23 +12,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.util.Arrays;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
-//@RequiredArgsConstructor
 @Slf4j
 public class DocumentServiceImpl implements DocumentService {
 
     private final DocumentDao documentDao;
-
-    @Qualifier("documentWorkflow") // Specify which bean to use
     private final WorkflowInitiator workflowInitiator;
 
     @Value("${document.storage.path}")
     private String storagePath;
 
-    // Constructor injection with Qualifier
     @Autowired
     public DocumentServiceImpl(DocumentDao documentDao,
                                @Qualifier("documentWorkflow") WorkflowInitiator workflowInitiator) {
@@ -38,8 +38,19 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public DocumentResponse processDocument(DocumentRequest request) {
+
         try {
             log.info("Starting document processing for user: {}, File: {}", request.getUserId(), request.getFileName());
+
+            String archivePath = findDocumentPath(request.getFileName());
+            // Generate unique file path
+           // String filePath = storagePath + "archive" + request.getFileName();
+           // request.transferTo(new File(filePath)); // Save file
+
+            // Create DocumentRequest from MultipartFile
+            //DocumentRequest request = new DocumentRequest();
+            // Keep original user report ID
+           // request.setFileName(file.getOriginalFilename());
 
             // Run workflow (OCR, Validation, Quality, Forgery Detection)
             DocumentResponse response = workflowInitiator.processDocument(request);
@@ -47,8 +58,10 @@ public class DocumentServiceImpl implements DocumentService {
 
             // Save document details to the database
             DocumentEntity entity = DocumentEntity.builder()
-                    .userId(request.getUserId())
+                    .userReportId(request.getUserReportId()) // Generate document ID
+                    .documentId(response.getDocumentId()) // Keep user-provided report ID
                     .fileName(request.getFileName())
+                    .filePath(archivePath)
                     .status(response.isValid() ? "COMPLETED" : "FAILED")
                     .remarks(response.getRemarks())
                     .ocrResults(response.getOcrResults())
@@ -76,16 +89,22 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentResponse getDocumentById(String documentId) {
         log.info("Fetching document details for ID: {}", documentId);
 
-        Optional<DocumentEntity> documentEntityOpt = documentDao.getDocumentById(documentId);
+        DocumentEntity entity = documentDao.getDocumentById(documentId)
+                .orElseThrow(() -> new DocumentProcessingException("Document not found for ID: " + documentId));
 
-        if (documentEntityOpt.isEmpty()) {
-            log.warn("Document not found for ID: {}", documentId);
-            throw new DocumentProcessingException("Document not found for ID: " + documentId);
-        }
+        log.debug("Document retrieved successfully: {}", entity);
+        return entity.toResponse();
+    }
 
-        DocumentResponse response = documentEntityOpt.get().toResponse();
-        log.debug("Document retrieved successfully: {}", response);
+    public String findDocumentPath(String fileName) {
+        String archiveDir = "src/main/resources/document_storage/archive";
+        File folder = new File(archiveDir);
+        Optional<File> matchingFile = Arrays.stream(folder.listFiles())
+                .filter(file -> file.getName().endsWith(fileName)) // Match the filename
+                .findFirst();
 
-        return response;
+        return matchingFile.map(file -> file.getAbsolutePath()
+                        .replace(new File("").getAbsolutePath() + File.separator, "")) // ✅ Convert to relative path
+                .orElse(null);
     }
 }
