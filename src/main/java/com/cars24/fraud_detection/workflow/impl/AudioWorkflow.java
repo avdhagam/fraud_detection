@@ -57,13 +57,13 @@ public class AudioWorkflow implements WorkflowInitiator {
         objectMapper.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
         JsonNode rootNode = objectMapper.readTree(obj.toString());
 
-            // Extract values from extracted_result
-            JsonNode extractedResult = rootNode.get(AudioStringConstants.EXTRACTED_RESULT);
-            String referenceName = extractedResult.get("reference_name").asText();
-            String subjectName = extractedResult.get("subject_name").asText();
-            String subjectAddress = extractedResult.get("subject_address").asText();
-            String relationToSubject = extractedResult.get("relation_to_subject").asText();
-            String subjectOccupation = extractedResult.get("subject_occupation").asText();
+        // Extract values from extracted_result
+        JsonNode extractedResult = rootNode.get(AudioStringConstants.EXTRACTED_RESULT);
+        String referenceName = extractedResult.get(AudioStringConstants.REFERENCE_NAME).asText();
+        String subjectName = extractedResult.get(AudioStringConstants.SUBJECT_NAME).asText();
+        String subjectAddress = extractedResult.get(AudioStringConstants.SUBJECT_ADDRESS).asText();
+        String relationToSubject = extractedResult.get(AudioStringConstants.RELATION_TO_SUBJECT).asText();
+        String subjectOccupation = extractedResult.get(AudioStringConstants.SUBJECT_OCCUPATION).asText();
 
         double overallScore = rootNode.get(AudioStringConstants.SCORING_RESULTS).get("overall_score").asDouble();
         String status = rootNode.has(AudioStringConstants.STATUS) ?
