@@ -2,12 +2,13 @@ PROMPTS = {
     "EXTRACTION_SCORING_PROMPT":"""
     First, extract the following information from this transcript. Be extremely precise.
     
+
     Keys to extract:
-    1. reference_name: Name of the person being called
-    2. subject_name: Name of the person who took the loan
-    3. subject_address: Full address of the subject
-    4. relation_to_subject: Relationship between reference and subject
-    5. subject_occupation: Current occupation of the subject
+1. reference_name: Name of the person being called
+2. subject_name: Name of the person who took the loan
+3. subject_address: Full address of the subject.  Extract the complete address if available.
+4. relation_to_subject: Relationship between reference and subject. **Extract only the key term describing the relationship (e.g., "colleague","work together", "friend", "family").  Do not include extraneous phrases.**
+5. subject_occupation: Current occupation of the subject. **Extract only the key term describing the occupation status (e.g., "employed", "unemployed", "no job", "student","developer").  Do not include extraneous phrases.**
     
     Transcript:
     {transcript}
@@ -38,10 +39,12 @@ PROMPTS = {
        - Lower scores for significantly different descriptions
     
     Return a JSON with these fields:
-    1. extracted_result: A dictionary with the extracted information
-    2. field_by_field_scores: A dictionary with scores for each field (reference_name, subject_name, subject_address, relation_to_subject, subject_occupation)
-    3. overall_score: Average of all field scores
-    4. explanation: A dictionary with detailed explanations for each field score
+    1. transcript
+    2. extracted_result: A dictionary with the extracted information
+    3. field_by_field_scores: A dictionary with scores for each field (reference_name, subject_name, subject_address, relation_to_subject, subject_occupation)
+    4. overall_score: Average of all field scores
+    5. explanation: A dictionary with detailed explanations for each field score
+    
     
     IMPORTANT: Return ONLY a valid JSON object with no markdown formatting, code blocks, or additional text.
     """,

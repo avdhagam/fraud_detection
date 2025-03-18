@@ -27,7 +27,5 @@ public class AudioEntity {
     private Map<String, Object> audioAnalysis;
     private String status;
 
-    public AudioResponse toResponse() {
-        return new AudioResponse(id, transcript, referenceName, subjectName, subjectAddress, relationToSubject, subjectOccupation, overallScore, explanation, fieldByFieldScores,status);
-    }
+
 }

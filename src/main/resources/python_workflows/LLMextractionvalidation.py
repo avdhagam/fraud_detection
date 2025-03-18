@@ -184,6 +184,18 @@ def process_transcript(transcript, ground_truth):
         "status": results.get("status", "reject")
     }
 
+def output_json(data):
+    """
+    Outputs the given data as a JSON string to standard output.
+
+    Args:
+        data (dict): The data to output as JSON.
+    """
+    try:
+        print(json.dumps(data))
+    except Exception as e:
+        print(json.dumps({"error": f"Failed to encode data as JSON: {e}"}))
+        sys.exit(1)
 
 # Example usage
 if __name__ == "__main__":
@@ -195,23 +207,33 @@ if __name__ == "__main__":
     audio_path = get_audio_file_path(uuid)
 
     # Call the transcription function from transcript.py
-    transcript = Transcription.get_transcripts(audio_path)
-
-
-
-    # print("\nFinal Transcription Output:\n")
-    # print(type(transcript))
-    # print(transcript)
-
-    # Print final output (or return to API)
-
-    #print(transcript)
-
-    # Sample transcript
-    # transcript = """
-    # 2.191  2.574 SPEAKER_01                                                        Hello? 4.213  4.597 SPEAKER_00                                                        Hello? 5.014  7.257 SPEAKER_00                                             Hi, is it Ashish? 7.257  7.581 SPEAKER_01                                                        Hello? 8.499 10.182 SPEAKER_00                                           Sorry, is it Arjun?10.181 11.864 SPEAKER_01                                                          Yes.11.863 14.066 SPEAKER_00                                Hi, Arjun, Shilpa from Car 24.15.307 15.730 SPEAKER_01                                                         Okay.16.769 18.611 SPEAKER_00                               It's a verification called C.Q.18.611 20.174 SPEAKER_00                                Matheo has given your address.21.415 21.897 SPEAKER_01                                                     Ah, okay.23.217 26.461 SPEAKER_00 Actually, he has taken a loan from us, so that is the reason.26.481 27.223 SPEAKER_00                                          How do you know him?28.944 29.806 SPEAKER_01                                          Ah, I'm a colleague.31.334 33.698 SPEAKER_00              Okay, is he doing a job or a business right now?35.100 35.703 SPEAKER_01                                                   No, no job.36.883 38.006 SPEAKER_00                                      And where does he stays?38.005 40.229 SPEAKER_00                                                  His address?40.289 43.674 SPEAKER_01                          He is now in Pattimathur, Ernakulam.45.217 46.420 SPEAKER_00                                 Sorry, sorry, can you repeat?47.080 48.483 SPEAKER_00                                       Pattimathur, Ernakulam.49.224 50.146 SPEAKER_00                                              Okay, thank you.51.167 51.267 SPEAKER_00                                                         Okay.
-    # """
-
+    # transcript = Transcription.get_transcripts(audio_path)
+    transcript = """start   end    speaker                                                              utterance
+    0.000  0.500 SPEAKER_01                                                            Hello?
+    1.560  2.180 SPEAKER_01                                                            Hello? Hi,
+    2.620  4.020 SPEAKER_00                                                            is it Arjun? Hello?
+    4.844  5.344 SPEAKER_00                                                            Sorry,
+    6.168  6.668 SPEAKER_00                                                            is
+    7.492  7.992 SPEAKER_00                                                            it
+    8.816  9.316 SPEAKER_01                                                            Arjun?
+    10.140  10.640 SPEAKER_00                                                            Yes.
+    11.660  13.860 SPEAKER_01                                                            Hi, Arjun, Shilpa from Kast 24.
+    15.220  15.720 SPEAKER_00                                                            Okay.
+    16.580  17.480 SPEAKER_00                                                            It's a verification
+    17.780  20.240 SPEAKER_00                                                            called C.J. Mathew has given your address.
+    21.280  21.780 SPEAKER_01                                                            Okay.
+    23.140  27.540 SPEAKER_00                                                            Actually he has taken a loan from us so that is the reason. How do you know him?
+    29.060  29.840 SPEAKER_01                                                            I'm a colleague.
+    31.300  33.940 SPEAKER_01                                                            Okay. Is he doing a job or a business right now?
+    34.900  35.780 SPEAKER_00                                                            No, no job.
+    36.760  38.800 SPEAKER_00                                                            And where does he stay? Is it a address?
+    40.120  41.180 SPEAKER_00                                                            He is now in
+    41.600  42.100 SPEAKER_00                                                            Pattimatham,
+    43.160  43.660 SPEAKER_01                                                            Ernakulam.
+    45.060  46.520 SPEAKER_00                                                            Sorry, sorry, can you repeat?
+    47.020  48.280 SPEAKER_01                                                            Patimatham, Kerala.
+    49.120  50.320 SPEAKER_00                                                            Okay, thank you.
+    50.860  51.360 SPEAKER_00                                                            Okay."""
 
     # Ground truth
     ground_truth = {
@@ -225,5 +247,5 @@ if __name__ == "__main__":
     # Process the transcript
     results = process_transcript(transcript, ground_truth)
 
-    # Print the results in JSON format
-    print(json.dumps(results))
+    # Output the results as a JSON string to standard output
+    output_json(results)

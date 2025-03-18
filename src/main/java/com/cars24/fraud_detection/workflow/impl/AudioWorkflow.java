@@ -5,22 +5,18 @@ import com.cars24.fraud_detection.data.request.DocumentRequest;
 import com.cars24.fraud_detection.data.response.AudioResponse;
 import com.cars24.fraud_detection.data.response.DocumentResponse;
 import com.cars24.fraud_detection.utils.AudioStringConstants;
-//import com.cars24.fraud_detection.utils.PythonExecutor;
-//import com.cars24.fraud_detection.utils.PythonExecutor2;
 import com.cars24.fraud_detection.utils.PythonExecutor3;
 import com.cars24.fraud_detection.workflow.WorkflowInitiator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired; // Add this import
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.*;
+import java.util.stream.Collectors;
+
 @Slf4j
 @Service
 @Primary
@@ -39,120 +35,74 @@ public class AudioWorkflow implements WorkflowInitiator {
         return null;
     }
 
+
     @Override
-    public AudioResponse processAudio(AudioRequest request) throws JsonProcessingException {
+    public AudioResponse processAudio(AudioRequest request) {
         logger.info("Starting audio processing for requestId: {}", request.getUuid());
 
-        // Run the LLMextractionvalidation.py script and get the result
+        // Run the LLM extraction script
         String llmScriptPath = "src/main/resources/python_workflows/LLMextractionvalidation.py";
+        String audioScriptPath = "src/main/resources/python_workflows/AudioAnalysis.py";
         logger.info("Executing LLM extraction script: {} for audio file: {}", llmScriptPath, request.getAudioFile());
 
         Map<String, Object> llmExtractionResult = processAudioScript(llmScriptPath, request.getUuid());
 
-        Object obj = llmExtractionResult.get("output");
-
-        logger.debug("Raw output from Python script: {}", obj);
-
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.configure(JsonParser.Feature.ALLOW_COMMENTS, true);
-        JsonNode rootNode = objectMapper.readTree(obj.toString());
-
-        // Extract values from extracted_result
-        JsonNode extractedResult = rootNode.get(AudioStringConstants.EXTRACTED_RESULT);
-        String referenceName = extractedResult.get("reference_name").asText();
-        String subjectName = extractedResult.get("subject_name").asText();
-        String subjectAddress = extractedResult.get("subject_address").asText();
-        String relationToSubject = extractedResult.get("relation_to_subject").asText();
-        String subjectOccupation = extractedResult.get("subject_occupation").asText();
-
-        double overallScore = rootNode.get(AudioStringConstants.SCORING_RESULTS).get("overall_score").asDouble();
-        String status = rootNode.has(AudioStringConstants.STATUS) ?
-                rootNode.get(AudioStringConstants.STATUS).asText() :
-                (overallScore >= 0.7 ? "accept" : "reject");
-
-        // Extract transcript
-        List<String> transcriptList = new ArrayList<>();
-        JsonNode transcriptNode = rootNode.path(AudioStringConstants.TRANSCRIPT);
-        for (JsonNode entry : transcriptNode) {
-            transcriptList.add(entry.path("text").asText());
-        }
-
-        // Extract explanations
-        JsonNode explanationNode = rootNode.path(AudioStringConstants.SCORING_RESULTS).path(AudioStringConstants.EXPLANATION);
-        List<String> explanations = new ArrayList<>();
-        Iterator<Map.Entry<String, JsonNode>> fields = explanationNode.fields();
-        while (fields.hasNext()) {
-            Map.Entry<String, JsonNode> field = fields.next();
-            explanations.add(field.getKey() + ": " + field.getValue().asText());
-        }
-
-        JsonNode fieldScoresNode = rootNode.path(AudioStringConstants.SCORING_RESULTS).path(AudioStringConstants.FIELD_BY_FIELD_SCORES);
-        Map<String, Double> fieldScores = new HashMap<>();
-        Iterator<Map.Entry<String, JsonNode>> scoreFields = fieldScoresNode.fields();
-        while (scoreFields.hasNext()) {
-            Map.Entry<String, JsonNode> field = scoreFields.next();
-            fieldScores.put(field.getKey(), field.getValue().asDouble());
-        }
-
-
-        // Store extracted values (Example: storing in a map)
-        Map<String, Object> extractedData = new HashMap<>();
-        extractedData.put("reference_name", referenceName);
-        extractedData.put("subject_name", subjectName);
-        extractedData.put("subject_address", subjectAddress);
-        extractedData.put("relation_to_subject", relationToSubject);
-        extractedData.put("subject_occupation", subjectOccupation);
-        extractedData.put("overall_score", overallScore);
-        extractedData.put("transcript", transcriptList);
-        extractedData.put("explanation", explanations);
-        extractedData.put("field_by_field_scores", fieldScores);
-        extractedData.put("status",status);
-
-        // Log extracted values
-        log.info("Extracted Data: {}", extractedData);
-
-
-
         if (llmExtractionResult == null || llmExtractionResult.isEmpty()) {
             logger.warn("LLM extraction script returned an empty response for requestId: {}", request.getUuid());
-        } else {
-            logger.info("LLM extraction completed successfully for requestId: {}", request.getUuid());
+            return new AudioResponse(request.getUuid(), null, new ArrayList<>(), null, null, null, null, null, 0.0, new ArrayList<>(), new HashMap<>(), "error");
         }
 
-        // Create AudioResponse
-        AudioResponse response = new AudioResponse();
-        response.setUuid(request.getUuid());
-        //response.setLlmExtraction(llmExtractionResult);
-        response.setStatus((String) extractedData.get("status"));
-        response.setTranscript((List<String>) extractedData.get("transcript"));
-        response.setReferenceName((String) extractedData.get("reference_name"));
-        response.setSubjectName((String) extractedData.get("subject_name"));
-        response.setSubjectAddress((String) extractedData.get("subject_address"));
-        response.setRelationToSubject((String) extractedData.get("relation_to_subject"));
-        response.setSubjectOccupation((String) extractedData.get("subject_occupation"));
-        response.setOverallScore((Double) extractedData.get("overall_score"));
-        response.setExplanation((List<String>) extractedData.get("explanation"));
-        response.setFieldByFieldScores((Map<String, Double>) extractedData.get("field_by_field_scores"));
+        // Extract values directly from the map
+        List<Map<String, Object>> transcriptList = (List<Map<String, Object>>) llmExtractionResult.get("transcript");
 
-        // Run the audio analysis script and get the result
-        String analysisScriptPath = "src/main/resources/python_workflows/AudioAnalysis.py";
-        logger.info("Executing audio analysis script: {} for audio file: {}", analysisScriptPath, request.getAudioFile());
+        Map<String, Object> extractedResultMap = (Map<String, Object>) llmExtractionResult.get("extracted_result");
+        String referenceName = (String) extractedResultMap.get("reference_name");
+        String subjectName = (String) extractedResultMap.get("subject_name");
+        String subjectAddress = (String) extractedResultMap.get("subject_address");
+        String relationToSubject = (String) extractedResultMap.get("relation_to_subject");
+        String subjectOccupation = (String) extractedResultMap.get("subject_occupation");
 
-        Map<String, Object> audioAnalysisResult = processAudioScript(analysisScriptPath, request.getUuid());
+        Map<String,Object> audioAnalysisMap = processAudioScript(audioScriptPath, request.getUuid());
 
-        if (audioAnalysisResult == null || audioAnalysisResult.isEmpty()) {
-            logger.warn("Audio analysis script returned an empty response for requestId: {}", request.getUuid());
-        } else {
-            logger.info("Audio analysis completed successfully for requestId: {}", request.getUuid());
+
+        Map<String, Object> scoringResultsMap = (Map<String, Object>) llmExtractionResult.get("scoring_results");
+        Double overallScore = (Double) scoringResultsMap.get("overall_score");
+
+        Map<String, Object> fieldByFieldScoresMap = (Map<String, Object>) scoringResultsMap.get("field_by_field_scores");
+        Map<String, Double> fieldByFieldScores = new HashMap<>();
+        if (fieldByFieldScoresMap != null) {
+            for (Map.Entry<String, Object> entry : fieldByFieldScoresMap.entrySet()) {
+                fieldByFieldScores.put(entry.getKey(), ((Number) entry.getValue()).doubleValue()); // Cast to Number and then to double
+            }
         }
 
-        response.setAudioAnalysis(audioAnalysisResult);
-        logger.info("Audio processing completed for requestId: {}", request.getUuid());
+        Map<String, Object> explanationMap = (Map<String, Object>) scoringResultsMap.get("explanation");
+        List<String> explanation = new ArrayList<>();
+        if (explanationMap != null) {
+            for (Map.Entry<String, Object> entry : explanationMap.entrySet()) {
+                explanation.add(entry.getValue().toString());
+            }
+        }
 
-        return response;
+        String status = (String) llmExtractionResult.get("status");
+
+        logger.info("Extracted Data: {}", Arrays.asList(
+                "ReferenceName=" + referenceName,
+                "SubjectName=" + subjectName,
+                "SubjectAddress=" + subjectAddress,
+                "RelationToSubject=" + relationToSubject,
+                "SubjectOccupation=" + subjectOccupation,
+                "OverallScore=" + overallScore,
+                "FieldByFieldScores=" + fieldByFieldScores,
+                "Explanation=" + explanation,
+                "Status=" + status
+                ,"AudioAnalysis="+audioAnalysisMap
+        ));
+        // Convert transcriptList to a list of strings
+        List<String> transcript = transcriptList.stream().map(map -> map.toString()).collect(Collectors.toList());
+        // Create and return AudioResponse
+        return new AudioResponse(request.getUuid(),audioAnalysisMap, transcript, referenceName, subjectName, subjectAddress, relationToSubject, subjectOccupation, overallScore, explanation, fieldByFieldScores, status);
     }
-
     private Map<String, Object> processAudioScript(String scriptPath, String uuid) {
         logger.debug("Running Python script: {} with audio file: {}", scriptPath, uuid);
         Map<String, Object> result = pythonExecutor.runPythonScript(scriptPath, uuid);

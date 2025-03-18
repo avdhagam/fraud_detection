@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+
 @Slf4j
 @Service
 public class PythonExecutor3 {
@@ -56,6 +57,7 @@ public class PythonExecutor3 {
             // Attempt to parse the output as JSON
             try {
                 Map<String, Object> result = objectMapper.readValue(scriptOutput, Map.class);
+                log.info("script output:{}",scriptOutput);
                 log.info("Python script executed successfully with parsed JSON result: {}", result);
                 return result;
             } catch (Exception jsonEx) {

@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 @Slf4j
 @RestController
 @RequestMapping("/audio")
+@CrossOrigin(origins = "*")
 public class AudioController {
 
     private final AudioService audioService;

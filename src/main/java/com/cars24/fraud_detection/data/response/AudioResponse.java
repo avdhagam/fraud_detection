@@ -5,12 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class AudioResponse {
     private String uuid;
     //private Map<String, Object> llmExtraction;
@@ -26,6 +27,29 @@ public class AudioResponse {
     private Map<String, Double> fieldByFieldScores;
     private String status;
 
-    public AudioResponse(String id, List<String> transcript, String referenceName, String subjectName, String subjectAddress, String relationToSubject, String subjectOccupation, double overallScore, List<String> explanation, Map<String, Double> fieldByFieldScores,String status) {
+    public AudioResponse(String uuid,
+                         Map<String, Object> audioAnalysis,
+                         List<String> transcript,
+                         String referenceName,
+                         String subjectName,
+                         String subjectAddress,
+                         String relationToSubject,
+                         String subjectOccupation,
+                         double overallScore,
+                         List<String> explanation,
+                         Map<String, Double> fieldByFieldScores,
+                         String status) {
+        this.uuid = uuid;
+        this.audioAnalysis = audioAnalysis;
+        this.transcript = transcript;
+        this.referenceName = referenceName;
+        this.subjectName = subjectName;
+        this.subjectAddress = subjectAddress;
+        this.relationToSubject = relationToSubject;
+        this.subjectOccupation = subjectOccupation;
+        this.overallScore = overallScore;
+        this.explanation = explanation;
+        this.fieldByFieldScores = fieldByFieldScores;
+        this.status = status;
     }
 }
