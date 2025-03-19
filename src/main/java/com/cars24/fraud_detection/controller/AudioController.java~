@@ -102,12 +102,16 @@ public class AudioController {
     @GetMapping("/recent/{userReportId}")
     public ResponseEntity<List<String>> getRecentAudioUUIDs(
             @PathVariable String userReportId,
-            @RequestParam(defaultValue = "5") int limit) {
-
+            @RequestParam(defaultValue = "5") int limit) { // Default limit to 5
         log.info("Received request to get recent audio UUIDs for user ID: {} with limit: {}", userReportId, limit);
 
-        List<String> recentAudioUUIDs = audioService.getRecentAudios(userReportId, limit);
+        List<String> recentAudioUUIDs = audioService.getRecentAudios(userReportId, limit)
+                .stream()
+                .map(AudioEntity::getId) // Extract only the UUIDs
+                .collect(Collectors.toList());
 
         return ResponseEntity.ok(recentAudioUUIDs);
     }
+
+
 }

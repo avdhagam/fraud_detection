@@ -1,0 +1,8 @@
+{
+    "document_type": "Aadhaar",
+    "name": "SMITH STEVE PETER",
+    "date_of_birth": "1989-06-02",
+    "gender": "male",
+    "id_number": "266497831234",
+    "raw_text": "{\n  \"document_type\": \"Aadhaar\",\n  \"name\": \"SMITH STEVE PETER\",\n  \"date_of_birth\": \"1989-06-02\",\n  \"gender\": \"male\",\n  \"id_number\": \"266497831234\"\n}"
+}

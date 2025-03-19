@@ -13,5 +13,5 @@ public interface AudioService {
     AudioResponse getAudioResults(String id);
     List<AudioEntity> getAudiosByUserId(String userId);
     //AudioResponse processUserAudio(AudioRequest audioRequest, String userReportId) throws JsonProcessingException, AudioProcessingException;
-    List<AudioEntity> getRecentAudios(String userId, int limit);
+    List<String> getRecentAudios(String userId, int limit);
 }
