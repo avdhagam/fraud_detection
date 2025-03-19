@@ -10,11 +10,8 @@ import java.util.List;
 
 public interface AudioService {
     AudioResponse processAudioRequest(AudioRequest audioRequest) throws JsonProcessingException, AudioProcessingException;
-
     AudioResponse getAudioResults(String id);
-
-
     List<AudioEntity> getAudiosByUserId(String userId);
-
     //AudioResponse processUserAudio(AudioRequest audioRequest, String userReportId) throws JsonProcessingException, AudioProcessingException;
+    List<AudioEntity> getRecentAudios(String userId, int limit);
 }

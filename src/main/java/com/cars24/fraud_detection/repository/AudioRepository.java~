@@ -10,6 +10,4 @@ public interface AudioRepository extends MongoRepository<AudioEntity, String> {
 
         // Find all audios by userReportId
         List<AudioEntity> findByUserReportId(String userReportId);
-
-        List<AudioEntity> findTopNByUserReportIdOrderByTimestampDesc(String userReportId, int n);
 }

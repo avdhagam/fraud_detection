@@ -11,6 +11,4 @@ public interface AudioDao {
 
     //New method to fetch all audios for a user
     List<AudioEntity> getAudiosByUserId(String userId);
-
-    List<AudioEntity> getRecentAudiosByUserId(String userReportId, int limit);
 }

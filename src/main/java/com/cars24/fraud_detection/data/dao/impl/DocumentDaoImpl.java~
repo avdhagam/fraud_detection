@@ -7,7 +7,6 @@ import com.cars24.fraud_detection.repository.DocumentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -30,7 +29,8 @@ public class DocumentDaoImpl implements DocumentDao {
     }
 
     @Override
-    public List<DocumentEntity> getRecentDocumentsByUserId(String userReportId, int limit) {
-        return documentRepo.findTopNByUserReportIdOrderByTimestampDesc(userReportId, limit);
+    public List<AudioEntity> getRecentAudiosByUserId(String userReportId, int limit) {
+        log.info("Fetching recent AudioEntities for user ID: " + userReportId + " with limit: " + limit);
+        return audioRepo.findTopNByUserReportIdOrderByTimestampDesc(userReportId, limit);
     }
 }

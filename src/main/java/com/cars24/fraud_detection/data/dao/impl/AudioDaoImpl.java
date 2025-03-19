@@ -37,6 +37,12 @@ public class AudioDaoImpl implements AudioDao {
         return audioRepo.findByUserReportId(userReportId);
     }
 
+    @Override
+    public List<AudioEntity> getRecentAudiosByUserId(String userReportId, int limit) {
+        log.info("Fetching recent AudioEntities for user ID: " + userReportId + " with limit: " + limit);
+        return audioRepo.findTopNByUserReportIdOrderByTimestampDesc(userReportId, limit);
+    }
+
 }
 
 

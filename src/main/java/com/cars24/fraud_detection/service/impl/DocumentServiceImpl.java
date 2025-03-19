@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -111,5 +112,10 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentEntity findDocumentEntityById(String documentId) {
         log.info("Fetching DocumentEntity by ID: {}", documentId);
         return documentDao.getDocumentById(documentId).orElse(null); // Return null if not found
+    }
+
+    @Override
+    public List<DocumentEntity> getRecentDocuments(String userId, int limit) {
+        return documentDao.getRecentDocumentsByUserId(userId, limit);
     }
 }

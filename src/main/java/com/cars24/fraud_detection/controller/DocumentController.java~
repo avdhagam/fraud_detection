@@ -130,15 +130,10 @@ public class DocumentController {
     @GetMapping("/recent/{userReportId}")
     public ResponseEntity<List<DocumentEntity>> getRecentDocuments(
             @PathVariable String userReportId,
-            @RequestParam(defaultValue = "5") int limit) {
-        try {
-            log.info("Received request to get recent documents for user ID: {} with limit: {}", userReportId, limit);
-            List<DocumentEntity> recentDocuments = documentService.getRecentDocuments(userReportId, limit);
-            return ResponseEntity.ok(recentDocuments);
-        } catch (Exception e) {
-            log.error("Error processing request:", e); // Log the exception
-            return ResponseEntity.badRequest().body(null); // Return a 400 error
-        }
+            @RequestParam(defaultValue = "5") int limit) { // Default limit to 5
+        log.info("Received request to get recent documents for user ID: {} with limit: {}", userReportId, limit);
+        List<DocumentEntity> recentDocuments = documentService.getRecentDocuments(userReportId, limit);
+        return ResponseEntity.ok(recentDocuments);
     }
 }
 

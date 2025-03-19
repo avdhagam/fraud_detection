@@ -7,10 +7,13 @@ import com.cars24.fraud_detection.data.response.DocumentResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @Service
 public interface DocumentService {
     DocumentResponse processDocument(DocumentRequest request);
     DocumentResponse getDocumentById(String documentId);
     DocumentEntity findDocumentEntityById(String documentId);
     //DocumentResponse processUserDocument(MultipartFile file, String userId);
+    List<DocumentEntity> getRecentDocuments(String userId, int limit);
 }

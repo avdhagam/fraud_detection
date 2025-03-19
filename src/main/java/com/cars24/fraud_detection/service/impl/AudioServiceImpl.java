@@ -8,6 +8,7 @@ import com.cars24.fraud_detection.exception.AudioProcessingException;
 import com.cars24.fraud_detection.service.AudioService;
 import com.cars24.fraud_detection.workflow.WorkflowInitiator;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,7 +21,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Logger;
-
+@Slf4j
 @Service
 public class AudioServiceImpl implements AudioService {
 
@@ -150,6 +151,12 @@ public class AudioServiceImpl implements AudioService {
     public List<AudioEntity> getAudiosByUserId(String userId) {
 
         return audioDao.getAudiosByUserId(userId);
+    }
+
+    @Override
+    public List<AudioEntity> getRecentAudios(String userId, int limit) {
+        log.info("Fetching recent audios for user ID: {} with limit: {}", userId, limit);
+        return audioDao.getRecentAudiosByUserId(userId, limit);
     }
 }
 

@@ -3,7 +3,6 @@ package com.cars24.fraud_detection.data.dao;
 
 import com.cars24.fraud_detection.data.entity.DocumentEntity;
 
-import java.util.List;
 import java.util.Optional;
 
 
