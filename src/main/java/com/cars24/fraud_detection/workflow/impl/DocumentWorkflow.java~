@@ -79,7 +79,7 @@ public class DocumentWorkflow implements WorkflowInitiator {
             Files.createDirectories(Paths.get(archivePath));
 
             // Save the document and get its path, using the userReportId
-            documentPath = fileUtils.saveDocument(request.getDocumentData(), request.getFileName());
+            documentPath = fileUtils.saveDocument(request.getDocumentData(), request.getFileName(), userReportId);
             log.info("Document stored at: {}", documentPath);
 
             // Execute OCR

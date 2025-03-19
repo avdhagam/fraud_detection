@@ -356,17 +356,22 @@
 #
 #
 
-
 import os
+os.environ["OMP_NUM_THREADS"] = "1"
+
 import json
 import re
 import requests
-from openai import OpenAI
-
-import sys
-
 from pathlib import Path
 import Transcription # Import transcript.py for processing
+import prompts
+import sys
+
+script_path = Path(__file__).resolve() # finds absolute path of script
+root_dir = script_path.parents[4]  # Calculate root directory by moving up four levels
+sys.path.append(str(root_dir)) # Add the project's root directory to the Python path
+import config
+
 
 # Define base path for stored audio files
 root_path = Path(__file__).resolve().parent.parent  # Moves up two levels
@@ -425,19 +430,23 @@ def parse_transcript_to_structured_format(transcript_text):
 
     return structured_transcript
 
-def extract_transcript_information(transcript):
+def extract_transcript_information(transcript, ground_truth):
     """
-    Extract key information from a call transcript using OpenRouter API.
+    Extract key information and score against ground truth in a single API call.
 
     Args:
         transcript (str): The call transcript text.
+        ground_truth (dict): The ground truth information.
 
     Returns:
-        dict: Extracted information in dictionary format.
+        dict: Extracted information and scoring results.
     """
     # OpenRouter API key
+    api_key = config.OPENROUTER_API_KEY
+    if not api_key:
+        print("Error: OPENROUTER_API_KEY is not set.")
+        sys.exit(1)
 
-    api_key = os.environ.get("OPENROUTER_API_KEY", "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")
     # API URL
     url = "https://openrouter.ai/api/v1/chat/completions"
 
@@ -449,36 +458,21 @@ def extract_transcript_information(transcript):
         "X-Title": "Transcript Analysis App",
     }
 
-    # Prompt for extraction
-    extraction_prompt = f"""
-    Extract the following information from this transcript. 
-    Be extremely precise and ensure the response is in valid JSON format.
-    
-    Keys to extract:
-    1. reference_name: Name of the person being called
-    2. subject_name: Name of the person who took the loan
-    3. subject_address: Full address of the subject
-    4. relation_to_subject: Relationship between reference and subject
-    5. subject_occupation: Current occupation of the subject
+    # Convert ground truth to string
+    ground_truth_str = json.dumps(ground_truth)
 
-    Transcript:
-    {transcript}
-
-    IMPORTANT: Respond EXACTLY in this JSON format:
-    {{
-        "reference_name": "...",
-        "subject_name": "...",
-        "subject_address": "...",
-        "relation_to_subject": "...",
-        "subject_occupation": "..."
-    }}
-    """
+    # Combined prompt for extraction and scoring
+    combined_prompt_template = prompts.PROMPTS["EXTRACTION_SCORING_PROMPT"]
+    combined_prompt = combined_prompt_template.format(
+        transcript=transcript,
+        ground_truth_str=ground_truth_str
+    )
 
     # Request payload
     payload = {
         "model": "google/gemini-2.0-flash-lite-001",
         "messages": [
-            {"role": "user", "content": extraction_prompt}
+            {"role": "user", "content": combined_prompt}
         ]
     }
 
@@ -489,163 +483,39 @@ def extract_transcript_information(transcript):
     if response.status_code == 200:
         try:
             result = response.json()
-            # Extract the content from the response
             content = result.get("choices", [{}])[0].get("message", {}).get("content", "")
 
-            # Clean the content (remove code blocks, trim)
-            content = content.strip()
+            # Clean and parse the JSON response
             content = re.sub(r'^```json\s*|\s*```$', '', content, flags=re.MULTILINE).strip()
-
-            # Parse the JSON
             parsed_result = json.loads(content)
+
+            # Determine status based on overall score
+            overall_score = parsed_result.get("overall_score", 0)
+            parsed_result["status"] = "accept" if overall_score >= 0.7 else "reject"
 
             return parsed_result
         except json.JSONDecodeError as e:
-            print(f"Error parsing extraction result: {e}")
-            print(f"Raw content: {content}")
-            return {}
+            print(f"Error parsing API response: {e}")
+            return {
+                "error": "Failed to parse response",
+                "status": "reject"
+            }
         except Exception as e:
             print(f"Unexpected error: {e}")
-            return {}
+            return {
+                "error": str(e),
+                "status": "reject"
+            }
     else:
         print(f"Error: API request failed with status code {response.status_code}")
-        return {}
-
-def score_extraction_with_llm(result, ground_truth):
-    """
-    Use the LLM to score the extracted information against ground truth
-
-    Args:
-        result (dict/str): The extracted information (JSON or string)
-        ground_truth (dict): The ground truth information
-
-    Returns:
-        dict: Scoring results with field-by-field and overall scores
-    """
-    # Initialize client with OpenRouter API
-    client = OpenAI(
-        base_url="https://openrouter.ai/api/v1",
-
-        api_key=os.environ.get("OPENROUTER_API_KEY", "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"),
-
-    )
-
-    # Convert result to string if it's a dict
-    if isinstance(result, dict):
-        result_str = json.dumps(result)
-    else:
-        result_str = result
-
-    # Convert ground truth to string
-    ground_truth_str = json.dumps(ground_truth)
-
-    # Create the scoring prompt
-    scoring_prompt = f"""
-    I need you to carefully score the extraction result against the ground truth.
-    
-    RESULT:
-    {result_str}
-    
-    GROUND TRUTH:
-    {ground_truth_str}
-    
-    Scoring Guidelines:
-    1. Names: 
-       - 1.0 if exactly same
-       - 0.8 if very similar (e.g., Matheo vs Matthew)
-       - Lower scores for significant differences
-    
-    2. Addresses: 
-       - 1.0 if exact match
-       - 0.8 if key location/area matches (e.g., same city/neighborhood)
-       - 0.6 if partial match (e.g., just the city or part of address)
-       - Lower scores for completely different locations
-    
-    3. Relation: 
-       - 1.0 if exact semantic match
-       - 0.8 if similar meaning (e.g., "colleague" vs "work together")
-       - Lower scores for significantly different meanings
-    
-    4. Occupation: 
-       - 1.0 if exact match
-       - 0.8 if semantically equivalent (e.g., "no job" vs "unemployed")
-       - Lower scores for significantly different descriptions
-    
-    Return a JSON with these fields:
-    1. transcript
-    2. field_by_field_scores: A dictionary with scores for each field (reference_name, subject_name, subject_address, relation_to_subject, subject_occupation)
-    2. overall_score: Average of all field scores
-    3. explanation: A dictionary with detailed explanations for each field score
-    
-    
-    IMPORTANT: Return ONLY a valid JSON object with no markdown formatting, code blocks, or additional text.
-    """
-
-    # Create request with the scoring prompt
-    completion = client.chat.completions.create(
-        extra_headers={
-            "HTTP-Referer": "https://your-app-domain.com",
-            "X-Title": "Extraction Scoring App",
-        },
-        model="google/gemini-2.0-flash-lite-001",  # Or any other suitable model
-        messages=[
-            {
-                "role": "user",
-                "content": scoring_prompt
-            }
-        ]
-    )
-
-    # Get the response
-    score_result = completion.choices[0].message.content
-
-    # Clean the response - remove markdown code blocks if present
-    # This pattern matches ```json and ``` at the beginning and end
-    # cleaned_result = re.sub(r'^```json\s*|\s*```$', '', score_result, flags=re.MULTILINE)
-    cleaned_result = re.sub(r'^```json\s*|\s*```$', '', score_result, flags=re.MULTILINE)
-
-    # Try to parse the JSON response
-    try:
-        score_data = json.loads(cleaned_result)
-
-        # Ensure the response has the correct structure
-        if "field_scores" in score_data and not "field_by_field_scores" in score_data:
-            score_data["field_by_field_scores"] = score_data.pop("field_scores")
-
-        # Ensure explanation is a dictionary if it's a string
-        if "explanation" in score_data and isinstance(score_data["explanation"], str):
-            # Create a dictionary with the same explanation for each field
-            explanation_text = score_data["explanation"]
-            score_data["explanation"] = {
-                "reference_name": explanation_text,
-                "subject_name": explanation_text,
-                "subject_address": explanation_text,
-                "relation_to_subject": explanation_text,
-                "subject_occupation": explanation_text
-            }
-
-        return score_data
-    except json.JSONDecodeError:
-        # If still failing, try a more aggressive cleanup
-        # Extract anything that looks like JSON - content between { and }
-        json_match = re.search(r'({.*})', cleaned_result, re.DOTALL)
-        if json_match:
-            try:
-                score_data = json.loads(json_match.group(1))
-                return score_data
-            except json.JSONDecodeError:
-                pass
-
-        # If all parsing attempts fail
         return {
-            "error": "Failed to parse LLM response",
-            "raw_response": score_result,
-            "cleaned_response": cleaned_result
+            "error": f"API request failed with status code {response.status_code}",
+            "status": "reject"
         }
 
 def process_transcript(transcript, ground_truth):
     """
-    Process the transcript by extracting information and scoring against ground truth
+    Process the transcript by extracting information and scoring against ground truth in a single step.
 
     Args:
         transcript (str): The call transcript
@@ -657,24 +527,33 @@ def process_transcript(transcript, ground_truth):
     # Parse transcript into structured format
     structured_transcript = parse_transcript_to_structured_format(transcript)
 
-    # Extract information from transcript
-    extracted_result = extract_transcript_information(transcript)
+    # Extract and score in one step
+    results = extract_transcript_information(transcript, ground_truth)
 
-    # Score the extracted information
-    scoring_results = score_extraction_with_llm(extracted_result, ground_truth)
-
-    # Determine status based on overall score
-    overall_score = scoring_results.get("overall_score", 0)
-    status = "accept" if overall_score >= 0.7 else "reject"
-
-    # Combine results into the required format
+    # Construct the final output
     return {
         "transcript": structured_transcript,
-        "extracted_result": extracted_result,
-        "scoring_results": scoring_results,
-        "status": status
+        "extracted_result": results.get("extracted_result", {}),
+        "scoring_results": {
+            "field_by_field_scores": results.get("field_by_field_scores", {}),
+            "overall_score": results.get("overall_score", 0),
+            "explanation": results.get("explanation", {})
+        },
+        "status": results.get("status", "reject")
     }
 
+def output_json(data):
+    """
+    Outputs the given data as a JSON string to standard output.
+
+    Args:
+        data (dict): The data to output as JSON.
+    """
+    try:
+        print(json.dumps(data))
+    except Exception as e:
+        print(json.dumps({"error": f"Failed to encode data as JSON: {e}"}))
+        sys.exit(1)
 
 # Example usage
 if __name__ == "__main__":
@@ -686,23 +565,33 @@ if __name__ == "__main__":
     audio_path = get_audio_file_path(uuid)
 
     # Call the transcription function from transcript.py
-    transcript = Transcription.get_transcripts(audio_path)
-
-
-
-    # print("\nFinal Transcription Output:\n")
-    # print(type(transcript))
-    # print(transcript)
-
-    # Print final output (or return to API)
-
-    #print(transcript)
-
-    # Sample transcript
-    # transcript = """
-    # 2.191  2.574 SPEAKER_01                                                        Hello? 4.213  4.597 SPEAKER_00                                                        Hello? 5.014  7.257 SPEAKER_00                                             Hi, is it Ashish? 7.257  7.581 SPEAKER_01                                                        Hello? 8.499 10.182 SPEAKER_00                                           Sorry, is it Arjun?10.181 11.864 SPEAKER_01                                                          Yes.11.863 14.066 SPEAKER_00                                Hi, Arjun, Shilpa from Car 24.15.307 15.730 SPEAKER_01                                                         Okay.16.769 18.611 SPEAKER_00                               It's a verification called C.Q.18.611 20.174 SPEAKER_00                                Matheo has given your address.21.415 21.897 SPEAKER_01                                                     Ah, okay.23.217 26.461 SPEAKER_00 Actually, he has taken a loan from us, so that is the reason.26.481 27.223 SPEAKER_00                                          How do you know him?28.944 29.806 SPEAKER_01                                          Ah, I'm a colleague.31.334 33.698 SPEAKER_00              Okay, is he doing a job or a business right now?35.100 35.703 SPEAKER_01                                                   No, no job.36.883 38.006 SPEAKER_00                                      And where does he stays?38.005 40.229 SPEAKER_00                                                  His address?40.289 43.674 SPEAKER_01                          He is now in Pattimathur, Ernakulam.45.217 46.420 SPEAKER_00                                 Sorry, sorry, can you repeat?47.080 48.483 SPEAKER_00                                       Pattimathur, Ernakulam.49.224 50.146 SPEAKER_00                                              Okay, thank you.51.167 51.267 SPEAKER_00                                                         Okay.
-    # """
-
+    # transcript = Transcription.get_transcripts(audio_path)
+    transcript = """start   end    speaker                                                              utterance
+    0.000  0.500 SPEAKER_01                                                            Hello?
+    1.560  2.180 SPEAKER_01                                                            Hello? Hi,
+    2.620  4.020 SPEAKER_00                                                            is it Arjun? Hello?
+    4.844  5.344 SPEAKER_00                                                            Sorry,
+    6.168  6.668 SPEAKER_00                                                            is
+    7.492  7.992 SPEAKER_00                                                            it
+    8.816  9.316 SPEAKER_01                                                            Arjun?
+    10.140  10.640 SPEAKER_00                                                            Yes.
+    11.660  13.860 SPEAKER_01                                                            Hi, Arjun, Shilpa from Kast 24.
+    15.220  15.720 SPEAKER_00                                                            Okay.
+    16.580  17.480 SPEAKER_00                                                            It's a verification
+    17.780  20.240 SPEAKER_00                                                            called C.J. Mathew has given your address.
+    21.280  21.780 SPEAKER_01                                                            Okay.
+    23.140  27.540 SPEAKER_00                                                            Actually he has taken a loan from us so that is the reason. How do you know him?
+    29.060  29.840 SPEAKER_01                                                            I'm a colleague.
+    31.300  33.940 SPEAKER_01                                                            Okay. Is he doing a job or a business right now?
+    34.900  35.780 SPEAKER_00                                                            No, no job.
+    36.760  38.800 SPEAKER_00                                                            And where does he stay? Is it a address?
+    40.120  41.180 SPEAKER_00                                                            He is now in
+    41.600  42.100 SPEAKER_00                                                            Pattimatham,
+    43.160  43.660 SPEAKER_01                                                            Ernakulam.
+    45.060  46.520 SPEAKER_00                                                            Sorry, sorry, can you repeat?
+    47.020  48.280 SPEAKER_01                                                            Patimatham, Kerala.
+    49.120  50.320 SPEAKER_00                                                            Okay, thank you.
+    50.860  51.360 SPEAKER_00                                                            Okay."""
 
     # Ground truth
     ground_truth = {
@@ -716,5 +605,5 @@ if __name__ == "__main__":
     # Process the transcript
     results = process_transcript(transcript, ground_truth)
 
-    # Print the results in JSON format
-    print(json.dumps(results))
+    # Output the results as a JSON string to standard output
+    output_json(results)

@@ -1,0 +1,29 @@
+{
+    "forgeryAnalysis": {
+        "tamperingAnalysis": {
+            "tamperingScore": 0.2,
+            "detailedInsight": "No signs of image manipulation or suspicious artifacts detected."
+        },
+        "metadataAnalysis": {
+            "metadataAnomalyScore": 0.1,
+            "detailedInsight": "Metadata appears consistent and does not indicate document modification."
+        },
+        "formatConsistencyAnalysis": {
+            "formatConsistencyScore": 0.3,
+            "detailedInsight": "Font, alignment, and layout match the standard document structure."
+        },
+        "securityFeatureAnalysis": {
+            "securityFeatureScore": 0.5,
+            "detailedInsight": "All expected security features, such as watermarks and holograms, are present and authentic."
+        },
+        "backgroundIntegrityAnalysis": {
+            "backgroundConsistencyScore": 0.4,
+            "detailedInsight": "No unnatural noise patterns or splicing artifacts detected in the background."
+        },
+        "overallForgeryAssessment": {
+            "finalForgeryRiskScore": "Low",
+            "decision": "Manual Review Recommended"
+        }
+    },
+    "success": true
+}

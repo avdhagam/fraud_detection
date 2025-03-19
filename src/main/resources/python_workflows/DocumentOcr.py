@@ -6,9 +6,17 @@ import os
 import codecs
 import re
 import traceback
+import prompts
+
+from pathlib import Path
+script_path = Path(__file__).resolve() # finds absolute path of script
+root_dir = script_path.parents[4]  # Calculate root directory by moving up four levels
+sys.path.append(str(root_dir))
+
+import config
 
 # Load API Key from environment variable
-GEMINI_API_KEY = "AIzaSyBoCMnuBY55guf4dxKj0cHwQiq4Mfyrn7w"  # Replace with your actual key or better, use environment variables
+GEMINI_API_KEY = config.GEMINI_API_KEY
 GEMINI_OCR_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
 
 # Ensure UTF-8 output encoding
@@ -40,17 +48,7 @@ def extract_text_from_image(image_path):
         "contents": [
             {
                 "parts": [
-                    {"text": """
-                        Extract the following information from this document image and return the result as a JSON object:
-
-                        - document_type (string): The type of document (e.g., "Aadhaar", "Passport", "Driving License").
-                        - name (string): The full name of the individual.
-                        - date_of_birth (string): The date of birth in YYYY-MM-DD format.
-                        - gender (string): The gender of the individual ("Male", "Female", or "Other").
-                        - id_number (string): The document's ID number.
-
-                        Ensure the JSON response is valid and parsable.  If a field cannot be extracted, set its value to null.
-                        """},
+                    {"text":prompts.PROMPTS["OCR_PROMPT"]},
                     {"inline_data": {"mime_type": "image/jpeg", "data": image_data}}
                 ]
             }
@@ -77,27 +75,32 @@ def extract_text_from_image(image_path):
         extracted_text = re.sub(r"```json\n", "", extracted_text)
         extracted_text = re.sub(r"\n```", "", extracted_text)
 
-        # Attempt to parse the extracted text as JSON
+        # Parse JSON response
         try:
             structured_data = json.loads(extracted_text)
 
-            # Ensure that you get structured data from the Gemini AI
+            # Extract common fields
             document_type = structured_data.get("document_type")
             name = structured_data.get("name")
             date_of_birth = structured_data.get("date_of_birth")
-            gender = structured_data.get("gender")
             id_number = structured_data.get("id_number")
 
-            # Save OCR output as JSON
+            # Handle Aadhaar-specific fields
+            gender = structured_data.get("gender") if document_type == "Aadhaar" else None
+
+            # Handle PAN-specific fields
+            father_name = structured_data.get("father_name") if document_type == "PAN" else None
+
+            # Save OCR output dynamically
             ocr_output = {
                 "document_type": document_type,
                 "name": name,
                 "date_of_birth": date_of_birth,
-                "gender": gender,
                 "id_number": id_number,
-                "raw_text": extracted_text # Keep the raw text as well, just in case
+                "gender": gender,
+                "father_name": father_name,
+                "raw_text": extracted_text  # Keep raw text for reference
             }
-
         except json.JSONDecodeError as e:
             print(json.dumps({"error": f"Failed to parse JSON from Gemini: {str(e)}", "raw_response": extracted_text}, indent=4, ensure_ascii=False))
             sys.exit(1)
