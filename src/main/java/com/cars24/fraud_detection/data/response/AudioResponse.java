@@ -5,12 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class AudioResponse {
     private String uuid;
 
@@ -29,6 +30,36 @@ public class AudioResponse {
     private Map<String, Double> fieldByFieldScores;
     private String status;
 
-    public AudioResponse(String id, String userReportId, List<String> transcript, String referenceName, String subjectName, String subjectAddress, String relationToSubject, String subjectOccupation, double overallScore, List<String> explanation, Map<String, Double> fieldByFieldScores, String status) {
+    public AudioResponse(String uuid,
+                         String userReportId,
+                         Map<String, Object> llmExtraction,
+                         Map<String, Object> audioAnalysis,
+                         List<String> transcript,
+                         String referenceName,
+                         String subjectName,
+                         String subjectAddress,
+                         String relationToSubject,
+                         String subjectOccupation,
+                         double overallScore,
+                         List<String> explanation,
+                         Map<String, Double> fieldByFieldScores,
+                         String status) {
+        this.uuid = uuid;
+        this.userReportId=userReportId;
+        this.llmExtraction = llmExtraction;
+        this.audioAnalysis = audioAnalysis;
+        this.transcript = transcript;
+        this.referenceName = referenceName;
+        this.subjectName = subjectName;
+        this.subjectAddress = subjectAddress;
+        this.relationToSubject = relationToSubject;
+        this.subjectOccupation = subjectOccupation;
+        this.overallScore = overallScore;
+        this.explanation = explanation;
+        this.fieldByFieldScores = fieldByFieldScores;
+        this.status = status;
+    }
+
+    public <E, K, V> AudioResponse(String uuid, Object o, ArrayList<E> es, Object o1, Object o2, Object o3, Object o4, Object o5, double v, ArrayList<E> es1, HashMap<K,V> kvHashMap, String error) {
     }
 }
