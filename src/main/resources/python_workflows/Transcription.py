@@ -1,10 +1,9 @@
-
 import requests
 import json
 import numpy as np
 import librosa
-
 import tempfile
+
 from pydub import AudioSegment
 from sklearn.cluster import KMeans, SpectralClustering, AgglomerativeClustering, DBSCAN
 from sklearn.preprocessing import StandardScaler
@@ -13,55 +12,101 @@ from scipy.spatial.distance import cdist
 
 import sys
 from pathlib import Path
+
 script_path = Path(__file__).resolve() # finds absolute path of script
 root_dir = script_path.parents[4]  # Calculate root directory by moving up four levels
 sys.path.append(str(root_dir)) # Add the project's root directory to the Python path
-import config
 
-# logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+import config
+import subprocess
 
 # Deepgram API Key
 DEEPGRAM_API_KEY = config.DEEPGRAM_API_KEY
 
+import subprocess
+import os
+from pydub import AudioSegment
+
+def is_ffmpeg_installed():
+    """Check if FFmpeg is installed and accessible."""
+    try:
+        subprocess.run(["ffmpeg", "-version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return True
+    except FileNotFoundError:
+        return False
+
+def force_reencode_mp3(mp3_path):
+    """Re-encode a potentially corrupt MP3 file using FFmpeg."""
+    reencoded_mp3 = mp3_path.replace(".mp3", "_fixed.mp3")
+
+    if not is_ffmpeg_installed():
+        raise RuntimeError("FFmpeg is not installed or not in PATH. Please install FFmpeg.")
+
+    try:
+        result = subprocess.run(
+            ["ffmpeg", "-y", "-i", mp3_path, "-acodec", "libmp3lame", "-q:a", "2", reencoded_mp3],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        if not os.path.exists(reencoded_mp3):
+            print("FFmpeg re-encode failed:", result.stderr)
+            return None
+        return reencoded_mp3
+    except Exception as e:
+        print(f"FFmpeg execution error: {e}")
+        return None
+
 def convert_mp3_to_wav(mp3_path):
-    """Converts an MP3 file to a temporary WAV file."""
-    temp_wav = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
+    """Convert MP3 to WAV, re-encoding if necessary."""
+    wav_path = mp3_path.replace(".mp3", ".wav")
+
+    try:
+        audio = AudioSegment.from_mp3(mp3_path)
+    except Exception as e:
+        print(f"MP3 is corrupt, attempting re-encode: {e}")
+        fixed_mp3_path = force_reencode_mp3(mp3_path)
+        if fixed_mp3_path and os.path.exists(fixed_mp3_path):
+            print("Re-encode successful, using fixed MP3")
+            mp3_path = fixed_mp3_path
+        else:
+            raise ValueError(f"Failed to fix MP3 file: {mp3_path}")
+
+    # Convert to WAV
     audio = AudioSegment.from_mp3(mp3_path)
-    audio.export(temp_wav.name, format="wav")
-    #logging.info(f"Converted MP3 to temporary WAV: {temp_wav.name}")
-    return temp_wav
+    audio.export(wav_path, format="wav")
+    return wav_path
+
+# def convert_mp3_to_wav(mp3_path):
+#     """Converts an MP3 file to a temporary WAV file."""
+#     temp_wav = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
+#     audio = AudioSegment.from_mp3(mp3_path)
+#     audio.export(temp_wav.name, format="wav")
+#     #logging.info(f"Converted MP3 to temporary WAV: {temp_wav.name}")
+#     return temp_wav
 
 def transcribe_audio_with_timestamps(wav_file):
     """Transcribes audio using Deepgram and returns utterances with timestamps."""
     url = "https://api.deepgram.com/v1/listen?model=whisper-large&language=en-IN&punctuate=true&smart_format=true&utterances=true&words=true&diarize=true"
     headers = {"Authorization": f"Token {DEEPGRAM_API_KEY}", "Content-Type": "audio/wav"}
 
-    # with open(wav_file.name, "rb") as audio_file:
-    #     response = requests.post(url, headers=headers, data=audio_file)
-    #
-    # if response.status_code == 200:
-    #     return response.json()
-    # else:
-    #     logging.error("Failed to process audio. Deepgram API Error.")
-    #     return None
 
-    with open(wav_file.name, "rb") as audio_file:
+    with open(wav_file, "rb") as audio_file:
         try:
             response = requests.post(url, headers=headers, data=audio_file)
-            response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
+            response.raise_for_status()
 
             try:
                 json_data = response.json()
                 return json_data
             except json.JSONDecodeError as e:
-                # logging.error(f"JSON Decode Error: {e}")
-                # logging.error(f"Response Content: {response.text}")  # LOG THE RESPONSE CONTENT!
-                return None  # or raise the exception if you want the program to halt
+
+                return None
         except requests.exceptions.RequestException as e:
-            # logging.error(f"Request Error: {e}")
+
             return None
         except Exception as e:
-            # logging.error(f"An unexpected error occurred: {e}")
+
             return None
 
 def extract_features(audio_path, start, end, sr=16000):
@@ -138,7 +183,7 @@ def get_transcripts(mp3_path):
                 # logging.info("No utterances found.")
                 return "No utterances found."
             else:
-                embeddings = [extract_features(temp_wav.name, utt['start'], utt['end']) for utt in utterances if utt['end'] - utt['start'] > 0.5]
+                embeddings = [extract_features(temp_wav, utt['start'], utt['end']) for utt in utterances if utt['end'] - utt['start'] > 0.5]
                 embeddings = [emb for emb in embeddings if emb is not None]
 
                 if embeddings:
@@ -147,14 +192,13 @@ def get_transcripts(mp3_path):
                     speaker_labels = cluster_speakers(np.array(embeddings), num_speakers)
                     formatted_output = format_transcription_output(utterances, speaker_labels)
 
-                    # logging.info(f"Detected {num_speakers} speakers.")
+
                     return formatted_output  # Return the formatted string
                 else:
-                    # logging.warning("No embeddings found for clustering.")
+
                     return "No embeddings found for clustering."
         else:
-            # logging.error("Failed to process audio.")
+
             return "Failed to process audio."
     finally:
-        temp_wav.close()
-        # logging.info(f"Deleting temporary file: {temp_wav.name}")
+        os.remove(temp_wav)
