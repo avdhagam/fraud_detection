@@ -2,11 +2,15 @@ package com.cars24.fraud_detection.controller;
 
 import com.cars24.fraud_detection.data.entity.AudioEntity;
 import com.cars24.fraud_detection.data.entity.UserEntity;
+import com.cars24.fraud_detection.data.request.LoginRequest;
+import com.cars24.fraud_detection.data.request.UserRequest;
+import com.cars24.fraud_detection.data.response.LoginResponse;
 import com.cars24.fraud_detection.service.AudioService;
 import com.cars24.fraud_detection.service.UserService;
 import com.cars24.fraud_detection.utils.PdfGeneratorUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -21,6 +25,9 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
+
+@CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.POST,RequestMethod.GET})
+
 public class UserController {
 
     private final UserService userService;
@@ -30,11 +37,16 @@ public class UserController {
     //register user
     @PostMapping("/register")
     public ResponseEntity<UserEntity> registerUser(
-            @RequestParam String name,
-            @RequestParam String phone) {
+           @Valid @RequestBody UserRequest userRequest) {
 
-        UserEntity user = userService.registerUser(name, phone);
+        UserEntity user = userService.registerUser(userRequest);
         return ResponseEntity.ok(user);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponse> loginUser(@RequestBody LoginRequest loginRequest) {
+        LoginResponse response = userService.loginUser(loginRequest);
+        return ResponseEntity.ok(response);
     }
 
     //fetch user-details

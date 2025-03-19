@@ -972,3 +972,5 @@
   }
 }
 2025-03-16 22:00:51,779 - INFO - Forgery analysis results saved to: src\main\resources\document_storage\output\forgery_analysis_b4eb7985.json
+2025-03-19 17:22:28,123 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-03-19 17:22:28,127 - ERROR - Forgery analysis error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}

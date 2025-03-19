@@ -18,17 +18,72 @@ root_dir = script_path.parents[4]  # Calculate root directory by moving up four 
 sys.path.append(str(root_dir)) # Add the project's root directory to the Python path
 
 import config
+import subprocess
 
 # Deepgram API Key
 DEEPGRAM_API_KEY = config.DEEPGRAM_API_KEY
 
+import subprocess
+import os
+from pydub import AudioSegment
+
+def is_ffmpeg_installed():
+    """Check if FFmpeg is installed and accessible."""
+    try:
+        subprocess.run(["ffmpeg", "-version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return True
+    except FileNotFoundError:
+        return False
+
+def force_reencode_mp3(mp3_path):
+    """Re-encode a potentially corrupt MP3 file using FFmpeg."""
+    reencoded_mp3 = mp3_path.replace(".mp3", "_fixed.mp3")
+
+    if not is_ffmpeg_installed():
+        raise RuntimeError("FFmpeg is not installed or not in PATH. Please install FFmpeg.")
+
+    try:
+        result = subprocess.run(
+            ["ffmpeg", "-y", "-i", mp3_path, "-acodec", "libmp3lame", "-q:a", "2", reencoded_mp3],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        if not os.path.exists(reencoded_mp3):
+            print("FFmpeg re-encode failed:", result.stderr)
+            return None
+        return reencoded_mp3
+    except Exception as e:
+        print(f"FFmpeg execution error: {e}")
+        return None
+
 def convert_mp3_to_wav(mp3_path):
-    """Converts an MP3 file to a temporary WAV file."""
-    temp_wav = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
+    """Convert MP3 to WAV, re-encoding if necessary."""
+    wav_path = mp3_path.replace(".mp3", ".wav")
+
+    try:
+        audio = AudioSegment.from_mp3(mp3_path)
+    except Exception as e:
+        print(f"MP3 is corrupt, attempting re-encode: {e}")
+        fixed_mp3_path = force_reencode_mp3(mp3_path)
+        if fixed_mp3_path and os.path.exists(fixed_mp3_path):
+            print("Re-encode successful, using fixed MP3")
+            mp3_path = fixed_mp3_path
+        else:
+            raise ValueError(f"Failed to fix MP3 file: {mp3_path}")
+
+    # Convert to WAV
     audio = AudioSegment.from_mp3(mp3_path)
-    audio.export(temp_wav.name, format="wav")
-    #logging.info(f"Converted MP3 to temporary WAV: {temp_wav.name}")
-    return temp_wav
+    audio.export(wav_path, format="wav")
+    return wav_path
+
+# def convert_mp3_to_wav(mp3_path):
+#     """Converts an MP3 file to a temporary WAV file."""
+#     temp_wav = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
+#     audio = AudioSegment.from_mp3(mp3_path)
+#     audio.export(temp_wav.name, format="wav")
+#     #logging.info(f"Converted MP3 to temporary WAV: {temp_wav.name}")
+#     return temp_wav
 
 def transcribe_audio_with_timestamps(wav_file):
     """Transcribes audio using Deepgram and returns utterances with timestamps."""
@@ -36,7 +91,7 @@ def transcribe_audio_with_timestamps(wav_file):
     headers = {"Authorization": f"Token {DEEPGRAM_API_KEY}", "Content-Type": "audio/wav"}
 
 
-    with open(wav_file.name, "rb") as audio_file:
+    with open(wav_file, "rb") as audio_file:
         try:
             response = requests.post(url, headers=headers, data=audio_file)
             response.raise_for_status()
@@ -128,7 +183,7 @@ def get_transcripts(mp3_path):
                 # logging.info("No utterances found.")
                 return "No utterances found."
             else:
-                embeddings = [extract_features(temp_wav.name, utt['start'], utt['end']) for utt in utterances if utt['end'] - utt['start'] > 0.5]
+                embeddings = [extract_features(temp_wav, utt['start'], utt['end']) for utt in utterances if utt['end'] - utt['start'] > 0.5]
                 embeddings = [emb for emb in embeddings if emb is not None]
 
                 if embeddings:
@@ -146,4 +201,4 @@ def get_transcripts(mp3_path):
 
             return "Failed to process audio."
     finally:
-        temp_wav.close()
+        os.remove(temp_wav)

@@ -127,7 +127,7 @@ import com.cars24.fraud_detection.data.request.AudioRequest;
 import com.cars24.fraud_detection.data.request.DocumentRequest;
 import com.cars24.fraud_detection.data.response.AudioResponse;
 import com.cars24.fraud_detection.data.response.DocumentResponse;
-import com.cars24.fraud_detection.utils.PythonExecutor;
+import com.cars24.fraud_detection.utils.PythonExecutor2;
 import com.cars24.fraud_detection.workflow.WorkflowInitiator;
 import com.cars24.fraud_detection.utils.AudioStringConstants;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -234,7 +234,7 @@ public class AudioWorkflow implements WorkflowInitiator {
 
     private Map<String, Object> runPythonScript(String scriptPath, String uuid) {
         logger.debug("Running Python script: {} with audio file: {}", scriptPath, uuid);
-        PythonExecutor executor = new PythonExecutor();
+        PythonExecutor2 executor = new PythonExecutor2();
         Map<String, Object> result = executor.runPythonScript(scriptPath, uuid);
 
         if (result == null || result.isEmpty()) {

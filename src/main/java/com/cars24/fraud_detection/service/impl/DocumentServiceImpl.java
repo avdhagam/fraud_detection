@@ -107,4 +107,10 @@ public class DocumentServiceImpl implements DocumentService {
                         .replace(new File("").getAbsolutePath() + File.separator, "")) // ✅ Convert to relative path
                 .orElse(null);
     }
+
+    @Override
+    public DocumentEntity findDocumentEntityById(String documentId) {
+        log.info("Fetching DocumentEntity by ID: {}", documentId);
+        return documentDao.getDocumentById(documentId).orElse(null); // Return null if not found
+    }
 }

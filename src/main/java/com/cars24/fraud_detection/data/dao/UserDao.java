@@ -5,5 +5,6 @@ import java.util.Optional;
 
 public interface UserDao {
     UserEntity saveUser(UserEntity user);  // Save user to DB
-    Optional<UserEntity> findUserById(String userId);  // Get user by ID
+    Optional<UserEntity> findUserById(String userId);// Get user by ID
+    Optional<UserEntity> findByEmail(String email);
 }

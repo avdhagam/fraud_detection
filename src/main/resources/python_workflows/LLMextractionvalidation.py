@@ -51,8 +51,7 @@ def parse_transcript_to_structured_format(transcript_text):
     """
     structured_transcript = []
 
-    # Regular expression to match transcript segments
-    # Format: <start_time> <end_time> <speaker> <text>
+
     pattern = r'(\d+\.\d+)\s+(\d+\.\d+)\s+(SPEAKER_\d+)\s+(.+?)(?=\d+\.\d+\s+\d+\.\d+\s+SPEAKER_|\Z)'
 
     matches = re.finditer(pattern, transcript_text, re.DOTALL)
@@ -184,6 +183,18 @@ def process_transcript(transcript, ground_truth):
         "status": results.get("status", "reject")
     }
 
+def output_json(data):
+    """
+    Outputs the given data as a JSON string to standard output.
+
+    Args:
+        data (dict): The data to output as JSON.
+    """
+    try:
+        print(json.dumps(data))
+    except Exception as e:
+        print(json.dumps({"error": f"Failed to encode data as JSON: {e}"}))
+        sys.exit(1)
 
 # Example usage
 if __name__ == "__main__":
@@ -191,29 +202,11 @@ if __name__ == "__main__":
         print("Usage: python llmextractor.py <UUID>")
         sys.exit(1)
 
-    uuid = sys.argv[1]  # UUID received from API
+    uuid = sys.argv[1]
     audio_path = get_audio_file_path(uuid)
 
-    # Call the transcription function from transcript.py
     transcript = Transcription.get_transcripts(audio_path)
 
-
-
-    # print("\nFinal Transcription Output:\n")
-    # print(type(transcript))
-    # print(transcript)
-
-    # Print final output (or return to API)
-
-    #print(transcript)
-
-    # Sample transcript
-    # transcript = """
-    # 2.191  2.574 SPEAKER_01                                                        Hello? 4.213  4.597 SPEAKER_00                                                        Hello? 5.014  7.257 SPEAKER_00                                             Hi, is it Ashish? 7.257  7.581 SPEAKER_01                                                        Hello? 8.499 10.182 SPEAKER_00                                           Sorry, is it Arjun?10.181 11.864 SPEAKER_01                                                          Yes.11.863 14.066 SPEAKER_00                                Hi, Arjun, Shilpa from Car 24.15.307 15.730 SPEAKER_01                                                         Okay.16.769 18.611 SPEAKER_00                               It's a verification called C.Q.18.611 20.174 SPEAKER_00                                Matheo has given your address.21.415 21.897 SPEAKER_01                                                     Ah, okay.23.217 26.461 SPEAKER_00 Actually, he has taken a loan from us, so that is the reason.26.481 27.223 SPEAKER_00                                          How do you know him?28.944 29.806 SPEAKER_01                                          Ah, I'm a colleague.31.334 33.698 SPEAKER_00              Okay, is he doing a job or a business right now?35.100 35.703 SPEAKER_01                                                   No, no job.36.883 38.006 SPEAKER_00                                      And where does he stays?38.005 40.229 SPEAKER_00                                                  His address?40.289 43.674 SPEAKER_01                          He is now in Pattimathur, Ernakulam.45.217 46.420 SPEAKER_00                                 Sorry, sorry, can you repeat?47.080 48.483 SPEAKER_00                                       Pattimathur, Ernakulam.49.224 50.146 SPEAKER_00                                              Okay, thank you.51.167 51.267 SPEAKER_00                                                         Okay.
-    # """
-
-
-    # Ground truth
     ground_truth = {
         "reference_name": "Arjun",
         "subject_name": "Matthew",
@@ -222,8 +215,6 @@ if __name__ == "__main__":
         "subject_occupation": "unemployed"
     }
 
-    # Process the transcript
     results = process_transcript(transcript, ground_truth)
 
-    # Print the results in JSON format
-    print(json.dumps(results))
+    output_json(results)
