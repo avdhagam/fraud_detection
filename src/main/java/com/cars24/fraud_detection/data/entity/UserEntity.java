@@ -12,15 +12,19 @@ import java.util.List;
 @Getter
 @Setter
 @Data
-@Document(collection = "users")  // MongoDB collection name
+@Document(collection = "users")
 public class UserEntity {
 
     @Id
     private String id; // Unique User ID (UUID)
 
     private String name;
-    private String phone;
+    private String email;
+
+    private String password;
 
     private List<AudioEntity> audioCalls = new ArrayList<>(); // List of transcribed audio calls
     private List<DocumentEntity> documents = new ArrayList<>(); // List of uploaded documents
+
+
 }

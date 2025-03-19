@@ -47,4 +47,9 @@ public class UserDaoImpl implements UserDao {
         });
     }
 
+    @Override
+    public Optional<UserEntity> findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
 }
