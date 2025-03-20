@@ -2,9 +2,11 @@ package com.cars24.fraud_detection.data.entity;
 
 import com.cars24.fraud_detection.data.response.DocumentResponse;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @Data
@@ -36,6 +38,9 @@ public class DocumentEntity {
     private Map<String, Object> qualityResults;
     private Map<String, Object> forgeryResults;
     private Map<String, Object> validationResults;
+
+    @CreatedDate
+    private LocalDateTime timestamp;
 
     public DocumentResponse toResponse() {
         return new DocumentResponse(

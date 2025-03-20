@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -80,4 +81,14 @@ public class AudioController {
         AudioResponse response = audioService.getAudioResult(userId);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/recent/{userId}")
+    public ResponseEntity<List<String>> getRecentAudioUUIDs(
+            @PathVariable String userId,
+            @RequestParam(defaultValue = "5") int limit) {
+
+        log.info("Fetching last {} audio UUIDs for user ID: {}", limit, userId);
+        List<String> recentAudioUUIDs = audioService.getRecentAudios(userId, limit);
+
+        return ResponseEntity.ok(recentAudioUUIDs);
 }

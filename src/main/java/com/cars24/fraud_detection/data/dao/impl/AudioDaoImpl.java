@@ -5,6 +5,7 @@ import com.cars24.fraud_detection.data.entity.AudioEntity;
 import com.cars24.fraud_detection.repository.AudioRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -36,6 +37,13 @@ public class AudioDaoImpl implements AudioDao {
         return audioRepo.findByUserId(userReportId);
     }
 
+    @Override
+    public List<AudioEntity> getRecentAudiosByUserId(String userId, int limit) {
+        return audioRepo.findByUserIdOrderByTimestampDesc(
+                userId,
+                PageRequest.of(0, limit) // Fetch recent `limit` documents sorted by timestamp
+        );
+    }
 }
 
 

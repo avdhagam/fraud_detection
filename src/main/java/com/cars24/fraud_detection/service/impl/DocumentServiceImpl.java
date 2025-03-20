@@ -15,7 +15,9 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -111,4 +113,21 @@ public class DocumentServiceImpl implements DocumentService {
         log.info("Fetching DocumentEntity by ID: {}", documentId);
         return documentDao.getDocumentById(documentId).orElse(null); // Return null if not found
     }
+
+    @Override
+    public List<String> getRecentDocuments(String userId, int limit) {
+        log.info("Fetching last {} documents for user ID: {}", limit, userId);
+
+        List<DocumentEntity> recentDocs = documentDao.getRecentDocumentsByUserId(userId, limit);
+
+        log.info("Total documents fetched: {}", recentDocs.size());
+        for (DocumentEntity doc : recentDocs) {
+            log.info("Found Document: {} with timestamp: {}", doc.getFileName(), doc.getTimestamp());
+        }
+
+        return recentDocs.stream()
+                .map(DocumentEntity::getFileName) // ✅ Extract only fileName
+                .collect(Collectors.toList());
+    }
+
 }

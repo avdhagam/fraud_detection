@@ -2,6 +2,7 @@
         package com.cars24.fraud_detection.repository;
 
 import com.cars24.fraud_detection.data.entity.AudioEntity;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
@@ -12,5 +13,5 @@ public interface AudioRepository extends MongoRepository<AudioEntity, String> {
 
 
     List<AudioEntity> findByUserId(String userId);
-
+    List<AudioEntity> findByUserIdOrderByTimestampDesc(String userId, PageRequest of);
 }

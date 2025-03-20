@@ -4,6 +4,7 @@ import com.cars24.fraud_detection.data.dao.DocumentDao;
 import com.cars24.fraud_detection.data.entity.DocumentEntity;
 import com.cars24.fraud_detection.repository.DocumentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -26,6 +27,11 @@ public class DocumentDaoImpl implements DocumentDao {
     @Override
     public Optional<DocumentEntity> getDocumentById(String documentId) {
         return documentRepo.findById(documentId);
+    }
+
+    @Override
+    public List<DocumentEntity> getRecentDocumentsByUserId(String userId, int limit) {
+        return documentRepo.findByUserIdOrderByTimestampDesc(userId, PageRequest.of(0, limit));
     }
 
 }
