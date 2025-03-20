@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -79,6 +80,7 @@ public class AudioServiceImpl implements AudioService {
         audioEntity.setStatus(audioResponse.getStatus());
         logger.info("Created AudioEntity object: " + audioEntity);
 
+        audioEntity.setTimestamp(LocalDateTime.now());
         audioDao.saveAudio(audioEntity);
         logger.info("Saved AudioEntity object to database");
 
@@ -106,21 +108,21 @@ public class AudioServiceImpl implements AudioService {
         response.setStatus(entity.getStatus());
         return response;
     }
-//    @Override
-//    public AudioResponse getAudioResults(String id) {
-//        logger.info("Fetching audio analysis for ID: " + id);
-//
-//        Optional<AudioEntity> audioEntityOpt = audioDao.getAudioById(id);
-//        if (audioEntityOpt.isEmpty()) {
-//            logger.warning("Audio analysis not found for ID: " + id);
-//            throw new RuntimeException("Audio analysis not found for ID: " + id);
-//        }
-//
-//        AudioEntity audioEntity = audioEntityOpt.get();
-//        logger.info("Fetched audio entity: " + audioEntity);
-//
-//        return mapToResponse(audioEntity);
-//    }
+    @Override
+    public AudioResponse getAudioResults(String id) {
+        logger.info("Fetching audio analysis for ID: " + id);
+
+        Optional<AudioEntity> audioEntityOpt = audioDao.getAudioById(id);
+        if (audioEntityOpt.isEmpty()) {
+            logger.warning("Audio analysis not found for ID: " + id);
+            throw new RuntimeException("Audio analysis not found for ID: " + id);
+        }
+
+        AudioEntity audioEntity = audioEntityOpt.get();
+        logger.info("Fetched audio entity: " + audioEntity);
+
+        return mapToResponse(audioEntity);
+    }
 
     private String saveAudio(MultipartFile file) throws AudioProcessingException {
         try {
@@ -190,6 +192,23 @@ public class AudioServiceImpl implements AudioService {
     }
 
     @Override
+    public List<String> getRecentAudios(String userId, int limit) {
+        logger.info("Fetching recent audio UUIDs for user ID: {} with limit: {}"+ userId+ limit);
+
+        List<AudioEntity> audios = audioDao.getRecentAudiosByUserId(userId, limit);
+
+        logger.info("Total audios fetched: {}"+ audios.size()); // ✅ Log the count of retrieved audios
+
+        for (AudioEntity audio : audios) {
+            logger.info("Found Audio UUID: {} with timestamp: {}"+ audio.getId()+ audio.getTimestamp()); // ✅ Print timestamp
+        }
+
+        return audios.stream()
+                .map(AudioEntity::getId) // Extract only UUIDs
+                .toList();
+    }
+
+    @Override
     public AudioResponse getAudioResult(String userId) {
         List<AudioEntity> audios = audioDao.getAudiosByUserId(userId);
         boolean empty = audios.isEmpty();
@@ -198,11 +217,9 @@ public class AudioServiceImpl implements AudioService {
             entity=  audios.get(0);
             return mapToResponse(entity);
         }
-       else{
+        else{
             AudioResponse dummyResponse = new AudioResponse();
             dummyResponse.setStatus("No audio found");
             return dummyResponse;
 
-        }
-    }
 }

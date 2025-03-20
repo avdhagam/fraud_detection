@@ -1,9 +1,11 @@
 package com.cars24.fraud_detection.data.entity;
 
 import lombok.Data;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -29,5 +31,6 @@ public class AudioEntity {
     private Map<String, Object> audioAnalysis;
     private String status;
 
-
+    @CreatedDate
+    private LocalDateTime timestamp;
 }

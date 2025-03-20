@@ -19,7 +19,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/documents")
@@ -128,5 +130,16 @@ public class DocumentController {
         return ResponseEntity.ok(documentTypeConfig.getMapping());
     }
 
+    @GetMapping("/recent/{userId}")
+    public ResponseEntity<List<String>> getRecentDocumentNames(
+            @PathVariable String userId,
+            @RequestParam(defaultValue = "5") int limit) {
+
+        log.info("Fetching last {} documents for user ID: {}", limit, userId);
+
+        List<String> fileNames = documentService.getRecentDocuments(userId, limit);
+
+        return ResponseEntity.ok(fileNames);
+    }
 
 }

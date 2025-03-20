@@ -9,4 +9,5 @@ public interface AudioDao {
     void saveAudio(AudioEntity audio);
     Optional<AudioEntity> getAudioById(String audioId);
     List<AudioEntity> getAudiosByUserId(String userId);
+    List<AudioEntity> getRecentAudiosByUserId(String userId, int limit);
 }

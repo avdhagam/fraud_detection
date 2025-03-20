@@ -15,8 +15,8 @@ public interface
 AudioService {
     ResponseEntity<FileSystemResource> getAudioFile(@PathVariable String id);
     AudioResponse processAudioRequest(AudioRequest audioRequest) throws JsonProcessingException, AudioProcessingException;
-//    AudioResponse getAudioResults(String id);
+    AudioResponse getAudioResults(String id);
     List<AudioEntity> getAudiosByUserId(String userId);
-
+    List<String> getRecentAudios(String userId, int limit);
     AudioResponse getAudioResult(String userId);
 }
