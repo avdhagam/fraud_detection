@@ -12,12 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @Slf4j
@@ -58,7 +56,7 @@ public class DocumentServiceImpl implements DocumentService {
 
             // Save document details to the database
             DocumentEntity entity = DocumentEntity.builder()
-                    .userReportId(request.getUserReportId()) // Generate document ID
+                    .userId(request.getUserReportId()) // Generate document ID
                     .documentId(response.getDocumentId()) // Keep user-provided report ID
                     .fileName(request.getFileName())
                     .filePath(archivePath)

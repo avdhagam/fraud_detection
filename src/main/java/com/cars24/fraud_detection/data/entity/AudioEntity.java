@@ -1,7 +1,6 @@
 package com.cars24.fraud_detection.data.entity;
 
-import com.cars24.fraud_detection.data.response.AudioResponse;
-import lombok.*;
+import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -10,19 +9,14 @@ import java.util.Map;
 
 @Document(collection = "audio_entities")
 @Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@ToString
-@EqualsAndHashCode
 public class AudioEntity {
 
     @Id
     private String id;
+    private String documentType;
+
     private Map<String, Object> llmExtraction;
-
-    private String userReportId;
-
+    private String userId;
     private List<String> transcript;
     private String referenceName;
     private String subjectName;
@@ -35,5 +29,5 @@ public class AudioEntity {
     private Map<String, Object> audioAnalysis;
     private String status;
 
-}
 
+}

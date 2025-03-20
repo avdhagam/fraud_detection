@@ -1,6 +1,10 @@
 package com.cars24.fraud_detection.service.impl;
 
+import com.cars24.fraud_detection.config.DocumentTypeConfig;
 import com.cars24.fraud_detection.data.dao.UserDao;
+import com.cars24.fraud_detection.data.entity.AudioEntity;
+import com.cars24.fraud_detection.data.entity.DocumentEntity;
+import com.cars24.fraud_detection.data.entity.InsightsEntity;
 import com.cars24.fraud_detection.data.entity.UserEntity;
 import com.cars24.fraud_detection.data.request.LoginRequest;
 import com.cars24.fraud_detection.data.request.UserRequest;
@@ -16,10 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.IOException;
-import java.util.Optional;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +29,7 @@ public class UserServiceImpl implements UserService {
     private final UserDao userDao;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+    private final DocumentTypeConfig documentTypeConfig;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -66,9 +68,7 @@ public class UserServiceImpl implements UserService {
         return response;
     }
 
-
-    @Override
-    public Optional<UserEntity> getUserById(String userId) {
+    public List<DocumentEntity> getUserById(String userId) {
         return userDao.findUserById(userId);
     }
 
@@ -86,5 +86,17 @@ public class UserServiceImpl implements UserService {
 
         // Step 3: Generate PDF
         return PdfGeneratorUtil.generateUserPdf(userData);
+    }
+
+    @Override
+    public List<InsightsEntity> getInsights(String userId) {
+        Map<String, String> docConfig  = documentTypeConfig.getMapping();
+        List<DocumentEntity> documentsForUser = getUserById(userId);
+        List<AudioEntity> audioForUser = userDao.findAudioByUserId(userId);
+        List<InsightsEntity> overallInsights = new ArrayList<>();
+        docConfig.forEach((documentType,documentName) -> {
+
+        });
+        return overallInsights;
     }
 }

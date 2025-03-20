@@ -1,6 +1,7 @@
 package com.cars24.fraud_detection.controller;
 
 import com.cars24.fraud_detection.data.entity.AudioEntity;
+import com.cars24.fraud_detection.data.entity.InsightsEntity;
 import com.cars24.fraud_detection.data.entity.UserEntity;
 import com.cars24.fraud_detection.data.request.LoginRequest;
 import com.cars24.fraud_detection.data.request.UserRequest;
@@ -50,10 +51,15 @@ public class UserController {
     }
 
     //fetch user-details
+//    @GetMapping("/{userId}")
+//    public ResponseEntity<UserEntity> getUser(@PathVariable String userId) {
+//        Optional<UserEntity> user = userService.getUserById(userId);
+//        return user.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+//    }
+
     @GetMapping("/{userId}")
-    public ResponseEntity<UserEntity> getUser(@PathVariable String userId) {
-        Optional<UserEntity> user = userService.getUserById(userId);
-        return user.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<List<InsightsEntity>> getUser(@PathVariable String userId) {
+        return ResponseEntity.ok(userService.getInsights(userId));
     }
 
     //generate user-details pdf

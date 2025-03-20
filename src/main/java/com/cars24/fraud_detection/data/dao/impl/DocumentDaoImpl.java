@@ -6,6 +6,7 @@ import com.cars24.fraud_detection.repository.DocumentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -16,7 +17,7 @@ public class DocumentDaoImpl implements DocumentDao {
 
     @Override
     public void saveDocument(DocumentEntity document) {
-        if (document.getUserReportId()== null) {
+        if (document.getUserId()== null) {
             throw new IllegalArgumentException("User ID cannot be null when saving document!");
         }
         documentRepo.save(document);
@@ -26,7 +27,5 @@ public class DocumentDaoImpl implements DocumentDao {
     public Optional<DocumentEntity> getDocumentById(String documentId) {
         return documentRepo.findById(documentId);
     }
-
-
 
 }

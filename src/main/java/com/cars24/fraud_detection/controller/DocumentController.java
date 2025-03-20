@@ -1,5 +1,6 @@
 package com.cars24.fraud_detection.controller;
 
+import com.cars24.fraud_detection.config.DocumentTypeConfig;
 import com.cars24.fraud_detection.data.entity.DocumentEntity;
 import com.cars24.fraud_detection.data.request.DocumentRequest;
 import com.cars24.fraud_detection.data.response.DocumentResponse;
@@ -27,9 +28,11 @@ import java.util.Map;
 public class DocumentController {
 
     private final DocumentService documentService;
+    private final DocumentTypeConfig documentTypeConfig;
 
-    public DocumentController(DocumentService documentService) {
+    public DocumentController(DocumentService documentService, DocumentTypeConfig documentTypeConfig) {
         this.documentService = documentService;
+        this.documentTypeConfig = documentTypeConfig;
     }
 
     @PostMapping("/process")
@@ -117,6 +120,12 @@ public class DocumentController {
             log.error("Error reading image file for document ID: {}", documentId, e);
             return ResponseEntity.internalServerError().build();
         }
+    }
+
+    @GetMapping("/types")
+    public ResponseEntity<Map<String, String>> getAllDocumentTypes() {
+        System.out.println("Fetching document types: " + documentTypeConfig.getMapping());
+        return ResponseEntity.ok(documentTypeConfig.getMapping());
     }
 
 

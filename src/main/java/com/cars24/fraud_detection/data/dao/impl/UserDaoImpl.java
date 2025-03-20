@@ -11,9 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -32,19 +30,17 @@ public class UserDaoImpl implements UserDao {
     }
 
     @Override
-    public Optional<UserEntity> findUserById(String userId) {
-        return userRepository.findById(userId).map(user -> {
-            // Fetch audio entities related to the user's report
-            List<AudioEntity> audioEntities = audioRepository.findByUserReportId(user.getId());
-            user.setAudioCalls(audioEntities);
-
+    public List<DocumentEntity> findUserById(String userId) {
             // Fetch document entities related to the user's report
-            List<DocumentEntity> documentEntities = documentRepository.findByUserReportId(user.getId());
-            user.setDocuments(documentEntities);
+        return documentRepository.findByUserId(userId);
 
-            return user;
+    }
 
-        });
+    @Override
+    public List<AudioEntity> findAudioByUserId(String userId) {
+        // Fetch document entities related to the user's report
+        return audioRepository.findByUserId(userId);
+
     }
 
     @Override

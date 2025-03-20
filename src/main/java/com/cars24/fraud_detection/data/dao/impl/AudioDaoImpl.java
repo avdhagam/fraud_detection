@@ -19,7 +19,7 @@ public class AudioDaoImpl implements AudioDao {
 
     @Override
     public void saveAudio(AudioEntity audio) {
-        if (audio.getUserReportId() == null) {
+        if (audio.getUserId() == null) {
             throw new IllegalArgumentException("User ID cannot be null when saving audio!");
         }
         audioRepo.save(audio);
@@ -33,7 +33,7 @@ public class AudioDaoImpl implements AudioDao {
 
     @Override
     public List<AudioEntity> getAudiosByUserId(String userReportId) {
-        return audioRepo.findByUserReportId(userReportId);
+        return audioRepo.findByUserId(userReportId);
     }
 
 }

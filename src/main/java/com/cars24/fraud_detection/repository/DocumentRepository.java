@@ -9,5 +9,6 @@ import java.util.List;
 
 @Repository
 public interface DocumentRepository extends MongoRepository<DocumentEntity, String> {
-    List<DocumentEntity> findByUserReportId(String userReportId);
+    List<DocumentEntity> findByUserId(String userReportId);
+
 }
