@@ -17,4 +17,6 @@ public interface DocumentService {
 
     List<String> getRecentDocuments(String userId, int limit);
     DocumentEntity getDocumentByUserIdAndType(String userReportId, String documentType);
+
+    DocumentResponse getDocumentResult(String userId, String documentType);
 }

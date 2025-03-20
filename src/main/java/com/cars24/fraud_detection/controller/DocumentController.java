@@ -162,8 +162,12 @@ public class DocumentController {
     }
 
     @GetMapping("/{userId}/{documentType}")
-    public DocumentEntity getDocument(@PathVariable String userId, @PathVariable String documentType) {
-        return documentService.getDocumentByUserIdAndType(userId, documentType);
+    public ResponseEntity<DocumentResponse> getDocumentResult(
+            @PathVariable String userId,
+            @PathVariable String documentType) {
+
+        DocumentResponse response = documentService.getDocumentResult(userId, documentType);
+        return ResponseEntity.ok(response);
     }
 
 }

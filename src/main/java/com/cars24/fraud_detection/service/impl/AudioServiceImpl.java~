@@ -33,7 +33,7 @@ import java.util.logging.Logger;
 @Service
 public class AudioServiceImpl implements AudioService {
 
-    private static final String AUDIO_STORAGE_PATH = "src/main/resources/audio_storage";
+    private static final String AUDIO_STORAGE_PATH =  "src/main/resources/audio_storage";
     @Autowired
     private AudioDao audioDao;
     @Autowired
@@ -108,7 +108,6 @@ public class AudioServiceImpl implements AudioService {
         response.setStatus(entity.getStatus());
         return response;
     }
-
     @Override
     public AudioResponse getAudioResults(String id) {
         logger.info("Fetching audio analysis for ID: " + id);
@@ -156,9 +155,8 @@ public class AudioServiceImpl implements AudioService {
             throw new AudioProcessingException("Failed to store audio file: " + e.getMessage());
         }
     }
-
     @Override
-    public ResponseEntity<FileSystemResource> getAudioFile(@PathVariable String id) {
+    public ResponseEntity<FileSystemResource> getAudioFile(@PathVariable String id){
         try {
             // Construct the file path
             Path filePath = Paths.get(AUDIO_STORAGE_PATH, id + ".mp3");
@@ -195,14 +193,14 @@ public class AudioServiceImpl implements AudioService {
 
     @Override
     public List<String> getRecentAudios(String userId, int limit) {
-        logger.info("Fetching recent audio UUIDs for user ID: {} with limit: {}" + userId + limit);
+        logger.info("Fetching recent audio UUIDs for user ID: {} with limit: {}"+ userId+ limit);
 
         List<AudioEntity> audios = audioDao.getRecentAudiosByUserId(userId, limit);
 
-        logger.info("Total audios fetched: {}" + audios.size()); // ✅ Log the count of retrieved audios
+        logger.info("Total audios fetched: {}"+ audios.size()); // ✅ Log the count of retrieved audios
 
         for (AudioEntity audio : audios) {
-            logger.info("Found Audio UUID: {} with timestamp: {}" + audio.getId() + audio.getTimestamp()); // ✅ Print timestamp
+            logger.info("Found Audio UUID: {} with timestamp: {}"+ audio.getId()+ audio.getTimestamp()); // ✅ Print timestamp
         }
 
         return audios.stream()
@@ -215,14 +213,13 @@ public class AudioServiceImpl implements AudioService {
         List<AudioEntity> audios = audioDao.getAudiosByUserId(userId);
         boolean empty = audios.isEmpty();
         AudioEntity entity = new AudioEntity();
-        if (!empty) {
-            entity = audios.get(0);
+        if(!empty){
+            entity=  audios.get(0);
             return mapToResponse(entity);
-        } else {
+        }
+        else{
             AudioResponse dummyResponse = new AudioResponse();
             dummyResponse.setStatus("No audio found");
             return dummyResponse;
 
-        }
-    }
 }

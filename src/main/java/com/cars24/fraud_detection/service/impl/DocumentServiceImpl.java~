@@ -171,11 +171,4 @@ public class DocumentServiceImpl implements DocumentService {
         return documentRepository.findByUserIdAndDocumentType(userId,documentType)
                 .orElse(null); // Return null if not found
     }
-
-    public DocumentResponse getDocumentResult(String userId, String documentType) {
-        DocumentEntity documentEntity = documentRepository.findByUserIdAndDocumentType(userId, documentType)
-                .orElseThrow(() -> new RuntimeException("Document not found for userId: " + userId + " and documentType: " + documentType));
-
-        return documentEntity.toResponse();
-    }
 }
