@@ -11,6 +11,6 @@ public class AudioRequest {
         private MultipartFile audioFile;
         private String filepath;
         private String uuid;
-
+        private String documentType;
         private String userReportId;
 }

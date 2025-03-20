@@ -14,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -54,7 +55,25 @@ public class DocumentController {
         DocumentResponse response = documentService.getDocumentById(documentId);
         return ResponseEntity.ok(response);
     }
+    @PutMapping("/update-document")
+    public ResponseEntity<DocumentResponse> updateDocument(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("userId") String userId,
+            @RequestParam("documentType") String documentType) throws IOException {
 
+        if (file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Uploaded file is empty");
+        }
+
+        DocumentRequest request = new DocumentRequest();
+        request.setFileName(file.getOriginalFilename());
+        request.setDocumentData(file.getBytes());
+        request.setUserId(userId);
+        request.setDocumentType(documentType);
+
+        DocumentResponse response = documentService.processDocument(request);
+        return ResponseEntity.ok(response);
+    }
     @PostMapping("/upload-document")
     public ResponseEntity<?> uploadDocument(
             @RequestParam(value = "file", required = true) MultipartFile file,
@@ -140,6 +159,11 @@ public class DocumentController {
         List<String> fileNames = documentService.getRecentDocuments(userId, limit);
 
         return ResponseEntity.ok(fileNames);
+    }
+
+    @GetMapping("/{userId}/{documentType}")
+    public DocumentEntity getDocument(@PathVariable String userId, @PathVariable String documentType) {
+        return documentService.getDocumentByUserIdAndType(userId, documentType);
     }
 
 }

@@ -10,6 +10,7 @@ import java.util.Optional;
 public interface DocumentDao {
     void saveDocument(DocumentEntity document);
     Optional<DocumentEntity> getDocumentById(String documentId);
-
+    void updateDocument(DocumentEntity document);
+    Optional<DocumentEntity> findFirstByUserIdAndDocumentType(String userReportId, String documentType);
     List<DocumentEntity> getRecentDocumentsByUserId(String userId, int limit);
 }

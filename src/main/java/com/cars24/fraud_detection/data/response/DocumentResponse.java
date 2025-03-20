@@ -13,9 +13,10 @@ import java.util.Map;
 @Builder
 public class DocumentResponse {
 
-    private String userReportId;
+    private String userId;
 
     private String documentId;
+    private String documentType;
     private boolean isValid;
     private double finalRiskScore;
     private String riskLevel; // High, Medium, Low

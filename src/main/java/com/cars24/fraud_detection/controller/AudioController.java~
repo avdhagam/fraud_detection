@@ -107,5 +107,4 @@ public class AudioController {
         List<String> recentAudioUUIDs = audioService.getRecentAudios(userId, limit);
 
         return ResponseEntity.ok(recentAudioUUIDs);
-    }
 }
