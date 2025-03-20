@@ -129,4 +129,10 @@ public class DocumentController {
     }
 
 
+    @GetMapping("/types/{key}")
+    public ResponseEntity<String> getDocumentTypeByKey(@PathVariable String key) {
+        return ResponseEntity.ok(documentTypeConfig.getDocumentType(key));
+    }
+
+
 }
