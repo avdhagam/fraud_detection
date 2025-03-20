@@ -46,6 +46,7 @@ public class DocumentEntity {
         return new DocumentResponse(
                 userId,
                 id,
+                documentType,
                 "COMPLETED".equals(status),
                 finalRiskScore,
                 riskLevel,
@@ -59,12 +60,13 @@ public class DocumentEntity {
         );
     }
 
-    public DocumentEntity(String userId, String documentId, String fileName, String filePath, String status, String remarks,
+    public DocumentEntity(String userId, String documentId, String documentType, String fileName, String filePath, String status, String remarks,
                           double finalRiskScore, String riskLevel, String decision, String nextSteps,
                           Map<String, Object> ocrResults, Map<String, Object> qualityResults,
                           Map<String, Object> forgeryResults, Map<String, Object> validationResults) {
         this.userId = userId;
         this.documentId = documentId;
+        this.documentType=documentType;
         this.fileName = fileName;
         this.filePath = filePath;
         this.status = status;

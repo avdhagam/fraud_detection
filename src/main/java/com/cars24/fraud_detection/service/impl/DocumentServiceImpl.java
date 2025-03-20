@@ -12,12 +12,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import com.cars24.fraud_detection.repository.DocumentRepository;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -25,74 +28,105 @@ public class DocumentServiceImpl implements DocumentService {
 
     private final DocumentDao documentDao;
     private final WorkflowInitiator workflowInitiator;
-
+    private final DocumentRepository documentRepository;
     @Value("${document.storage.path}")
     private String storagePath;
 
     @Autowired
     public DocumentServiceImpl(DocumentDao documentDao,
-                               @Qualifier("documentWorkflow") WorkflowInitiator workflowInitiator) {
+                               @Qualifier("documentWorkflow") WorkflowInitiator workflowInitiator, DocumentRepository documentRepository) {
         this.documentDao = documentDao;
         this.workflowInitiator = workflowInitiator;
+        this.documentRepository = documentRepository;
     }
 
     @Override
     public DocumentResponse processDocument(DocumentRequest request) {
 
         try {
-            log.info("Starting document processing for user: {}, File: {}", request.getUserId(), request.getFileName());
+            //  log.info("Starting document processing for user: {}, File: {}", request.getUserId(), request.getFileName());
 
             String archivePath = findDocumentPath(request.getFileName());
             // Generate unique file path
-           // String filePath = storagePath + "archive" + request.getFileName();
-           // request.transferTo(new File(filePath)); // Save file
+            // String filePath = storagePath + "archive" + request.getFileName();
+            // request.transferTo(new File(filePath)); // Save file
 
             // Create DocumentRequest from MultipartFile
             //DocumentRequest request = new DocumentRequest();
             // Keep original user report ID
-           // request.setFileName(file.getOriginalFilename());
+            // request.setFileName(file.getOriginalFilename());
 
             // Run workflow (OCR, Validation, Quality, Forgery Detection)
             DocumentResponse response = workflowInitiator.processDocument(request);
             log.debug("Workflow execution completed for file: {}, Result: {}", request.getFileName(), response);
 
-            // Save document details to the database
-            DocumentEntity entity = DocumentEntity.builder()
-                    .userId(request.getUserReportId()) // Generate document ID
-                    .documentId(response.getDocumentId()) // Keep user-provided report ID
-                    .fileName(request.getFileName())
-                    .filePath(archivePath)
-                    .status(response.isValid() ? "COMPLETED" : "FAILED")
-                    .remarks(response.getRemarks())
-                    .ocrResults(response.getOcrResults())
-                    .qualityResults(response.getQualityResults())
-                    .forgeryResults(response.getForgeryResults())
-                    .validationResults(response.getValidationResults())
-                    .finalRiskScore(response.getFinalRiskScore())
-                    .riskLevel(response.getRiskLevel())
-                    .decision(response.getDecision())
-                    .nextSteps(response.getNextSteps())
-                    .build();
+            // Check if an entry with the same userReportId and documentType exists
+            // Optional<DocumentEntity> existingDocument = documentDao.findByUserReportIdAndDocumentType(request.getUserReportId(), request.getDocumentType());
+            Optional<DocumentEntity> existingDocument = documentDao.findFirstByUserIdAndDocumentType(
+                    request.getUserReportId(), request.getDocumentType()
+            );
 
-            documentDao.saveDocument(entity);
-            log.info("Document saved successfully in database: {} (Status: {})", request.getFileName(), entity.getStatus());
+            if (existingDocument.isPresent()) {
+                // Update existing entry
+                DocumentEntity entity = existingDocument.get();
+
+                //log.info("Existing document found, updating record: {}", entity);
+
+                entity.setFileName(request.getFileName());
+                entity.setFilePath(archivePath);
+                entity.setOcrResults(response.getOcrResults());
+                entity.setQualityResults(response.getQualityResults());
+                entity.setForgeryResults(response.getForgeryResults());
+                entity.setValidationResults(response.getValidationResults());
+                entity.setFinalRiskScore(response.getFinalRiskScore());
+                entity.setRiskLevel(response.getRiskLevel());
+                entity.setDecision(response.getDecision());
+                entity.setNextSteps(response.getNextSteps());
+                entity.setStatus(response.isValid() ? "COMPLETED" : "FAILED");
+                entity.setRemarks(response.getRemarks());
+
+                documentDao.updateDocument(entity);
+                //  log.info("Updated existing document record: {}", entity);
+            } else {
+                // Insert new entry
+                DocumentEntity newDocumentEntity = DocumentEntity.builder()
+                        .userId(request.getUserId()) // Original user report ID
+                        .documentId(response.getDocumentId()) // Generated document ID
+                        .documentType(response.getDocumentType())
+                        .fileName(request.getFileName())
+                        .filePath(archivePath)
+                        .ocrResults(response.getOcrResults())
+                        .qualityResults(response.getQualityResults())
+                        .forgeryResults(response.getForgeryResults())
+                        .validationResults(response.getValidationResults())
+                        .finalRiskScore(response.getFinalRiskScore())
+                        .riskLevel(response.getRiskLevel())
+                        .decision(response.getDecision())
+                        .nextSteps(response.getNextSteps())
+                        .status(response.isValid() ? "COMPLETED" : "FAILED")
+                        .remarks(response.getRemarks())
+                        .build();
+
+                documentDao.saveDocument(newDocumentEntity);
+                // log.info("Saved new document record: {}", newDocumentEntity);
+            }
 
             return response;
 
         } catch (Exception e) {
-            log.error("Error processing document for user {}: {}", request.getUserId(), e.getMessage(), e);
+            //   log.error("Error processing document for user {}: {}", request.getUserId(), e.getMessage(), e);
             throw new DocumentProcessingException("Failed to process document: " + e.getMessage());
         }
     }
 
     @Override
     public DocumentResponse getDocumentById(String documentId) {
-        log.info("Fetching document details for ID: {}", documentId);
+        //  log.info("Fetching document details for ID: {}", documentId);
 
         DocumentEntity entity = documentDao.getDocumentById(documentId)
                 .orElseThrow(() -> new DocumentProcessingException("Document not found for ID: " + documentId));
 
-        log.debug("Document retrieved successfully: {}", entity);
+        //  log.debug("Document retrieved successfully: {}", entity);
         return entity.toResponse();
     }
 
@@ -110,7 +144,7 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public DocumentEntity findDocumentEntityById(String documentId) {
-        log.info("Fetching DocumentEntity by ID: {}", documentId);
+        // log.info("Fetching DocumentEntity by ID: {}", documentId);
         return documentDao.getDocumentById(documentId).orElse(null); // Return null if not found
     }
 
@@ -130,4 +164,11 @@ public class DocumentServiceImpl implements DocumentService {
                 .collect(Collectors.toList());
     }
 
+
+
+
+    public DocumentEntity getDocumentByUserIdAndType(String userId, String documentType) {
+        return documentRepository.findByUserIdAndDocumentType(userId,documentType)
+                .orElse(null); // Return null if not found
+    }
 }

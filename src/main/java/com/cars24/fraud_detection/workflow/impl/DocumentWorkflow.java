@@ -63,17 +63,18 @@ public class DocumentWorkflow implements WorkflowInitiator {
         DocumentResponse response = null;
 
         // Retrieve userReportId from the request.  Handle potential null/empty case.
-        String userReportId = request.getUserReportId(); // Assuming this is the correct getter
-        if (userReportId == null || userReportId.isEmpty()) {
+        String userId = request.getUserId(); // Assuming this is the correct getter
+        if (userId == null || userId.isEmpty()) {
             log.warn("userReportId missing in DocumentRequest. Generating a new one.");
             //userReportId = UUID.randomUUID().toString(); // Generate if missing
         }
-        log.info("Using userReportId: {}", userReportId);
+        log.info("Using userReportId: {}", userId);
 
         // Generate a separate documentId
         String documentId = UUID.randomUUID().toString();
         log.info("Generated documentId: {}", documentId);
-
+        String documentType = request.getDocumentType();
+        log.info("received document type: {}", documentType);
         try {
             // Create necessary directories
             Files.createDirectories(Paths.get(archivePath));
@@ -100,7 +101,7 @@ public class DocumentWorkflow implements WorkflowInitiator {
             double fraudRiskScore = fileUtils.computeRiskScore(qualityResult, forgeryResult, validationResult);
 
             // Create response with appropriate documentId, userReportId, and documentPath
-            response = fileUtils.createResponse(userReportId ,documentId,fraudRiskScore, ocrResult, qualityResult, forgeryResult, validationResult);
+            response = fileUtils.createResponse(userId ,documentId, documentType, fraudRiskScore, ocrResult, qualityResult, forgeryResult, validationResult);
 
         } catch (Exception e) {
             log.error("Error processing document: {}", e.getMessage(), e);

@@ -23,10 +23,22 @@ public class DocumentDaoImpl implements DocumentDao {
         }
         documentRepo.save(document);
     }
-
+    @Override
+    public void updateDocument(DocumentEntity document) {
+        if (document.getId() == null) {
+            throw new IllegalArgumentException("Audio ID cannot be null for an update operation!");
+        }
+        System.out.println("Updating AudioEntity with ID: " + document.getId());
+        documentRepo.save(document);
+        System.out.println("Updated AudioEntity: " + document);
+    }
     @Override
     public Optional<DocumentEntity> getDocumentById(String documentId) {
         return documentRepo.findById(documentId);
+    }
+
+    public Optional<DocumentEntity> findFirstByUserIdAndDocumentType(String userId, String documentType) {
+        return documentRepo.findFirstByUserIdAndDocumentType(userId, documentType);
     }
 
     @Override

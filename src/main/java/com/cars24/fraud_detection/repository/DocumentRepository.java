@@ -7,10 +7,12 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface DocumentRepository extends MongoRepository<DocumentEntity, String> {
     List<DocumentEntity> findByUserId(String userReportId);
+    Optional<DocumentEntity> findByUserIdAndDocumentType(String userReportId, String documentType);
     List<DocumentEntity> findByUserIdOrderByTimestampDesc(String userId, Pageable pageable);
-
+    Optional<DocumentEntity> findFirstByUserIdAndDocumentType(String userReportId, String documentType);
 }

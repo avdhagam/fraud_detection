@@ -69,6 +69,9 @@ public class FileUtils {
         return DocumentEntity.builder()
                 .documentId(UUID.randomUUID().toString())
                 .fileName(request.getFileName())
+
+                .documentType(request.getDocumentType())
+
                 .status(response.isValid() ? "COMPLETED" : "FAILED")
                 .remarks(response.getRemarks())
                 .ocrResults(response.getOcrResults())
@@ -111,7 +114,7 @@ public class FileUtils {
         return result;
     }
 
-    public DocumentResponse createResponse(String documentId,String userReportId,double fraudRiskScore, Map<String, Object> ocrResult, Map<String, Object> qualityResult, Map<String, Object> forgeryResult, Map<String, Object> validationResult) {
+    public DocumentResponse createResponse(String documentId,String userReportId, String documentType, double fraudRiskScore, Map<String, Object> ocrResult, Map<String, Object> qualityResult, Map<String, Object> forgeryResult, Map<String, Object> validationResult) {
         String riskLevel = fraudRiskScore > 0.7 ? "LOW" : fraudRiskScore > 0.4 ? "MEDIUM" : "HIGH";
         String decision = fraudRiskScore > 0.7 ? "APPROVE" : "REJECT";
         String nextSteps = fraudRiskScore > 0.7 ? "Request re-submission or manual verification" :
@@ -121,6 +124,7 @@ public class FileUtils {
 
                 documentId,
                 userReportId,
+                documentType,
                 true,
                 fraudRiskScore,
                 riskLevel,
