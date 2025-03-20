@@ -70,30 +70,7 @@ public class AudioController {
 
     @GetMapping("/audio-file/{id}")
     public ResponseEntity<FileSystemResource> getAudioFile(@PathVariable String id) {
-        try {
-            // Construct the file path
-            Path filePath = Paths.get(AUDIO_STORAGE_PATH, id + ".mp3");
-            File audioFile = filePath.toFile();
+        return audioService.getAudioFile(id);
 
-            if (!audioFile.exists()) {
-                log.warn("Audio file not found for id: {}", id);
-                return ResponseEntity.notFound().build();
-            }
-
-            FileSystemResource resource = new FileSystemResource(audioFile);
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.parseMediaType("audio/mpeg")); // Set content type to audio/mpeg
-            headers.setContentLength(audioFile.length());
-            headers.setContentDispositionFormData("attachment", id + ".mp3"); // Optional:  Suggest a filename
-
-            log.info("Successfully retrieved audio file for id: {}", id);
-            return new ResponseEntity<>(resource, headers, HttpStatus.OK);
-
-
-        } catch (Exception e) {
-            log.error("Error retrieving audio file for id: {}", id, e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
     }
 }

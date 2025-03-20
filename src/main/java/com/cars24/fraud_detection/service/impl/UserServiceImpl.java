@@ -109,7 +109,7 @@ public class UserServiceImpl implements UserService {
     private InsightsEntity createDocumentEntity(List<DocumentEntity> documentsForUser, String documentType, String documentName) {
         boolean isEmpty = documentsForUser.isEmpty();
        DocumentEntity documentEntity = new DocumentEntity();
-        if(isEmpty)
+        if(!isEmpty)
             documentEntity = documentsForUser.get(0);
         return InsightsEntity.builder()
                 .doctype(documentType)
@@ -124,7 +124,7 @@ public class UserServiceImpl implements UserService {
     private InsightsEntity createAudioEntity(List<AudioEntity> audioForUser, String documentType, String documentName) {
         boolean isEmpty = audioForUser.isEmpty();
         AudioEntity audioEntity = new AudioEntity();
-        if(isEmpty)
+        if(!isEmpty)
             audioEntity = audioForUser.get(0);
         return InsightsEntity.builder()
                 .doctype(documentType)
