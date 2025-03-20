@@ -45,12 +45,12 @@ public class AudioController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<AudioResponse> getAudioResult(@PathVariable String id) {
-        logger.info("Received get request");
-        AudioResponse response = audioService.getAudioResults(id);
-        return ResponseEntity.ok(response);
-    }
+//    @GetMapping("/{id}")
+//    public ResponseEntity<AudioResponse> getAudioResult(@PathVariable String id) {
+//        logger.info("Received get request");
+//        AudioResponse response = audioService.getAudioResults(id);
+//        return ResponseEntity.ok(response);
+//    }
 
     @PostMapping("/upload-audio")
     public ResponseEntity<AudioResponse> uploadAudio(
@@ -72,5 +72,12 @@ public class AudioController {
     public ResponseEntity<FileSystemResource> getAudioFile(@PathVariable String id) {
         return audioService.getAudioFile(id);
 
+    }
+
+    @GetMapping("/{userId}")
+    public ResponseEntity<AudioResponse> getAudioResult(@PathVariable String userId) {
+        // logger.info("Received get request");
+        AudioResponse response = audioService.getAudioResult(userId);
+        return ResponseEntity.ok(response);
     }
 }

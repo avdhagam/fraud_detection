@@ -106,21 +106,21 @@ public class AudioServiceImpl implements AudioService {
         response.setStatus(entity.getStatus());
         return response;
     }
-    @Override
-    public AudioResponse getAudioResults(String id) {
-        logger.info("Fetching audio analysis for ID: " + id);
-
-        Optional<AudioEntity> audioEntityOpt = audioDao.getAudioById(id);
-        if (audioEntityOpt.isEmpty()) {
-            logger.warning("Audio analysis not found for ID: " + id);
-            throw new RuntimeException("Audio analysis not found for ID: " + id);
-        }
-
-        AudioEntity audioEntity = audioEntityOpt.get();
-        logger.info("Fetched audio entity: " + audioEntity);
-
-        return mapToResponse(audioEntity);
-    }
+//    @Override
+//    public AudioResponse getAudioResults(String id) {
+//        logger.info("Fetching audio analysis for ID: " + id);
+//
+//        Optional<AudioEntity> audioEntityOpt = audioDao.getAudioById(id);
+//        if (audioEntityOpt.isEmpty()) {
+//            logger.warning("Audio analysis not found for ID: " + id);
+//            throw new RuntimeException("Audio analysis not found for ID: " + id);
+//        }
+//
+//        AudioEntity audioEntity = audioEntityOpt.get();
+//        logger.info("Fetched audio entity: " + audioEntity);
+//
+//        return mapToResponse(audioEntity);
+//    }
 
     private String saveAudio(MultipartFile file) throws AudioProcessingException {
         try {
@@ -187,5 +187,22 @@ public class AudioServiceImpl implements AudioService {
     public List<AudioEntity> getAudiosByUserId(String userId) {
 
         return audioDao.getAudiosByUserId(userId);
+    }
+
+    @Override
+    public AudioResponse getAudioResult(String userId) {
+        List<AudioEntity> audios = audioDao.getAudiosByUserId(userId);
+        boolean empty = audios.isEmpty();
+        AudioEntity entity = new AudioEntity();
+        if(!empty){
+            entity=  audios.get(0);
+            return mapToResponse(entity);
+        }
+       else{
+            AudioResponse dummyResponse = new AudioResponse();
+            dummyResponse.setStatus("No audio found");
+            return dummyResponse;
+
+        }
     }
 }
