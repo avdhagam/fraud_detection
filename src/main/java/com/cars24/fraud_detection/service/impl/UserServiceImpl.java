@@ -20,6 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -95,8 +96,44 @@ public class UserServiceImpl implements UserService {
         List<AudioEntity> audioForUser = userDao.findAudioByUserId(userId);
         List<InsightsEntity> overallInsights = new ArrayList<>();
         docConfig.forEach((documentType,documentName) -> {
-
+            if(documentType.equals("REFERENCE_CALL")){
+                overallInsights.add(createAudioEntity(audioForUser, documentType, documentName));
+            }
+            else{
+                overallInsights.add(createDocumentEntity(documentsForUser,documentType,documentName));
+            }
         });
         return overallInsights;
+    }
+
+    private InsightsEntity createDocumentEntity(List<DocumentEntity> documentsForUser, String documentType, String documentName) {
+        boolean isEmpty = documentsForUser.isEmpty();
+       DocumentEntity documentEntity = new DocumentEntity();
+        if(isEmpty)
+            documentEntity = documentsForUser.get(0);
+        return InsightsEntity.builder()
+                .doctype(documentType)
+                .documentName(documentName)
+                .score(isEmpty ? 0d :documentEntity.getFinalRiskScore())
+                .uploadedAt(isEmpty ? null : LocalDateTime.now().minusHours(2).minusMinutes(12))
+                .status(isEmpty ? "Pending" : "Uploaded")
+                .description(isEmpty? "Document not Uploaded" :documentEntity.getDecision() )
+                .build();
+    }
+
+    private InsightsEntity createAudioEntity(List<AudioEntity> audioForUser, String documentType, String documentName) {
+        boolean isEmpty = audioForUser.isEmpty();
+        AudioEntity audioEntity = new AudioEntity();
+        if(isEmpty)
+            audioEntity = audioForUser.get(0);
+        return InsightsEntity.builder()
+                .doctype(documentType)
+                .documentName(documentName)
+                .score(isEmpty ? 0d : audioEntity.getOverallScore())
+                .uploadedAt(isEmpty ? null : LocalDateTime.now().minusHours(4).minusMinutes(37))
+                .status(isEmpty ? "Pending" : "Uploaded")
+                .description(isEmpty? "Audio not Uploaded" : audioEntity.getStatus())
+                .build();
+
     }
 }
