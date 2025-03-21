@@ -213,13 +213,14 @@ public class AudioServiceImpl implements AudioService {
         List<AudioEntity> audios = audioDao.getAudiosByUserId(userId);
         boolean empty = audios.isEmpty();
         AudioEntity entity = new AudioEntity();
-        if(!empty){
-            entity=  audios.get(0);
+        if (!empty) {
+            entity = audios.get(0);
             return mapToResponse(entity);
-        }
-        else{
+        } else {
             AudioResponse dummyResponse = new AudioResponse();
             dummyResponse.setStatus("No audio found");
             return dummyResponse;
+        }
+    }
 
 }

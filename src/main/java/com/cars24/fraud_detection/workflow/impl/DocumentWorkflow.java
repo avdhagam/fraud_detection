@@ -63,7 +63,7 @@ public class DocumentWorkflow implements WorkflowInitiator {
         DocumentResponse response = null;
 
         // Retrieve userReportId from the request.  Handle potential null/empty case.
-        String userId = request.getUserId(); // Assuming this is the correct getter
+        String userId = request.getUserReportId(); // Assuming this is the correct getter
         if (userId == null || userId.isEmpty()) {
             log.warn("userReportId missing in DocumentRequest. Generating a new one.");
             //userReportId = UUID.randomUUID().toString(); // Generate if missing

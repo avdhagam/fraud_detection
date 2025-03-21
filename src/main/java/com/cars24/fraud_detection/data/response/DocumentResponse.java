@@ -13,7 +13,7 @@ import java.util.Map;
 @Builder
 public class DocumentResponse {
 
-    private String userId;
+    private String userReportId;
 
     private String documentId;
     private String documentType;

@@ -23,14 +23,15 @@ public class DocumentDaoImpl implements DocumentDao {
         }
         documentRepo.save(document);
     }
+
     @Override
     public void updateDocument(DocumentEntity document) {
         if (document.getId() == null) {
-            throw new IllegalArgumentException("Audio ID cannot be null for an update operation!");
+            throw new IllegalArgumentException("Document ID cannot be null for an update operation!");
         }
-        System.out.println("Updating AudioEntity with ID: " + document.getId());
+        System.out.println("Updating DocumentEntity with ID: " + document.getId());
         documentRepo.save(document);
-        System.out.println("Updated AudioEntity: " + document);
+        System.out.println("Updated DocumentEntity: " + document);
     }
     @Override
     public Optional<DocumentEntity> getDocumentById(String documentId) {
@@ -46,4 +47,8 @@ public class DocumentDaoImpl implements DocumentDao {
         return documentRepo.findByUserIdOrderByTimestampDesc(userId, PageRequest.of(0, limit));
     }
 
+    @Override
+    public Optional<DocumentEntity> findByUserIdAndDocumentType(String userReportId, String documentType) {
+        return documentRepo.findByUserIdAndDocumentType(userReportId, documentType);
+    }
 }

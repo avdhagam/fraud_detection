@@ -8,13 +8,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public interface DocumentService {
     DocumentResponse processDocument(DocumentRequest request);
     DocumentResponse getDocumentById(String documentId);
     DocumentEntity findDocumentEntityById(String documentId);
-
+    Optional<DocumentEntity> getDocumentByUserIdAndType(String userReportId, String documentType);
     List<String> getRecentDocuments(String userId, int limit);
-    DocumentEntity getDocumentByUserIdAndType(String userReportId, String documentType);
+
 }

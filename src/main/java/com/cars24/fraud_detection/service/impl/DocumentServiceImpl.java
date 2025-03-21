@@ -28,16 +28,16 @@ public class DocumentServiceImpl implements DocumentService {
 
     private final DocumentDao documentDao;
     private final WorkflowInitiator workflowInitiator;
-    private final DocumentRepository documentRepository;
+
     @Value("${document.storage.path}")
     private String storagePath;
 
     @Autowired
     public DocumentServiceImpl(DocumentDao documentDao,
-                               @Qualifier("documentWorkflow") WorkflowInitiator workflowInitiator, DocumentRepository documentRepository) {
+                               @Qualifier("documentWorkflow") WorkflowInitiator workflowInitiator) {
         this.documentDao = documentDao;
         this.workflowInitiator = workflowInitiator;
-        this.documentRepository = documentRepository;
+
     }
 
     @Override
@@ -66,6 +66,7 @@ public class DocumentServiceImpl implements DocumentService {
                     request.getUserReportId(), request.getDocumentType()
             );
 
+
             if (existingDocument.isPresent()) {
                 // Update existing entry
                 DocumentEntity entity = existingDocument.get();
@@ -90,7 +91,7 @@ public class DocumentServiceImpl implements DocumentService {
             } else {
                 // Insert new entry
                 DocumentEntity newDocumentEntity = DocumentEntity.builder()
-                        .userId(request.getUserId()) // Original user report ID
+                        .userId(request.getUserReportId()) // Original user report ID
                         .documentId(response.getDocumentId()) // Generated document ID
                         .documentType(response.getDocumentType())
                         .fileName(request.getFileName())
@@ -164,11 +165,7 @@ public class DocumentServiceImpl implements DocumentService {
                 .collect(Collectors.toList());
     }
 
-
-
-
-    public DocumentEntity getDocumentByUserIdAndType(String userId, String documentType) {
-        return documentRepository.findByUserIdAndDocumentType(userId,documentType)
-                .orElse(null); // Return null if not found
+    public Optional<DocumentEntity> getDocumentByUserIdAndType(String userReportId, String documentType) {
+        return documentDao.findByUserIdAndDocumentType(userReportId, documentType);
     }
 }

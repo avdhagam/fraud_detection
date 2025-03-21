@@ -27,7 +27,7 @@ import java.util.Optional;
 @RequestMapping("/users")
 @RequiredArgsConstructor
 
-@CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.POST,RequestMethod.GET})
+@CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.POST,RequestMethod.GET, RequestMethod.PUT})
 
 public class UserController {
 

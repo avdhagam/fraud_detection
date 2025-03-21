@@ -25,7 +25,7 @@ import java.util.logging.Logger;
 @Slf4j
 @RestController
 @RequestMapping("/audio")
-@CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.POST,RequestMethod.GET})
+@CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.POST,RequestMethod.GET, RequestMethod.PUT})
 
 public class AudioController {
 

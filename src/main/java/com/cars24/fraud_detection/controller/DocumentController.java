@@ -22,11 +22,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/documents")
-@CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.POST,RequestMethod.GET})
+@CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.POST,RequestMethod.GET, RequestMethod.PUT})
 @Slf4j
 public class DocumentController {
 
@@ -55,6 +56,7 @@ public class DocumentController {
         DocumentResponse response = documentService.getDocumentById(documentId);
         return ResponseEntity.ok(response);
     }
+
     @PutMapping("/update-document")
     public ResponseEntity<DocumentResponse> updateDocument(
             @RequestParam("file") MultipartFile file,
@@ -68,7 +70,7 @@ public class DocumentController {
         DocumentRequest request = new DocumentRequest();
         request.setFileName(file.getOriginalFilename());
         request.setDocumentData(file.getBytes());
-        request.setUserId(userId);
+        request.setUserReportId(userId);
         request.setDocumentType(documentType);
 
         DocumentResponse response = documentService.processDocument(request);
@@ -161,9 +163,11 @@ public class DocumentController {
         return ResponseEntity.ok(fileNames);
     }
 
-    @GetMapping("/{userId}/{documentType}")
-    public DocumentEntity getDocument(@PathVariable String userId, @PathVariable String documentType) {
-        return documentService.getDocumentByUserIdAndType(userId, documentType);
+    @GetMapping("/{userId}/{docType}")
+    public Optional<DocumentEntity> getDocument(
+            @PathVariable String userId,
+            @PathVariable String docType) {
+        return documentService.getDocumentByUserIdAndType(userId, docType);
     }
 
 }
