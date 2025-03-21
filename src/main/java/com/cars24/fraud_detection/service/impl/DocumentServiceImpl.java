@@ -161,7 +161,7 @@ public class DocumentServiceImpl implements DocumentService {
         }
 
         return recentDocs.stream()
-                .map(DocumentEntity::getFileName) // ✅ Extract only fileName
+                .map(DocumentEntity::getFileName) //
                 .collect(Collectors.toList());
     }
 
