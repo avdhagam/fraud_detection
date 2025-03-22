@@ -6,6 +6,8 @@ import org.springframework.web.multipart.MultipartFile;
 @Data
 public class AudioRequest {
 
+        private String uuid;
+
         private String agentId;
         private String leadId;
 

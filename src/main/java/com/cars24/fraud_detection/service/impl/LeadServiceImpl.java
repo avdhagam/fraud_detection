@@ -14,6 +14,7 @@ import com.cars24.fraud_detection.config.DocumentTypeConfig;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -37,34 +38,18 @@ public class LeadServiceImpl implements LeadService {
         leadEntity.setGender(leadRequest.getGender());
         leadEntity.setAdharNumber(leadRequest.getAdharNumber());
         leadEntity.setPanNumber(leadRequest.getPanNumber());
-        leadEntity.setVerifiedName(leadRequest.getVerifiedName());
-        leadEntity.setVerifiedDob(leadRequest.getVerifiedDob());
-        leadEntity.setVerifiedGender(leadRequest.getVerifiedGender());
-        leadEntity.setVerifiedAdhar(leadRequest.getVerifiedAdhar());
-        leadEntity.setVerifiedPan(leadRequest.getVerifiedPan());
         leadEntity.setAddress(leadRequest.getAddress());
         leadEntity.setPhoneNumber(leadRequest.getPhoneNumber());
+        leadEntity.setReferenceName(leadRequest.getReferenceName());
+        leadEntity.setRelationToSubject(leadRequest.getRelationToSubject());
+        leadEntity.setSubjectOccupation(leadRequest.getSubjectOccupation());
+        leadEntity.setFatherName(leadRequest.getFatherName());
+        leadEntity.setDocType(leadRequest.getDocType());
+        leadEntity.setCreatedAt(LocalDate.now().atStartOfDay());
 
         LeadEntity savedLead = leadDao.saveLead(leadEntity);
 
-        LeadResponse leadResponse = new LeadResponse();
-        leadResponse.setId(savedLead.getId());
-        leadResponse.setAgentId(savedLead.getAgentId());
-        leadResponse.setName(savedLead.getName());
-        leadResponse.setEmail(savedLead.getEmail());
-        leadResponse.setDob(savedLead.getDob());
-        leadResponse.setGender(savedLead.getGender());
-        leadResponse.setAdharNumber(savedLead.getAdharNumber());
-        leadResponse.setPanNumber(savedLead.getPanNumber());
-        leadResponse.setVerifiedName(savedLead.getVerifiedName());
-        leadResponse.setVerifiedDob(savedLead.getVerifiedDob());
-        leadResponse.setVerifiedGender(savedLead.getVerifiedGender());
-        leadResponse.setVerifiedAdhar(savedLead.getVerifiedAdhar());
-        leadResponse.setVerifiedPan(savedLead.getVerifiedPan());
-        leadResponse.setAddress(savedLead.getAddress());
-        leadResponse.setPhoneNumber(savedLead.getPhoneNumber());
-
-        return leadResponse;
+        return new LeadResponse(savedLead);
     }
 
     @Override
@@ -134,9 +119,8 @@ public class LeadServiceImpl implements LeadService {
                 .documentName(documentName)
                 .status(audio.getStatus())
                 .score((double) audio.getOverallScore())
-                .description(audio.getStatus())
-                .uploadedAt(audio.getTimestamp())
-                .build();
+                .description(audio.getStatus()).uploadedAt(audio.getTimestamp())
+                        .build();
     }
 
     private InsightsEntity createPendingDocumentInsightsEntity(String leadId, String documentType, String documentName) {

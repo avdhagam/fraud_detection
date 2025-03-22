@@ -5,6 +5,7 @@ import com.cars24.fraud_detection.data.response.AudioResponse;
 import com.cars24.fraud_detection.exception.AudioProcessingException;
 import com.cars24.fraud_detection.service.AudioService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,7 @@ import java.io.IOException;
 @RestController
 @RequestMapping("/audio")
 @CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.POST,RequestMethod.GET, RequestMethod.PUT})
+
 public class AudioController {
 
     private final AudioService audioService;
@@ -58,7 +60,7 @@ public class AudioController {
     }
 
     @GetMapping("/{audioId}")
-    public ResponseEntity<AudioResponse> getAudio(@PathVariable String audioId) {
+    public ResponseEntity<AudioResponse> getAudio(@PathVariable String audioId) throws AudioProcessingException {
         log.info("Received get request for audio ID: {}", audioId);
         AudioResponse response = audioService.getAudioResults(audioId);
         return ResponseEntity.ok(response);

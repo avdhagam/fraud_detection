@@ -67,7 +67,7 @@ public class FileUtils {
 
     public static DocumentEntity buildDocumentEntity(DocumentRequest request, DocumentResponse response) {
         return DocumentEntity.builder()
-                .documentId(UUID.randomUUID().toString())
+                .id(UUID.randomUUID().toString())
                 .fileName(request.getFileName())
 
                 .documentType(request.getDocumentType())

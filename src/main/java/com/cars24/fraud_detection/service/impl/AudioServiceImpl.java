@@ -45,10 +45,6 @@ public class AudioServiceImpl implements AudioService {
     private final LeadDao leadDao;  // Inject LeadDao
     private final WorkflowInitiator workflowInitiator;
     private static final Logger logger = Logger.getLogger(AudioServiceImpl.class.getName());
-    private static final String STORAGE_PATH = "src/main/resources/audio_storage";
-
-    @Value("${audio.storage.path}")
-    private String audioStoragePath;
 
     private final DocumentTypeConfig documentTypeConfig;
 
@@ -101,7 +97,7 @@ public class AudioServiceImpl implements AudioService {
     }
 
     @Override
-    public AudioResponse getAudioResults(String audioId) {
+    public AudioResponse getAudioResults(String audioId) throws AudioProcessingException {
         logger.info("Fetching audio analysis for ID: " + audioId);
 
         Optional<AudioEntity> audioEntityOpt = audioDao.getAudioById(audioId);
@@ -180,7 +176,7 @@ public class AudioServiceImpl implements AudioService {
     }
 
     @Override
-    public InsightsEntity getAudioInsights(String audioId) {
+    public InsightsEntity getAudioInsights(String audioId) throws AudioProcessingException {
         AudioEntity audioEntity = audioDao.getAudioById(audioId)
                 .orElseThrow(() -> new AudioProcessingException("Audio not found for ID: " + audioId));
 
@@ -206,7 +202,7 @@ public class AudioServiceImpl implements AudioService {
             }
 
             // Ensure the storage directory exists
-            Path storagePath = Paths.get(STORAGE_PATH);
+            Path storagePath = Paths.get(AUDIO_STORAGE_PATH);
             Files.createDirectories(storagePath);
 
             // Generate a unique file name

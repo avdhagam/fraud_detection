@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,4 +29,10 @@ public class AudioResponse {
     private Map<String, Double> fieldByFieldScores;
     private Map<String, Object> audioAnalysis;
     private String status;
+
+    public <E, K, V> AudioResponse(String uuid, Object o, ArrayList<E> es, Object o1, Object o2, Object o3, Object o4, Object o5, double v, ArrayList<E> es1, HashMap<K,V> kvHashMap, String error) {
+    }
+
+    public AudioResponse(String uuid, String agentId, Map<String, Object> llmExtractionResult, Map<String, Object> audioAnalysisMap, List<String> transcript, String referenceName, String subjectName, String subjectAddress, String relationToSubject, String subjectOccupation, Double overallScore, List<String> explanation, Map<String, Double> fieldByFieldScores, String status) {
+    }
 }

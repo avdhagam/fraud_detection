@@ -102,7 +102,7 @@ public class AudioWorkflow implements WorkflowInitiator {
         // Convert transcriptList to a list of strings
         List<String> transcript = transcriptList.stream().map(map -> map.toString()).collect(Collectors.toList());
         // Create and return AudioResponse
-        return new AudioResponse(request.getUuid(), request.getUserReportId(),llmExtractionResult, audioAnalysisMap, transcript, referenceName, subjectName, subjectAddress, relationToSubject, subjectOccupation, overallScore, explanation, fieldByFieldScores, status);
+        return new AudioResponse(request.getUuid(), request.getAgentId(),llmExtractionResult, audioAnalysisMap, transcript, referenceName, subjectName, subjectAddress, relationToSubject, subjectOccupation, overallScore, explanation, fieldByFieldScores, status);
     }
     private Map<String, Object> processAudioScript(String scriptPath, String uuid) {
         logger.debug("Running Python script: {} with audio file: {}", scriptPath, uuid);

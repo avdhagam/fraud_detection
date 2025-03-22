@@ -21,16 +21,17 @@ public class LeadEntity {
     private String email;
     private String dob;  // Date of Birth
     private String gender;
+    private String fatherName;
 
     private String adharNumber;
     private String panNumber;
 
-    // Ground Truth Data for Validation (Data Entered by Agent)
-    private String verifiedName;
-    private String verifiedDob;
-    private String verifiedGender;
-    private String verifiedAdhar;
-    private String verifiedPan;
+    private String docType;
+
+    private String referenceName;
+    private String relationToSubject;
+    private String subjectOccupation;
+
 
     // Optional: Additional Lead Information
     private String address;
@@ -38,4 +39,6 @@ public class LeadEntity {
 
     @CreatedDate
     private LocalDateTime createdAt;
+
+
 }
