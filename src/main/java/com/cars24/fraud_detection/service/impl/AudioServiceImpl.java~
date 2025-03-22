@@ -16,14 +16,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -53,51 +49,76 @@ public class AudioServiceImpl implements AudioService {
     private final DocumentTypeConfig documentTypeConfig;
 
     @Override
-    public AudioResponse processAudioRequest(AudioRequest audioRequest) throws JsonProcessingException, AudioProcessingException {
+    public AudioResponse processAudioRequest(AudioRequest audioRequest) { // Removed throws declaration
         logger.info("Received AudioRequest object: " + audioRequest);
+        AudioResponse audioResponse = new AudioResponse();
 
-        // 1. Validate Lead Existence
-        LeadEntity lead = leadDao.findLeadById(audioRequest.getLeadId())
-                .orElseThrow(() -> new AudioProcessingException("Lead not found with ID: " + audioRequest.getLeadId()));
+        try {
+            // 1. Validate Lead Existence
+            LeadEntity lead = leadDao.findLeadById(audioRequest.getLeadId())
+                    .orElseThrow(() -> new AudioProcessingException("Lead not found with ID: " + audioRequest.getLeadId()));
 
-        MultipartFile file = audioRequest.getAudioFile();
+            MultipartFile file = audioRequest.getAudioFile();
 
-        // 2. Save the audio file
-        String filePath = saveAudio(file);
-        Path path = Paths.get(filePath);
-        String fileName = path.getFileName().toString();
-        String uuid = fileName.replace(".mp3", ""); // Extract UUID from filename
+            // 2. Save the audio file
+            String filePath = saveAudio(file);
+            Path path = Paths.get(filePath);
+            String fileName = path.getFileName().toString();
+            String uuid = fileName.replace(".mp3", ""); // Extract UUID from filename
 
-        // 3. Process Audio using Workflow
-        AudioResponse audioResponse = workflowInitiator.processAudio(audioRequest);
+            // 3. Process Audio using Workflow
 
-        // 4. Create AudioEntity
-        AudioEntity audioEntity = new AudioEntity();
-        audioEntity.setId(uuid); // Use UUID
-        audioEntity.setLeadId(audioRequest.getLeadId());
-        audioEntity.setAgentId(audioRequest.getAgentId());
-        audioEntity.setDocumentType(audioRequest.getDocumentType());
-        audioEntity.setLlmExtraction(audioResponse.getLlmExtraction());
-        audioEntity.setTranscript(audioResponse.getTranscript());
-        audioEntity.setReferenceName(audioResponse.getReferenceName());
-        audioEntity.setSubjectName(audioResponse.getSubjectName());
-        audioEntity.setSubjectAddress(audioResponse.getSubjectAddress());
-        audioEntity.setRelationToSubject(audioResponse.getRelationToSubject());
-        audioEntity.setSubjectOccupation(audioResponse.getSubjectOccupation());
-        audioEntity.setOverallScore(audioResponse.getOverallScore());
-        audioEntity.setExplanation(audioResponse.getExplanation());
-        audioEntity.setFieldByFieldScores(audioResponse.getFieldByFieldScores());
-        audioEntity.setAudioAnalysis(audioResponse.getAudioAnalysis());
-        audioEntity.setStatus(audioResponse.getStatus());
-        audioEntity.setTimestamp(LocalDateTime.now());
+            try {
+                audioResponse = workflowInitiator.processAudio(audioRequest);
+            } catch (JsonProcessingException e) {
+                throw new AudioProcessingException("Json Processing exception during workflow: " + e.getMessage(), e);
+            }
 
-        // 5. Save AudioEntity
-        audioDao.saveAudio(audioEntity);
-        logger.info("Saved AudioEntity object to database with ID: " + audioEntity.getId());
+            // 4. Create AudioEntity
+            AudioEntity audioEntity = new AudioEntity();
+            audioEntity.setId(uuid); // Use UUID
+            audioEntity.setLeadId(audioRequest.getLeadId());
+            audioEntity.setAgentId(audioRequest.getAgentId());
+            audioEntity.setDocumentType(audioRequest.getDocumentType());
+            audioEntity.setLlmExtraction(audioResponse.getLlmExtraction());
+            audioEntity.setTranscript(audioResponse.getTranscript());
+            audioEntity.setReferenceName(audioResponse.getReferenceName());
+            audioEntity.setSubjectName(audioResponse.getSubjectName());
+            audioEntity.setSubjectAddress(audioResponse.getSubjectAddress());
+            audioEntity.setRelationToSubject(audioResponse.getRelationToSubject());
+            audioEntity.setSubjectOccupation(audioResponse.getSubjectOccupation());
+            audioEntity.setOverallScore(audioResponse.getOverallScore());
+            audioEntity.setExplanation(audioResponse.getExplanation());
+            audioEntity.setFieldByFieldScores(audioResponse.getFieldByFieldScores());
+            audioEntity.setAudioAnalysis(audioResponse.getAudioAnalysis());
+            audioEntity.setStatus(audioResponse.getStatus());
+            audioEntity.setTimestamp(LocalDateTime.now());
 
-        // 6. Return response with UUID
-        audioResponse.setId(audioEntity.getId()); // Set the generated UUID
-        return audioResponse;
+            // 5. Save AudioEntity
+            audioDao.saveAudio(audioEntity);
+            logger.info("Saved AudioEntity object to database with ID: " + audioEntity.getId());
+
+            // 6. Return response with UUID
+            audioResponse.setId(audioEntity.getId()); // Set the generated UUID
+            return audioResponse;
+
+        } catch (AudioProcessingException e) {
+            log.error("Audio processing failed: ", e);
+            // Handle exception appropriately - e.g., create an error AudioResponse
+            audioResponse.setStatus("Failed");  // Set an error status
+            return audioResponse; // **Important:  Return the error response**
+
+        } catch (IOException e) {
+            log.error("IO exception: ", e);
+            // Handle exception appropriately - e.g., create an error AudioResponse
+            audioResponse.setStatus("Failed");  // Set an error status
+            return audioResponse; // **Important:  Return the error response**
+
+        } catch (Exception e) {
+            log.error("Unexpected error: ", e);
+            audioResponse.setStatus("Failed");
+            return audioResponse;
+        }
     }
 
     @Override
@@ -140,11 +161,11 @@ public class AudioServiceImpl implements AudioService {
 
     @Override
     public List<String> getRecentAudios(String leadId, int limit) {
-        log.info("Fetching recent audio UUIDs for lead ID: {} with limit: {}", leadId, limit);
+        logger.info("Fetching recent audio UUIDs for lead ID: {} with limit: {}", leadId, limit);
 
         List<AudioEntity> audios = audioDao.getRecentAudiosByLeadId(leadId, limit);
 
-        log.info("Total audios fetched: " + audios.size());
+        logger.info("Total audios fetched: " + audios.size());
 
         return audios.stream()
                 .map(AudioEntity::getId)
@@ -158,7 +179,7 @@ public class AudioServiceImpl implements AudioService {
             File audioFile = filePath.toFile();
 
             if (!audioFile.exists()) {
-//                log.warn("Audio file not found for id: {}", id);
+                //log.warn("Audio file not found for id: {}", id);
                 return ResponseEntity.notFound().build();
             }
 
@@ -174,7 +195,7 @@ public class AudioServiceImpl implements AudioService {
 
 
         } catch (Exception e) {
-//            log.error("Error retrieving audio file for id: {}", id, e);
+            // log.error("Error retrieving audio file for id: {}", id, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

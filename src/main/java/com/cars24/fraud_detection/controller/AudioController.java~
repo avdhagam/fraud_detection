@@ -6,7 +6,6 @@ import com.cars24.fraud_detection.exception.AudioProcessingException;
 import com.cars24.fraud_detection.service.AudioService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,31 +29,19 @@ public class AudioController {
             @RequestParam("file") MultipartFile file,
             @RequestParam("agentId") String agentId,
             @RequestParam("leadId") String leadId,
-            @RequestParam("documentType") String documentType) {  // Removed throws declaration
-        try {
-            log.info("Received audio file upload request for lead: {}", leadId);
+            @RequestParam("documentType") String documentType) throws IOException, AudioProcessingException {
 
-            AudioRequest audioRequest = new AudioRequest();
-            audioRequest.setAudioFile(file);
-            audioRequest.setAgentId(agentId);
-            audioRequest.setLeadId(leadId);
-            audioRequest.setDocumentType(documentType);
+        log.info("Received audio file upload request for lead: {}", leadId);
 
-            AudioResponse response = audioService.processAudioRequest(audioRequest);
+        AudioRequest audioRequest = new AudioRequest();
+        audioRequest.setAudioFile(file);
+        audioRequest.setAgentId(agentId);
+        audioRequest.setLeadId(leadId);
+        audioRequest.setDocumentType(documentType);
 
-            return ResponseEntity.ok(response);
+        AudioResponse response = audioService.processAudioRequest(audioRequest);
 
-        } catch (AudioProcessingException e) {
-            log.error("Error processing audio: ", e);
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(null); // Or create an error AudioResponse
-        } catch (IOException e) {
-            log.error("IO error during audio upload", e);
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(null);  // Or create an error AudioResponse
-        }
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{audioId}")

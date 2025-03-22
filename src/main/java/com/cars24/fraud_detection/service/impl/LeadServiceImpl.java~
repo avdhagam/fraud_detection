@@ -1,0 +1,69 @@
+package com.cars24.fraud_detection.service.impl;
+
+import com.cars24.fraud_detection.data.dao.LeadDao;
+import com.cars24.fraud_detection.data.entity.LeadEntity;
+import com.cars24.fraud_detection.data.request.LeadRequest;
+import com.cars24.fraud_detection.data.response.LeadResponse;
+import com.cars24.fraud_detection.service.LeadService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class LeadServiceImpl implements LeadService {
+
+    private final LeadDao leadDao;
+
+    @Override
+    public LeadResponse createLead(LeadRequest leadRequest) {
+        LeadEntity leadEntity = new LeadEntity();
+        leadEntity.setAgentId(leadRequest.getAgentId());
+        leadEntity.setName(leadRequest.getName());
+        leadEntity.setEmail(leadRequest.getEmail());
+        leadEntity.setDob(leadRequest.getDob());
+        leadEntity.setGender(leadRequest.getGender());
+        leadEntity.setAdharNumber(leadRequest.getAdharNumber());
+        leadEntity.setPanNumber(leadRequest.getPanNumber());
+        leadEntity.setVerifiedName(leadRequest.getVerifiedName());
+        leadEntity.setVerifiedDob(leadRequest.getVerifiedDob());
+        leadEntity.setVerifiedGender(leadRequest.getVerifiedGender());
+        leadEntity.setVerifiedAdhar(leadRequest.getVerifiedAdhar());
+        leadEntity.setVerifiedPan(leadRequest.getVerifiedPan());
+        leadEntity.setAddress(leadRequest.getAddress());
+        leadEntity.setPhoneNumber(leadRequest.getPhoneNumber());
+
+        LeadEntity savedLead = leadDao.saveLead(leadEntity);
+
+        LeadResponse leadResponse = new LeadResponse();
+        leadResponse.setId(savedLead.getId());
+        leadResponse.setAgentId(savedLead.getAgentId());
+        leadResponse.setName(savedLead.getName());
+        leadResponse.setEmail(savedLead.getEmail());
+        leadResponse.setDob(savedLead.getDob());
+        leadResponse.setGender(savedLead.getGender());
+        leadResponse.setAdharNumber(savedLead.getAdharNumber());
+        leadResponse.setPanNumber(savedLead.getPanNumber());
+        leadResponse.setVerifiedName(savedLead.getVerifiedName());
+        leadResponse.setVerifiedDob(savedLead.getVerifiedDob());
+        leadResponse.setVerifiedGender(savedLead.getVerifiedGender());
+        leadResponse.setVerifiedAdhar(savedLead.getVerifiedAdhar());
+        leadResponse.setVerifiedPan(savedLead.getVerifiedPan());
+        leadResponse.setAddress(savedLead.getAddress());
+        leadResponse.setPhoneNumber(savedLead.getPhoneNumber());
+
+        return leadResponse;
+    }
+
+    @Override
+    public LeadEntity getLeadById(String leadId) {
+        return leadDao.findLeadById(leadId)
+                .orElseThrow(() -> new IllegalArgumentException("Lead not found with ID: " + leadId));
+    }
+
+    @Override
+    public List<LeadEntity> getLeadsByAgentId(String agentId) {
+        return leadDao.findByAgentId(agentId);
+    }
+}
