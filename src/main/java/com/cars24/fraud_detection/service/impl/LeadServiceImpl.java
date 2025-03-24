@@ -46,7 +46,6 @@ public class LeadServiceImpl implements LeadService {
         leadEntity.setRelationToSubject(leadRequest.getRelationToSubject());
         leadEntity.setSubjectOccupation(leadRequest.getSubjectOccupation());
         leadEntity.setFatherName(leadRequest.getFatherName());
-        leadEntity.setDocType(leadRequest.getDocType());
         leadEntity.setCreatedAt(LocalDate.now().atStartOfDay());
 
         LeadEntity savedLead = leadDao.saveLead(leadEntity);

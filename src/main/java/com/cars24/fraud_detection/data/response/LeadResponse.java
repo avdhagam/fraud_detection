@@ -38,7 +38,6 @@ public class LeadResponse {
         this.fatherName = leadEntity.getFatherName();
         this.adharNumber = leadEntity.getAdharNumber();
         this.panNumber = leadEntity.getPanNumber();
-        this.docType = leadEntity.getDocType();
         this.referenceName = leadEntity.getReferenceName();
         this.relationToSubject = leadEntity.getRelationToSubject();
         this.subjectOccupation = leadEntity.getSubjectOccupation();

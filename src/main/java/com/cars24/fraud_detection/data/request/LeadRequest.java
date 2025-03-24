@@ -55,10 +55,6 @@ public class LeadRequest {
     @Pattern(regexp = "^[A-Z]{5}\\d{4}[A-Z]$", message = "Invalid PAN Number format. Use XXXXX1234X")
     private String panNumber;
 
-    @NotNull(message = "Document Type is required")
-    @NotBlank(message = "Document Type cannot be blank")
-    @Size(min = 1, max = 50, message = "Document Type must be between 1 and 50 characters")
-    private String docType;
 
     @NotNull(message = "Reference Name is required")
     @NotBlank(message = "Reference Name cannot be blank")
@@ -100,7 +96,6 @@ public class LeadRequest {
         leadEntity.setFatherName(this.fatherName); // Add this line
         leadEntity.setAdharNumber(this.adharNumber);
         leadEntity.setPanNumber(this.panNumber);
-        leadEntity.setDocType(this.docType); // Add this line
         leadEntity.setReferenceName(this.referenceName);
         leadEntity.setRelationToSubject(this.relationToSubject);
         leadEntity.setSubjectOccupation(this.subjectOccupation);
