@@ -26,7 +26,7 @@ public class LeadEntity {
     private String adharNumber;
     private String panNumber;
 
-    private String docType;
+//    private String docType;
 
     private String referenceName;
     private String relationToSubject;

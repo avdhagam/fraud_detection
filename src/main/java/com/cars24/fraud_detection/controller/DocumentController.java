@@ -1,5 +1,6 @@
 package com.cars24.fraud_detection.controller;
 
+import com.cars24.fraud_detection.config.DocumentTypeConfig;
 import com.cars24.fraud_detection.data.entity.DocumentEntity;
 import com.cars24.fraud_detection.data.request.DocumentRequest;
 import com.cars24.fraud_detection.data.response.DocumentResponse;
@@ -19,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/documents")
@@ -27,9 +29,11 @@ import java.util.List;
 public class DocumentController {
 
     private final DocumentService documentService;
+    private final DocumentTypeConfig documentTypeConfig;
 
-    public DocumentController(DocumentService documentService) {
+    public DocumentController(DocumentService documentService, DocumentTypeConfig documentTypeConfig) {
         this.documentService = documentService;
+        this.documentTypeConfig = documentTypeConfig;
     }
 
     @PostMapping("/upload")
@@ -112,5 +116,11 @@ public class DocumentController {
                 .map(DocumentEntity::toResponse)
                 .orElse(null); // Or handle not found case as appropriate
         return ResponseEntity.ok(document);
+    }
+
+    @GetMapping("/types")
+    public ResponseEntity<Map<String, String>> getAllDocumentTypes() {
+        System.out.println("Fetching document types: " + documentTypeConfig.getMapping());
+        return ResponseEntity.ok(documentTypeConfig.getMapping());
     }
 }

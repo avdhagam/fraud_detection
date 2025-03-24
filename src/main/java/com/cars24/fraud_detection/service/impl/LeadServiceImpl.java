@@ -6,6 +6,7 @@ import com.cars24.fraud_detection.data.entity.InsightsEntity;
 import com.cars24.fraud_detection.data.entity.DocumentEntity;
 import com.cars24.fraud_detection.data.entity.AudioEntity;
 import com.cars24.fraud_detection.data.request.LeadRequest;
+import com.cars24.fraud_detection.data.response.LeadNameEmail;
 import com.cars24.fraud_detection.data.response.LeadResponse;
 import com.cars24.fraud_detection.service.LeadService;
 import com.cars24.fraud_detection.service.DocumentService;
@@ -18,6 +19,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -44,7 +46,7 @@ public class LeadServiceImpl implements LeadService {
         leadEntity.setRelationToSubject(leadRequest.getRelationToSubject());
         leadEntity.setSubjectOccupation(leadRequest.getSubjectOccupation());
         leadEntity.setFatherName(leadRequest.getFatherName());
-        leadEntity.setDocType(leadRequest.getDocType());
+       // leadEntity.setDocType(leadRequest.getDocType());
         leadEntity.setCreatedAt(LocalDate.now().atStartOfDay());
 
         LeadEntity savedLead = leadDao.saveLead(leadEntity);
@@ -61,6 +63,20 @@ public class LeadServiceImpl implements LeadService {
     @Override
     public List<LeadEntity> getLeadsByAgentId(String agentId) {
         return leadDao.findByAgentId(agentId);
+    }
+
+    @Override
+    public String getLeadName(String leadId) {
+        LeadEntity leadEntity = getLeadById(leadId);  // Reuse existing method
+        return leadEntity.getName();
+    }
+
+    @Override
+    public List<LeadNameEmail> getLeadNameEmailByAgentId(String agentId) {
+        List<LeadEntity> leadEntities = leadDao.findByAgentId(agentId);
+        return leadEntities.stream()
+                .map(lead -> new LeadNameEmail(lead.getId(), lead.getName(), lead.getEmail()))
+                .collect(Collectors.toList());
     }
 
     @Override

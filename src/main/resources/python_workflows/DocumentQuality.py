@@ -5,7 +5,12 @@ import json
 import logging
 import re
 from openai import OpenAI
-
+import prompts
+from pathlib import Path
+script_path = Path(__file__).resolve() # finds absolute path of script
+root_dir = script_path.parents[4]  # Calculate root directory by moving up four levels
+sys.path.append(str(root_dir))
+import config
 # Configure logging
 log_dir = os.path.join("src", "main", "resources", "document_storage", "output")
 os.makedirs(log_dir, exist_ok=True)
@@ -14,19 +19,14 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
-
 # OpenRouter API Config
-API_KEY = "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"
+API_KEY = config.OPENROUTER_API_KEY
 BASE_URL = "https://openrouter.ai/api/v1"
-
 client = OpenAI(base_url=BASE_URL, api_key=API_KEY)
-
 # Document Storage Path
 DOCUMENT_STORAGE_PATH = os.path.join("src", "main", "resources", "document_storage")
 OUTPUT_PATH = os.path.join(DOCUMENT_STORAGE_PATH, "output")
 os.makedirs(OUTPUT_PATH, exist_ok=True)
-
-
 def assess_quality(image_path):
     """Assess document quality using AI-based analysis."""
     try:
@@ -34,28 +34,11 @@ def assess_quality(image_path):
             error_msg = f"File not found: {image_path}"
             logging.error(error_msg)
             return {"error": error_msg, "success": False, "finalQualityScore": 0.0}
-
         # Encode image for AI processing
         with open(image_path, "rb") as img_file:
             image_base64 = base64.b64encode(img_file.read()).decode("utf-8")
-
         # AI Quality Analysis Prompt
-        quality_prompt = (
-            "Analyze this document image for quality assessment with a focus on readability, clarity, and completeness. Identify the following aspects:\n\n"
-            " **Readability Analysis** - Assess if text is clear, legible, and distortion-free.\n"
-            " **Completeness Analysis** - Verify if all document sections are fully visible.\n"
-            " **Blur Detection** - Identify if blur affects readability.\n"
-            " **Lighting Issues** - Detect overexposure, shadows, or uneven brightness.\n"
-            " **Color Accuracy** - Identify distortions or unnatural color shifts.\n"
-            " **Document Alignment** - Check for tilt or misalignment impacting clarity.\n"
-            " **Noise & Artifacts** - Identify unwanted marks, background noise, or distortions.\n\n"
-            "Provide the results in **structured JSON format** with:\n"
-            "- **Scores (0-1)** for each category.\n"
-            "- **Detailed insights** explaining the score.\n"
-            "- **Clear recommendations** for improvement.\n"
-            "- **An overall quality score** and a final decision (Good, Acceptable, Poor)."
-        )
-
+        quality_prompt = prompts.PROMPTS["DOCUMENT_QUALITY_PROMPT"]
         # Call AI Model
         completion = client.chat.completions.create(
             model="google/gemini-pro-vision",
@@ -66,20 +49,16 @@ def assess_quality(image_path):
                 ]}
             ]
         )
-
         # Extract AI Response
         raw_response = completion.choices[0].message.content
         logging.info(f"Quality API Raw Response: {raw_response}")
-
         # Clean & Parse AI Response
         cleaned_response = re.sub(r"```json\n|\n```", "", raw_response).strip()
-
         try:
             ai_results = json.loads(cleaned_response)
         except json.JSONDecodeError as e:
             logging.error(f"Failed to parse JSON: {e}")
             ai_results = {}
-
         # Construct Final Quality Response
         combined_results = {
             "qualityAnalysis": {
@@ -123,14 +102,10 @@ def assess_quality(image_path):
             "decision": ai_results.get("final_decision", "Review needed"),
             "success": True
         }
-
         return combined_results
-
     except Exception as e:
         logging.error(f"Quality assessment error: {str(e)}")
         return {"error": f"Quality assessment error: {str(e)}", "finalQualityScore": 0.0, "success": False}
-
-
 if __name__ == "__main__":
     image_path = sys.argv[1]
     result = assess_quality(image_path)

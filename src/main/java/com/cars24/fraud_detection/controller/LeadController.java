@@ -3,10 +3,7 @@ package com.cars24.fraud_detection.controller;
 import com.cars24.fraud_detection.data.entity.LeadEntity;
 import com.cars24.fraud_detection.data.entity.InsightsEntity;
 import com.cars24.fraud_detection.data.request.LeadRequest;
-import com.cars24.fraud_detection.data.response.AadhaarGroundTruth;
-import com.cars24.fraud_detection.data.response.AudioGroundTruth;
-import com.cars24.fraud_detection.data.response.LeadResponse;
-import com.cars24.fraud_detection.data.response.PanGroundTruth;
+import com.cars24.fraud_detection.data.response.*;
 import com.cars24.fraud_detection.service.LeadService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/leads")
@@ -41,6 +39,8 @@ public class LeadController {
         List<LeadEntity> leadEntities = leadService.getLeadsByAgentId(agentId);
         return ResponseEntity.ok(leadEntities);
     }
+
+
 
     //Combined lead insights end point
     @GetMapping("/{leadId}/insights")
@@ -75,5 +75,21 @@ public class LeadController {
         }
         PanGroundTruth panGroundTruth = PanGroundTruth.fromLeadEntity(leadEntity);
         return ResponseEntity.ok(panGroundTruth);
+    }
+    @GetMapping("/{leadId}/name")
+    public ResponseEntity<String> getLeadName(@PathVariable String leadId) {
+        LeadEntity leadEntity = leadService.getLeadById(leadId);
+        if (leadEntity == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(leadEntity.getName());  // Just return the name
+    }
+    @GetMapping("/agent/{agentId}/name-email")
+    public ResponseEntity<List<LeadNameEmail>> getLeadNameEmailByAgent(@PathVariable String agentId) {
+        List<LeadEntity> leadEntities = leadService.getLeadsByAgentId(agentId);
+        List<LeadNameEmail> leadNameEmails = leadEntities.stream()
+                .map(lead -> new LeadNameEmail(lead.getId(), lead.getName(), lead.getEmail()))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(leadNameEmails);
     }
 }

@@ -18,7 +18,7 @@ public class LeadResponse {
     private String fatherName;
     private String adharNumber;
     private String panNumber;
-    private String docType;
+   // private String docType;
     private String referenceName;
     private String relationToSubject;
     private String subjectOccupation;
@@ -38,7 +38,7 @@ public class LeadResponse {
         this.fatherName = leadEntity.getFatherName();
         this.adharNumber = leadEntity.getAdharNumber();
         this.panNumber = leadEntity.getPanNumber();
-        this.docType = leadEntity.getDocType();
+      //  this.docType = leadEntity.getDocType();
         this.referenceName = leadEntity.getReferenceName();
         this.relationToSubject = leadEntity.getRelationToSubject();
         this.subjectOccupation = leadEntity.getSubjectOccupation();
