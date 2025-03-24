@@ -18,7 +18,6 @@ public class LeadResponse {
     private String fatherName;
     private String adharNumber;
     private String panNumber;
-    private String docType;
     private String referenceName;
     private String relationToSubject;
     private String subjectOccupation;

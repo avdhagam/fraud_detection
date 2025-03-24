@@ -40,6 +40,8 @@ public class LeadController {
         return ResponseEntity.ok(leadEntities);
     }
 
+
+
     //Combined lead insights end point
     @GetMapping("/{leadId}/insights")
     public ResponseEntity<List<InsightsEntity>> getLeadInsights(@PathVariable String leadId) {
