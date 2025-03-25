@@ -6,6 +6,7 @@ import com.cars24.fraud_detection.data.response.FileResponse;
 import com.cars24.fraud_detection.repository.FileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,6 +28,7 @@ public class FileDaoImpl implements FileDao {
         return fileRepository.findById(id);
     }
 
+    @Transactional
     @Override
     public void updateStatus(String fileId, String status) {
         fileRepository.findById(fileId).ifPresent(file -> {

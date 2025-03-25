@@ -225,8 +225,6 @@ import com.cars24.fraud_detection.service.FileService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -240,7 +238,6 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -314,15 +311,19 @@ public class FileServiceImpl implements FileService {
         return savedFile;
     }
 
-    @Override
     @Transactional
-    public List<FileResponse> uploadMultipleFiles(String agentId, String leadId, String fileType, List<MultipartFile> files) {
+    @Override
+    public List<FileResponse> uploadMultipleFiles(String agentId, String leadId, List<String> fileTypes, List<MultipartFile> files) {
         List<FileResponse> responses = new ArrayList<>();
 
-        for (MultipartFile file : files) {
+        for (int i = 0; i < files.size(); i++) {
+            MultipartFile file = files.get(i);
+            String fileType = fileTypes.get(i);  // Get corresponding file type
+
             try {
                 byte[] fileData = file.getBytes();
                 FileEntity savedFile = uploadFile(agentId, leadId, fileType, file.getOriginalFilename(), fileData);
+
                 responses.add(new FileResponse(
                         savedFile.getFileId(),
                         savedFile.getAgentId(),
@@ -342,6 +343,7 @@ public class FileServiceImpl implements FileService {
 
         return responses;
     }
+
 
 
     private String determineStoragePath(String fileType) {
@@ -380,7 +382,7 @@ public class FileServiceImpl implements FileService {
             log.info("Audio processing completed: {}", response);
 
             // Update file status and other relevant data from AudioResponse
-            fileEntity.setStatus(response.getStatus());
+            fileEntity.setStatus(fileEntity.getStatus());
             // Update file status to PROCESSED and save
             fileDao.updateStatus(fileEntity.getFileId(),"PROCESSED");  // Use response.getStatus()
             log.info("Audio file processed successfully: {}", fileEntity.getFileId());
@@ -442,6 +444,10 @@ public class FileServiceImpl implements FileService {
             log.error("Error processing document file: {}", fileEntity.getFileId(), e);
             fileDao.updateStatus(fileEntity.getFileId(), "FAILED");
         }
+        finally {
+            // Save the updated FileEntity
+            fileDao.save(fileEntity);
+        }
     }
 
     private String extractFileExtension(String originalFilename) {
@@ -465,4 +471,9 @@ public class FileServiceImpl implements FileService {
     public List<FileEntity> getFilesByAgentAndLead(String agentId, String leadId, String fileType) {
         return fileDao.findByAgentIdAndLeadIdAndFileType(agentId, leadId, fileType);
     }
+
+//    @Override
+//    public List<FileResponse> uploadMultipleFiles(String agentId, String leadId, String fileType, List<MultipartFile> files) {
+//        return List.of();
+//    }
 }

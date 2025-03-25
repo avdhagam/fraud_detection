@@ -1,0 +1,9 @@
+{
+    "document_type": "Aadhaar",
+    "name": "SMITH STEVE PETER",
+    "date_of_birth": "1989-06-02",
+    "id_number": "266497831234",
+    "gender": "male",
+    "father_name": null,
+    "raw_text": "{\n  \"document_type\": \"Aadhaar\",\n  \"confidence\": 1.0,\n  \"name\": \"SMITH STEVE PETER\",\n  \"confidence\": 1.0,\n  \"date_of_birth\": \"1989-06-02\",\n  \"confidence\": 1.0,\n  \"gender\": \"male\",\n  \"confidence\": 1.0,\n  \"father_name\": null,\n  \"confidence\": 0.0,\n  \"id_number\": \"266497831234\",\n  \"confidence\": 1.0\n}"
+}

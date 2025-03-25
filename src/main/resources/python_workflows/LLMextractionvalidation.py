@@ -12,7 +12,7 @@ import sys
 script_path = Path(__file__).resolve() # finds absolute path of script
 root_dir = script_path.parents[4]  # Calculate root directory by moving up four levels
 sys.path.append(str(root_dir)) # Add the project's root directory to the Python path
-import config
+import configs
 
 
 # Define base path for stored audio files
@@ -83,7 +83,7 @@ def extract_transcript_information(transcript, ground_truth):
         dict: Extracted information and scoring results.
     """
     # OpenRouter API key
-    api_key = config.OPENROUTER_API_KEY
+    api_key = configs.OPENROUTER_API_KEY
     if not api_key:
         print("Error: OPENROUTER_API_KEY is not set.")
         sys.exit(1)

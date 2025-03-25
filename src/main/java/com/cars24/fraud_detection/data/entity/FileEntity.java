@@ -32,7 +32,8 @@ public class FileEntity {
         this.originalFilename = originalFilename;
         this.fileType = fileType;
         this.filePath = filePath;
-        this.status = "PENDING"; // Default status
+        //this.status = "PENDING"; // Default status
+        this.status = getStatus();
         this.isActive = Boolean.TRUE; // Mark file as active
         this.uploadedAt = LocalDateTime.now(); // Set timestamp
     }

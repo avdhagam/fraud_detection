@@ -1,0 +1,16 @@
+2025-03-25 12:24:51,773 - INFO - Forgery analysis results saved to: src/main/resources/document_storage/output\forgery_analysis_123fbf1a.json
+2025-03-25 12:25:11,449 - INFO - Forgery analysis results saved to: src/main/resources/document_storage/output\forgery_analysis_c724fda9.json
+2025-03-25 12:25:42,706 - INFO - Forgery analysis results saved to: src/main/resources/document_storage/output\forgery_analysis_dc567cba.json
+2025-03-25 12:29:06,314 - ERROR - Forgery analysis error: File not found: C:\Users\rashm\Documents\fraud_detection_final\src\main\resources\files_to_test\adhar_images\output_with_exif
+2025-03-25 12:30:16,996 - ERROR - Forgery analysis error: File not found: C:\Users\rashm\Documents\fraud_detection_final\src\main\resources\files_to_test\adhar_images\output_with_exif
+2025-03-25 12:30:34,159 - ERROR - Forgery analysis error: File not found: C:\Users\rashm\Documents\fraud_detection_latest1\src\main\resources\files_to_test\adhar_images\output_with_exif
+2025-03-25 12:32:00,817 - INFO - Forgery analysis results saved to: src/main/resources/document_storage/output\forgery_analysis_7be7b25b.json
+2025-03-25 12:48:32,551 - INFO - Forgery analysis results saved to: src/main/resources/document_storage/output\forgery_analysis_7212169a.json
+2025-03-25 12:50:06,863 - INFO - Forgery analysis results saved to: src/main/resources/document_storage/output\forgery_analysis_c43c868f.json
+2025-03-25 12:52:58,538 - INFO - Forgery analysis results saved to: src/main/resources/document_storage/output\forgery_analysis_81dd508b.json
+2025-03-25 12:53:09,738 - INFO - Forgery analysis results saved to: src/main/resources/document_storage/output\forgery_analysis_6f90ebd5.json
+2025-03-25 12:55:25,652 - INFO - Forgery analysis results saved to: src/main/resources/document_storage/output\forgery_analysis_0c95cd97.json
+2025-03-25 12:58:30,399 - INFO - Forgery analysis results saved to: src/main/resources/document_storage/output\forgery_analysis_19a135a4.json
+2025-03-25 13:01:02,562 - INFO - Forgery analysis results saved to: src/main/resources/document_storage/output\forgery_analysis_824c5e18.json
+2025-03-25 13:08:25,208 - INFO - Forgery analysis results saved to: src/main/resources/document_storage/output\forgery_analysis_f26fef4b.json
+2025-03-25 13:08:34,478 - INFO - Forgery analysis results saved to: src/main/resources/document_storage/output\forgery_analysis_43a47550.json

@@ -13,10 +13,10 @@ script_path = Path(__file__).resolve() # finds absolute path of script
 root_dir = script_path.parents[4]  # Calculate root directory by moving up four levels
 sys.path.append(str(root_dir))
 
-import config
+import configs
 
 # Load API Key from environment variable
-GEMINI_API_KEY = config.GEMINI_API_KEY
+GEMINI_API_KEY = configs.GEMINI_API_KEY
 GEMINI_OCR_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
 
 # Ensure UTF-8 output encoding

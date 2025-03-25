@@ -10,7 +10,7 @@ from pathlib import Path
 script_path = Path(__file__).resolve() # finds absolute path of script
 root_dir = script_path.parents[4]  # Calculate root directory by moving up four levels
 sys.path.append(str(root_dir))
-import config
+import configs
 # Configure logging
 log_dir = os.path.join("src", "main", "resources", "document_storage", "output")
 os.makedirs(log_dir, exist_ok=True)
@@ -20,7 +20,7 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 # OpenRouter API Config
-API_KEY = config.OPENROUTER_API_KEY
+API_KEY = configs.OPENROUTER_API_KEY
 BASE_URL = "https://openrouter.ai/api/v1"
 client = OpenAI(base_url=BASE_URL, api_key=API_KEY)
 # Document Storage Path

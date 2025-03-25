@@ -1,0 +1,9 @@
+{
+    "document_type": "Aadhaar",
+    "name": "Ayaan Khan",
+    "date_of_birth": "2007-07-15",
+    "id_number": "123456789101112",
+    "gender": "Male",
+    "father_name": null,
+    "raw_text": "{\n  \"document_type\": \"Aadhaar\",\n  \"confidence\": 1.0,\n  \"name\": \"Ayaan Khan\",\n  \"confidence\": 1.0,\n  \"date_of_birth\": \"2007-07-15\",\n  \"confidence\": 1.0,\n  \"gender\": \"Male\",\n  \"confidence\": 1.0,\n  \"father_name\": null,\n  \"confidence\": 0.0,\n  \"id_number\": \"123456789101112\",\n  \"confidence\": 1.0\n}"
+}

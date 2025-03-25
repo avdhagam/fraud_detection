@@ -1,0 +1,30 @@
+{
+    "forgeryAnalysis": {
+        "tamperingAnalysis": {
+            "tamperingScore": 0.06274509803921569,
+            "insight": "ELA-based tampering analysis completed."
+        },
+        "metadataAnalysis": {
+            "metadataAnomalyScore": 0.0,
+            "insight": "Metadata analysis completed.",
+            "issues": []
+        },
+        "formatConsistencyAnalysis": {
+            "formatConsistencyScore": 0.0,
+            "insight": "File format detected: image/jpeg"
+        },
+        "securityFeatureAnalysis": {
+            "securityFeatureScore": 0.9532943755547785,
+            "insight": "Edge detection performed for security features."
+        },
+        "backgroundIntegrityAnalysis": {
+            "backgroundConsistencyScore": 1.0,
+            "insight": "Texture analysis performed for background consistency."
+        },
+        "overallForgeryAssessment": {
+            "finalForgeryRiskScore": 0.40320789471879886,
+            "decision": "Likely Authentic"
+        }
+    },
+    "success": true
+}

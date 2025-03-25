@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 @Slf4j
@@ -61,10 +62,12 @@ public class FileController {
     public ResponseEntity<List<FileResponse>> uploadMultipleFiles(
             @RequestParam("agentId") String agentId,
             @RequestParam("leadId") String leadId,
-            @RequestParam("fileType") String fileType,
+            @RequestParam("fileTypes") List<String> fileTypes, // Updated to List<String>
             @RequestParam("files") List<MultipartFile> files) {
-
-        List<FileResponse> uploadedFiles = fileService.uploadMultipleFiles(agentId, leadId, fileType, files);
+        if (fileTypes.size() != files.size()) {
+            return ResponseEntity.badRequest().body(Collections.emptyList());
+        }
+        List<FileResponse> uploadedFiles = fileService.uploadMultipleFiles(agentId, leadId, fileTypes, files);
         return ResponseEntity.ok(uploadedFiles);
     }
 

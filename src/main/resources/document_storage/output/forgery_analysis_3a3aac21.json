@@ -1,0 +1,29 @@
+{
+    "forgeryAnalysis": {
+        "tamperingAnalysis": {
+            "tamperingScore": 0,
+            "detailedInsight": "No tampering insights available."
+        },
+        "metadataAnalysis": {
+            "metadataAnomalyScore": 0,
+            "detailedInsight": "No metadata insights available."
+        },
+        "formatConsistencyAnalysis": {
+            "formatConsistencyScore": 0,
+            "detailedInsight": "No format inconsistencies detected."
+        },
+        "securityFeatureAnalysis": {
+            "securityFeatureScore": 0,
+            "detailedInsight": "Security features analysis unavailable."
+        },
+        "backgroundIntegrityAnalysis": {
+            "backgroundConsistencyScore": 0,
+            "detailedInsight": "No background inconsistencies found."
+        },
+        "overallForgeryAssessment": {
+            "finalForgeryRiskScore": 0.0,
+            "decision": "Manual Review Recommended"
+        }
+    },
+    "success": true
+}

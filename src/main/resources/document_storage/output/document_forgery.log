@@ -1428,3 +1428,161 @@
   "decision": "Low Risk"
 }
 2025-03-25 09:33:51,824 - INFO - Forgery analysis results saved to: src\main\resources\document_storage\output\forgery_analysis_e107004d.json
+2025-03-25 10:32:14,943 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 401 Unauthorized"
+2025-03-25 10:32:14,946 - ERROR - Forgery analysis error: Error code: 401 - {'error': {'message': 'No auth credentials found', 'code': 401}}
+2025-03-25 11:51:07,469 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-03-25 11:51:13,192 - INFO - Forgery API Raw Response:  ```json
+{
+  "tamperingAnalysis": {
+    "tamperingScore": 0.2,
+    "detailedInsight": "The image appears to have been edited. There are noticeable inconsistencies in the background texture and color near the edges of the document."
+  },
+  "metadataAnalysis": {
+    "metadataScore": 0.0,
+    "detailedInsight": "No metadata is available for analysis."
+  },
+  "formatConsistency": {
+    "consistencyScore": 0.8,
+    "detailedInsight": "The font, alignment, and layout are consistent with the expected format for this type of document."
+  },
+  "securityFeatures": {
+    "securityScore": 0.0,
+    "detailedInsight": "No security features are present in the document."
+  },
+  "backgroundIntegrity": {
+    "backgroundScore": 0.7,
+    "detailedInsight": "The background appears to be intact, with no visible signs of splicing or unnatural noise patterns."
+  },
+  "finalForgeryRiskScore": 0.34,
+  "decision": "Medium Risk"
+}
+```
+2025-03-25 11:51:13,193 - INFO - Cleaned API Response: {
+  "tamperingAnalysis": {
+    "tamperingScore": 0.2,
+    "detailedInsight": "The image appears to have been edited. There are noticeable inconsistencies in the background texture and color near the edges of the document."
+  },
+  "metadataAnalysis": {
+    "metadataScore": 0.0,
+    "detailedInsight": "No metadata is available for analysis."
+  },
+  "formatConsistency": {
+    "consistencyScore": 0.8,
+    "detailedInsight": "The font, alignment, and layout are consistent with the expected format for this type of document."
+  },
+  "securityFeatures": {
+    "securityScore": 0.0,
+    "detailedInsight": "No security features are present in the document."
+  },
+  "backgroundIntegrity": {
+    "backgroundScore": 0.7,
+    "detailedInsight": "The background appears to be intact, with no visible signs of splicing or unnatural noise patterns."
+  },
+  "finalForgeryRiskScore": 0.34,
+  "decision": "Medium Risk"
+}
+2025-03-25 11:51:13,194 - INFO - Forgery analysis results saved to: src\main\resources\document_storage\output\forgery_analysis_3a3aac21.json
+2025-03-25 11:51:35,561 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-03-25 11:51:42,689 - INFO - Forgery API Raw Response:  ```json
+{
+  "tamperingAnalysis": {
+    "tamperingScore": 0.2,
+    "detailedInsight": "No obvious signs of tampering detected. However, further analysis is recommended to confirm the authenticity of the document."
+  },
+  "metadataAnalysis": {
+    "metadataScore": 0.0,
+    "detailedInsight": "Metadata not available."
+  },
+  "formatConsistency": {
+    "consistencyScore": 1.0,
+    "detailedInsight": "Font, alignment, and layout are consistent with the expected format."
+  },
+  "securityFeatures": {
+    "securityScore": 0.0,
+    "detailedInsight": "No security features identified in the provided image."
+  },
+  "backgroundIntegrity": {
+    "backgroundScore": 1.0,
+    "detailedInsight": "No suspicious noise patterns or splicing artifacts detected in the background."
+  },
+  "finalForgeryRiskScore": 0.2,
+  "decision": "Low Risk"
+}
+```
+2025-03-25 11:51:42,689 - INFO - Cleaned API Response: {
+  "tamperingAnalysis": {
+    "tamperingScore": 0.2,
+    "detailedInsight": "No obvious signs of tampering detected. However, further analysis is recommended to confirm the authenticity of the document."
+  },
+  "metadataAnalysis": {
+    "metadataScore": 0.0,
+    "detailedInsight": "Metadata not available."
+  },
+  "formatConsistency": {
+    "consistencyScore": 1.0,
+    "detailedInsight": "Font, alignment, and layout are consistent with the expected format."
+  },
+  "securityFeatures": {
+    "securityScore": 0.0,
+    "detailedInsight": "No security features identified in the provided image."
+  },
+  "backgroundIntegrity": {
+    "backgroundScore": 1.0,
+    "detailedInsight": "No suspicious noise patterns or splicing artifacts detected in the background."
+  },
+  "finalForgeryRiskScore": 0.2,
+  "decision": "Low Risk"
+}
+2025-03-25 11:51:42,691 - INFO - Forgery analysis results saved to: src\main\resources\document_storage\output\forgery_analysis_401c7257.json
+2025-03-25 11:52:31,194 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-03-25 11:52:37,865 - INFO - Forgery API Raw Response:  ```json
+{
+  "tamperingAnalysis": {
+    "tamperingScore": 0.2,
+    "detailedInsight": "The image appears to have been edited. There are noticeable inconsistencies in the background texture and color near the edges of the document."
+  },
+  "metadataAnalysis": {
+    "metadataScore": 0.0,
+    "detailedInsight": "No metadata is available for analysis."
+  },
+  "formatConsistency": {
+    "consistencyScore": 0.8,
+    "detailedInsight": "The font, alignment, and layout are consistent with the expected format for this type of document."
+  },
+  "securityFeatures": {
+    "securityScore": 0.0,
+    "detailedInsight": "No security features are present in the document."
+  },
+  "backgroundIntegrity": {
+    "backgroundScore": 0.7,
+    "detailedInsight": "The background appears to be intact, with no visible signs of splicing or unnatural noise patterns."
+  },
+  "finalForgeryRiskScore": 0.34,
+  "decision": "Medium Risk"
+}
+```
+2025-03-25 11:52:37,866 - INFO - Cleaned API Response: {
+  "tamperingAnalysis": {
+    "tamperingScore": 0.2,
+    "detailedInsight": "The image appears to have been edited. There are noticeable inconsistencies in the background texture and color near the edges of the document."
+  },
+  "metadataAnalysis": {
+    "metadataScore": 0.0,
+    "detailedInsight": "No metadata is available for analysis."
+  },
+  "formatConsistency": {
+    "consistencyScore": 0.8,
+    "detailedInsight": "The font, alignment, and layout are consistent with the expected format for this type of document."
+  },
+  "securityFeatures": {
+    "securityScore": 0.0,
+    "detailedInsight": "No security features are present in the document."
+  },
+  "backgroundIntegrity": {
+    "backgroundScore": 0.7,
+    "detailedInsight": "The background appears to be intact, with no visible signs of splicing or unnatural noise patterns."
+  },
+  "finalForgeryRiskScore": 0.34,
+  "decision": "Medium Risk"
+}
+2025-03-25 11:52:37,867 - INFO - Forgery analysis results saved to: src\main\resources\document_storage\output\forgery_analysis_57021a9c.json

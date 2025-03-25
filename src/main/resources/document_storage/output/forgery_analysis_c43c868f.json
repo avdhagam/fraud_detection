@@ -1,0 +1,32 @@
+{
+    "forgeryAnalysis": {
+        "tamperingAnalysis": {
+            "tamperingScore": 0.043137254901960784,
+            "insight": "ELA-based tampering analysis completed."
+        },
+        "metadataAnalysis": {
+            "metadataAnomalyScore": 0.3333333333333333,
+            "insight": "Metadata analysis completed.",
+            "issues": [
+                "No GPS metadata found, which is uncommon for certain documents."
+            ]
+        },
+        "formatConsistencyAnalysis": {
+            "formatConsistencyScore": 0.0,
+            "insight": "File format detected: image/jpeg"
+        },
+        "securityFeatureAnalysis": {
+            "securityFeatureScore": 0.9572493489583334,
+            "insight": "Edge detection performed for security features."
+        },
+        "backgroundIntegrityAnalysis": {
+            "backgroundConsistencyScore": 1.0,
+            "insight": "Texture analysis performed for background consistency."
+        },
+        "overallForgeryAssessment": {
+            "finalForgeryRiskScore": 0.46674398743872547,
+            "decision": "Likely Authentic"
+        }
+    },
+    "success": true
+}

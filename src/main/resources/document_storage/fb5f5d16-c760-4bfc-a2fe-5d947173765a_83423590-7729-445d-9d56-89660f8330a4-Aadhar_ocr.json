@@ -1,0 +1,9 @@
+{
+    "document_type": "Aadhaar",
+    "name": "Raj Dharamshing Pal",
+    "date_of_birth": null,
+    "id_number": "6472 9129 9137",
+    "gender": "Male",
+    "father_name": null,
+    "raw_text": "{\n  \"document_type\": \"Aadhaar\",\n  \"confidence_document_type\": 1.0,\n  \"name\": \"Raj Dharamshing Pal\",\n  \"confidence_name\": 1.0,\n  \"date_of_birth\": null,\n  \"confidence_date_of_birth\": 0.0,\n  \"gender\": \"Male\",\n  \"confidence_gender\": 1.0,\n  \"father_name\": null,\n  \"confidence_father_name\": 0.0,\n  \"id_number\": \"6472 9129 9137\",\n  \"confidence_id_number\": 1.0\n}"
+}

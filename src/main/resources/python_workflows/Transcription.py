@@ -17,11 +17,11 @@ script_path = Path(__file__).resolve() # finds absolute path of script
 root_dir = script_path.parents[4]  # Calculate root directory by moving up four levels
 sys.path.append(str(root_dir)) # Add the project's root directory to the Python path
 
-import config
+import configs
 import subprocess
 
 # Deepgram API Key
-DEEPGRAM_API_KEY = config.DEEPGRAM_API_KEY
+DEEPGRAM_API_KEY = configs.DEEPGRAM_API_KEY
 
 import subprocess
 import os
