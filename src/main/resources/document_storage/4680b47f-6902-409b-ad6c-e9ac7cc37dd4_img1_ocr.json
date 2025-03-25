@@ -1,9 +1,0 @@
-{
-    "document_type": "PAN",
-    "name": "PRACHIT CHOPRA",
-    "date_of_birth": "1990-08-25",
-    "id_number": "AMWPC3594M",
-    "gender": null,
-    "father_name": "SANJEEV CHOPRA",
-    "raw_text": "{\n  \"document_type\": \"PAN\",\n  \"confidence\": 1.0,\n  \"name\": \"PRACHIT CHOPRA\",\n  \"confidence\": 1.0,\n  \"date_of_birth\": \"1990-08-25\",\n  \"confidence\": 1.0,\n  \"gender\": null,\n  \"confidence\": 0.0,\n  \"father_name\": \"SANJEEV CHOPRA\",\n  \"confidence\": 1.0,\n  \"id_number\": \"AMWPC3594M\",\n  \"confidence\": 1.0\n}"
-}

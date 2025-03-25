@@ -63,12 +63,15 @@ public class DocumentWorkflow implements WorkflowInitiator {
         DocumentResponse response = null;
 
         // Retrieve userReportId from the request.  Handle potential null/empty case.
-        String userId = request.getUserReportId(); // Assuming this is the correct getter
+        String userId = request.getAgentId(); // Assuming this is the correct getter
         if (userId == null || userId.isEmpty()) {
-            log.warn("userReportId missing in DocumentRequest. Generating a new one.");
+            log.warn("userId missing in DocumentRequest. Generating a new one.");
             //userReportId = UUID.randomUUID().toString(); // Generate if missing
         }
-        log.info("Using userReportId: {}", userId);
+        log.info("Using userId: {}", userId);
+
+        String leadId = request.getLeadId();
+        log.info("Generated leadId: {}", leadId);
 
         // Generate a separate documentId
         String documentId = UUID.randomUUID().toString();
@@ -93,9 +96,9 @@ public class DocumentWorkflow implements WorkflowInitiator {
             String ocrJsonPath = fileUtils.extractOcrJsonPath(ocrResult);
 
             // Execute independent tasks in parallel
-            Map<String, Object> qualityResult = fileUtils.executePythonTask(executor, fileUtils.getQualityScriptPath(), documentPath, "Quality Analysis");
-            Map<String, Object> forgeryResult = fileUtils.executePythonTask(executor, fileUtils.getForgeryScriptPath(), documentPath, "Forgery Detection");
-            Map<String, Object> validationResult = fileUtils.executePythonTask(executor, fileUtils.getValidationScriptPath(), ocrJsonPath, "Validation");
+            Map<String, Object> qualityResult = fileUtils.executePythonTask(executor, fileUtils.getQualityScriptPath(), new String[]{documentPath}, "Quality Analysis");
+            Map<String, Object> forgeryResult = fileUtils.executePythonTask(executor, fileUtils.getForgeryScriptPath(), new String[]{documentPath}, "Forgery Detection");
+            Map<String, Object> validationResult = fileUtils.executePythonTask(executor, fileUtils.getValidationScriptPath(), new String[]{ocrJsonPath, leadId, documentType}, "Validation");
 
             // Compute fraud risk score
             double fraudRiskScore = fileUtils.computeRiskScore(qualityResult, forgeryResult, validationResult);

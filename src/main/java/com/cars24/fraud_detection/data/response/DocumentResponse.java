@@ -13,9 +13,8 @@ import java.util.Map;
 @Builder
 public class DocumentResponse {
 
-    private String userReportId;
-
-    private String documentId;
+    private String documentId; //  ID of the document
+    private String leadId;  // ID of associated lead
     private String documentType;
     private boolean isValid;
     private double finalRiskScore;
@@ -28,6 +27,4 @@ public class DocumentResponse {
     private Map<String, Object> qualityResults;
     private Map<String, Object> forgeryResults;
     private Map<String, Object> validationResults;
-
-
 }

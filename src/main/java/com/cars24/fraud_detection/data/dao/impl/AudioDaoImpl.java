@@ -4,46 +4,35 @@ import com.cars24.fraud_detection.data.dao.AudioDao;
 import com.cars24.fraud_detection.data.entity.AudioEntity;
 import com.cars24.fraud_detection.repository.AudioRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
-@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class AudioDaoImpl implements AudioDao {
 
-    private final AudioRepository audioRepo;
+    private final AudioRepository audioRepository;
 
     @Override
-    public void saveAudio(AudioEntity audio) {
-        if (audio.getUserId() == null) {
-            throw new IllegalArgumentException("User ID cannot be null when saving audio!");
-        }
-        audioRepo.save(audio);
+    public AudioEntity saveAudio(AudioEntity audio) {
+        return audioRepository.save(audio);
     }
 
     @Override
     public Optional<AudioEntity> getAudioById(String audioId) {
-        log.info("Fetching AudioEntity with ID: " + audioId);
-        return audioRepo.findById(audioId);
+        return audioRepository.findById(audioId);
     }
 
     @Override
-    public List<AudioEntity> getAudiosByUserId(String userReportId) {
-        return audioRepo.findByUserId(userReportId);
+    public List<AudioEntity> findByLeadId(String leadId) {
+        return audioRepository.findByLeadId(leadId);
     }
 
     @Override
-    public List<AudioEntity> getRecentAudiosByUserId(String userId, int limit) {
-        return audioRepo.findByUserIdOrderByTimestampDesc(
-                userId,
-                PageRequest.of(0, limit) // Fetch recent `limit` documents sorted by timestamp
-        );
+    public List<AudioEntity> getRecentAudiosByLeadId(String leadId, int limit) {
+        return audioRepository.findByLeadIdOrderByTimestampDesc(leadId, PageRequest.of(0, limit));
     }
 }
-
-
