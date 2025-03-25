@@ -3,6 +3,8 @@ import sys
 import os
 from difflib import SequenceMatcher
 import codecs
+import requests
+
 
 # Set output encoding to UTF-8
 sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
@@ -15,17 +17,25 @@ REFERENCE_FOLDER = os.path.join(BASE_DIR, "reference_json")
 REFERENCE_JSON_PATH = os.path.join(REFERENCE_FOLDER, "reference.json")
 TEST_CASES_JSON_PATH = os.path.join(BASE_DIR, "test_cases.json")
 
-# Load reference record from JSON file
-def load_reference_record():
-    """Loads the reference record from the reference.json file. Handles file not found and JSON errors."""
-    try:
-        with open(REFERENCE_JSON_PATH, "r", encoding="utf-8") as json_file:
-            return json.load(json_file)  # Returns JSON object
-    except FileNotFoundError:
-        print(json.dumps({"error": f"Reference file not found: {REFERENCE_JSON_PATH}"}, ensure_ascii=False, indent=4))
+
+API_BASE_URL = "http://localhost:8080/leads"
+
+def fetch_ground_truth(lead_id, doc_type):
+    """Fetches ground truth from API based on lead ID and document type."""
+    if doc_type.lower() == "aadhaar":
+        url = f"{API_BASE_URL}/{lead_id}/aadhaar"
+    elif doc_type.lower() == "pan":
+        url = f"{API_BASE_URL}/{lead_id}/pan"
+    else:
+        print(json.dumps({"error": f"Unsupported document type: {doc_type}"}, ensure_ascii=False, indent=4))
         sys.exit(1)
-    except json.JSONDecodeError:
-        print(json.dumps({"error": "Invalid JSON format in reference file"}, ensure_ascii=False, indent=4))
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(json.dumps({"error": f"Failed to fetch ground truth: {str(e)}"}, ensure_ascii=False, indent=4))
         sys.exit(1)
 
 # Loading of all test cases to JSON files
@@ -95,7 +105,7 @@ def run_tests():
     print("Starting test run...\n")
     try:
         test_cases = load_test_cases()
-        reference_record = load_reference_record()
+        reference_record = fetch_ground_truth(lead_id, doc_type)
 
         # Set initial status
         all_tests_passed = True
@@ -158,12 +168,14 @@ def run_tests():
 
 if __name__ == "__main__":
     # Check if the correct number of command-line arguments is provided
-    if len(sys.argv) != 2:
-        print(json.dumps({"error": "Usage: python DocumentValidation.py <ocr_json_path>"}, ensure_ascii=False, indent=4))
+    if len(sys.argv) != 4:
+        print(json.dumps({"error": "Usage: python DocumentValidation.py <ocr_json_path> <lead_id> <doc_type>"}, ensure_ascii=False, indent=4))
         sys.exit(1)
 
     # Get the path to the OCR JSON file from the command-line arguments
     ocr_json_path = sys.argv[1]
+    lead_id = sys.argv[2]
+    doc_type = sys.argv[3]
 
     # Check if the OCR JSON file exists
     if not os.path.exists(ocr_json_path):
@@ -171,22 +183,17 @@ if __name__ == "__main__":
         sys.exit(1)
 
     try:
-        # Open the OCR JSON file and load the OCR data
         with open(ocr_json_path, "r", encoding="utf-8") as json_file:
-            try:
-                ocr_data = json.load(json_file)  # Returns JSON object
-            except Exception as e:
-                print(json.dumps({"error": f"Invalid JSON for ocr_data:" + str(e),  "validation_results": {},"overall_validation_score": 0, "status": "CRASH"}, indent=4, ensure_ascii=False))
-                sys.exit(1)
+            ocr_data = json.load(json_file)
 
-        # Load reference record from JSON file
-        reference_record = load_reference_record()
-
-        # Validate the document
-        result = validate_document(ocr_data, reference_record)
-
-        # Print the validation results as JSON
+        ground_truth = fetch_ground_truth(lead_id, doc_type)
+        result = validate_document(ocr_data, ground_truth)
         print(json.dumps(result, indent=4, ensure_ascii=False))
+    except Exception as e:
+        print(json.dumps({"error": f"Unexpected error: {str(e)}"}, ensure_ascii=False, indent=4))
+        sys.exit(1)
+
+
 
     #Add error JSON to be provided for output
     except ValueError as e:

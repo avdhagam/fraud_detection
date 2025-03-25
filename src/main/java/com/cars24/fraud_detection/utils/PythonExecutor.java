@@ -41,6 +41,13 @@ public class PythonExecutor {
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String scriptOutput = reader.lines().collect(Collectors.joining("\n"));
 
+            BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            String errorOutput = errorReader.lines().collect(Collectors.joining("\n"));
+            if (!errorOutput.isEmpty()) {
+                log.error("Python script error output: {}", errorOutput);
+            }
+
+
             int exitCode = process.waitFor();
             if (exitCode != 0) {
                 log.error("Python script failed with exit code {}: {}", exitCode, scriptOutput);

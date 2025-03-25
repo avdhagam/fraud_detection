@@ -105,9 +105,9 @@ public class FileUtils {
     }
 
 
-    public Map<String, Object> executePythonTask(ExecutorService executor, String scriptPath, String parameter, String taskName) {
+    public Map<String, Object> executePythonTask(ExecutorService executor, String scriptPath, String[] parameters, String taskName) {
         long startTime = System.currentTimeMillis();
-        Future<Map<String, Object>> future = executor.submit(() -> pythonExecutor.runPythonScript(scriptPath, parameter));
+        Future<Map<String, Object>> future = executor.submit(() -> pythonExecutor.runPythonScript(scriptPath, parameters));
         Map<String, Object> result = getFutureResult(future, taskName);
         long endTime = System.currentTimeMillis();
         log.info("{} Completed in {} ms", taskName, (endTime - startTime));
