@@ -11,14 +11,14 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class FileResponse {
 
-    private String fileId; // Unique ID for the file (String because MongoDB uses ObjectId)
+    private String fileId;
 
-    private String agentId; // ID of the agent who uploaded
-    private String leadId; // Lead ID associated with the file
-    private String originalFilename; // Original file name
-    private String fileType; // AUDIO / DOCUMENT
-    private String filePath; // Location where the file is stored
+    private String agentId;
+    private String leadId;
+    private String originalFilename;
+    private String fileType;
+    private String filePath;
     private String status; // PENDING, PROCESSING, COMPLETED, FAILED
-    private boolean isActive; // Soft delete flag
-    private LocalDateTime uploadedAt; // Upload timestamp
+    private Boolean isActive;
+    private LocalDateTime uploadedAt;
 }

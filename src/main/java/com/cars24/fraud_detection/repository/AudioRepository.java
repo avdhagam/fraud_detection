@@ -9,4 +9,5 @@ import java.util.List;
 public interface AudioRepository extends MongoRepository<AudioEntity, String> {
     List<AudioEntity> findByLeadId(String leadId);
     List<AudioEntity> findByLeadIdOrderByTimestampDesc(String leadId, Pageable pageable);
+    List<AudioEntity> findByAgentIdAndLeadId(String agentId,String leadId);
 }

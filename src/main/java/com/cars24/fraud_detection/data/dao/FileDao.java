@@ -11,5 +11,5 @@ public interface FileDao {
     Optional<FileEntity> findById(String id);
     void updateStatus(String fileId, String status);
     List<FileEntity> findByAgentIdAndLeadIdAndFileType(String agentId, String leadId, String fileType);
-
+    List<FileEntity> findByAgentIdAndLeadIdAndIsActive(String agentId, String leadId, Boolean isActive);
 }

@@ -238,6 +238,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -287,14 +288,14 @@ public class FileServiceImpl implements FileService {
         // **Mark all existing files as INACTIVE**
         List<FileEntity> existingFiles = fileDao.findByAgentIdAndLeadIdAndFileType(agentId, leadId, fileType);
         for (FileEntity existingFile : existingFiles) {
-            existingFile.setActive(false); // Mark previous files as inactive
+            existingFile.setIsActive(Boolean.FALSE); // Mark previous files as inactive
             fileDao.save(existingFile);
         }
 
         //  **Create and Save New FileEntity**
         FileEntity newFile = new FileEntity(agentId, leadId, filename, fileType, originalFilename); // Add originalFilename
         newFile.setStatus("PENDING");  // Default status
-        newFile.setActive(true);  // Mark new file as active
+        newFile.setIsActive(Boolean.TRUE);  // Mark new file as active
         newFile.setUploadedAt(LocalDateTime.now());
         newFile.setFilePath(filePath);  // Save full file path
 
@@ -312,6 +313,36 @@ public class FileServiceImpl implements FileService {
 
         return savedFile;
     }
+
+    @Override
+    @Transactional
+    public List<FileResponse> uploadMultipleFiles(String agentId, String leadId, String fileType, List<MultipartFile> files) {
+        List<FileResponse> responses = new ArrayList<>();
+
+        for (MultipartFile file : files) {
+            try {
+                byte[] fileData = file.getBytes();
+                FileEntity savedFile = uploadFile(agentId, leadId, fileType, file.getOriginalFilename(), fileData);
+                responses.add(new FileResponse(
+                        savedFile.getFileId(),
+                        savedFile.getAgentId(),
+                        savedFile.getLeadId(),
+                        savedFile.getOriginalFilename(),
+                        savedFile.getFileType(),
+                        savedFile.getFilePath(),
+                        savedFile.getStatus(),
+                        savedFile.getIsActive(),
+                        savedFile.getUploadedAt()
+                ));
+            } catch (IOException e) {
+                log.error("Error reading file: {}", file.getOriginalFilename(), e);
+                throw new RuntimeException("Failed to read file: " + file.getOriginalFilename());
+            }
+        }
+
+        return responses;
+    }
+
 
     private String determineStoragePath(String fileType) {
         String referenceCallType = documentTypeConfig.getDocumentDisplayName("REFERENCE_CALL");

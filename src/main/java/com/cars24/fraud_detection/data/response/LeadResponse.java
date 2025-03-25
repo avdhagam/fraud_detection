@@ -1,9 +1,13 @@
 package com.cars24.fraud_detection.data.response;
 
+import com.cars24.fraud_detection.data.entity.AudioEntity;
+import com.cars24.fraud_detection.data.entity.DocumentEntity;
 import com.fasterxml.jackson.annotation.JacksonInject;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
 import com.cars24.fraud_detection.data.entity.LeadEntity;
 
 @Data
@@ -18,13 +22,16 @@ public class LeadResponse {
     private String fatherName;
     private String adharNumber;
     private String panNumber;
-   // private String docType;
     private String referenceName;
     private String relationToSubject;
     private String subjectOccupation;
     private String address;
     private String phoneNumber;
     private LocalDateTime createdAt;
+
+    private List<AudioEntity> referenceCalls;
+    private List<DocumentEntity> aadhaar;
+    private List<DocumentEntity> pan;
 
     // getters and setters
 
@@ -38,12 +45,14 @@ public class LeadResponse {
         this.fatherName = leadEntity.getFatherName();
         this.adharNumber = leadEntity.getAdharNumber();
         this.panNumber = leadEntity.getPanNumber();
-      //  this.docType = leadEntity.getDocType();
         this.referenceName = leadEntity.getReferenceName();
         this.relationToSubject = leadEntity.getRelationToSubject();
         this.subjectOccupation = leadEntity.getSubjectOccupation();
         this.address = leadEntity.getAddress();
         this.phoneNumber = leadEntity.getPhoneNumber();
         this.createdAt = leadEntity.getCreatedAt();
+        this.referenceCalls = leadEntity.getReferenceCalls();
+        this.aadhaar = leadEntity.getAadhaar();
+        this.pan = leadEntity.getPan();
     }
 }

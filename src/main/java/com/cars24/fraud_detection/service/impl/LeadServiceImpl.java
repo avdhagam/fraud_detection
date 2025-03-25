@@ -1,10 +1,8 @@
 package com.cars24.fraud_detection.service.impl;
 
+import com.cars24.fraud_detection.data.dao.FileDao;
 import com.cars24.fraud_detection.data.dao.LeadDao;
-import com.cars24.fraud_detection.data.entity.LeadEntity;
-import com.cars24.fraud_detection.data.entity.InsightsEntity;
-import com.cars24.fraud_detection.data.entity.DocumentEntity;
-import com.cars24.fraud_detection.data.entity.AudioEntity;
+import com.cars24.fraud_detection.data.entity.*;
 import com.cars24.fraud_detection.data.request.LeadRequest;
 import com.cars24.fraud_detection.data.response.LeadNameEmail;
 import com.cars24.fraud_detection.data.response.LeadResponse;
@@ -19,6 +17,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,6 +25,7 @@ import java.util.stream.Collectors;
 public class LeadServiceImpl implements LeadService {
 
     private final LeadDao leadDao;
+    private final FileDao fileDao;
     private final DocumentService documentService;
     private final AudioService audioService;
     private final DocumentTypeConfig documentTypeConfig;
@@ -116,6 +116,7 @@ public class LeadServiceImpl implements LeadService {
         return overallInsights;
     }
 
+
     private InsightsEntity createDocumentInsightsEntity(DocumentEntity document, String documentName) {
         return InsightsEntity.builder()
                 .leadId(document.getLeadId())
@@ -162,4 +163,90 @@ public class LeadServiceImpl implements LeadService {
                 .uploadedAt(null)
                 .build();
     }
+
+    @Override
+    public LeadResponse getLeadDetails(String agentId, String leadId) {
+
+        LeadEntity leadEntity = leadDao.findByAgentIdAndId(agentId,leadId);
+
+        List<AudioEntity> referenceCalls = leadDao.findAudioByAgentAndLead(agentId,leadId);
+        List<DocumentEntity> documents = leadDao.findDocumentsByAgentAndLead(agentId,leadId);
+
+
+
+        List<DocumentEntity> aadhaarDocs = documents.stream()
+                .filter(doc -> "AADHAAR".equalsIgnoreCase(doc.getDocumentType()))
+                .collect(Collectors.toList());
+
+        List<DocumentEntity> panDocs = documents.stream()
+                .filter(doc -> "PAN".equalsIgnoreCase(doc.getDocumentType()))
+                .collect(Collectors.toList());
+
+
+
+        LeadResponse response = new LeadResponse(leadEntity);
+        response.setReferenceCalls(referenceCalls);
+        response.setAadhaar(aadhaarDocs);
+        response.setPan(panDocs);
+
+        return response;
+   }
+
+    @Override
+    public LeadResponse getActiveLeadDetails(String agentId, String leadId) {
+        LeadEntity leadEntity = leadDao.findByAgentIdAndId(agentId, leadId);
+
+        // ✅ Fetch only active files
+        List<FileEntity> activeFiles = fileDao.findByAgentIdAndLeadIdAndIsActive(agentId, leadId, true);
+
+        // ✅ Extract active file types mapped to agentId & leadId
+        Set<String> activeFileTypes = activeFiles.stream()
+                .map(FileEntity::getFileType)
+                .collect(Collectors.toSet());
+
+        // ✅ Fetch all Audio and Documents
+        List<AudioEntity> allAudio = leadDao.findAudioByAgentAndLead(agentId, leadId);
+        List<DocumentEntity> allDocuments = leadDao.findDocumentsByAgentAndLead(agentId, leadId);
+
+        // ✅ Filter only active AudioEntities that match agentId, leadId & fileType
+        List<AudioEntity> activeAudio = allAudio.stream()
+                .filter(audio -> activeFileTypes.contains(audio.getDocumentType()) &&
+                        activeFiles.stream().anyMatch(f ->
+                                f.getAgentId().equals(agentId) &&
+                                        f.getLeadId().equals(leadId) &&
+                                        f.getFileType().equals(audio.getDocumentType())))
+                .collect(Collectors.toList());
+
+        // ✅ Filter only active DocumentEntities that match agentId, leadId & fileType
+        List<DocumentEntity> activeDocuments = allDocuments.stream()
+                .filter(doc -> activeFileTypes.contains(doc.getDocumentType()) &&
+                        activeFiles.stream().anyMatch(f ->
+                                f.getAgentId().equals(agentId) &&
+                                        f.getLeadId().equals(leadId) &&
+                                        f.getFileType().equals(doc.getDocumentType())))
+                .collect(Collectors.toList());
+
+        // ✅ Separate Aadhaar and PAN documents from active documents
+        List<DocumentEntity> aadhaarDocs = activeDocuments.stream()
+                .filter(doc -> "AADHAAR".equalsIgnoreCase(doc.getDocumentType()))
+                .collect(Collectors.toList());
+
+        List<DocumentEntity> panDocs = activeDocuments.stream()
+                .filter(doc -> "PAN".equalsIgnoreCase(doc.getDocumentType()))
+                .collect(Collectors.toList());
+
+        // ✅ Build response
+        LeadResponse response = new LeadResponse(leadEntity);
+        response.setReferenceCalls(activeAudio);
+        response.setAadhaar(aadhaarDocs);
+        response.setPan(panDocs);
+
+        return response;
+    }
+
+
+
+
+
+
 }

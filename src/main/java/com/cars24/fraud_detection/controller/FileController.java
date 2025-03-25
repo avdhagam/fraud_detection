@@ -40,7 +40,7 @@ public class FileController {
                     savedFile.getFileType(),
                     savedFile.getFilePath(),
                     savedFile.getStatus(),
-                    savedFile.isActive(),
+                    savedFile.getIsActive(),
                     savedFile.getUploadedAt()
             );
             return new ResponseEntity<>(fileResponse, HttpStatus.CREATED);
@@ -57,6 +57,17 @@ public class FileController {
         }
     }
 
+    @PostMapping("/upload-multiple")
+    public ResponseEntity<List<FileResponse>> uploadMultipleFiles(
+            @RequestParam("agentId") String agentId,
+            @RequestParam("leadId") String leadId,
+            @RequestParam("fileType") String fileType,
+            @RequestParam("files") List<MultipartFile> files) {
+
+        List<FileResponse> uploadedFiles = fileService.uploadMultipleFiles(agentId, leadId, fileType, files);
+        return ResponseEntity.ok(uploadedFiles);
+    }
+
     @GetMapping("/{fileId}")
     public ResponseEntity<FileResponse> getFile(@PathVariable String fileId) {
         FileEntity fileEntity = fileService.getFile(fileId);
@@ -71,7 +82,7 @@ public class FileController {
                 fileEntity.getFileType(),
                 fileEntity.getFilePath(),
                 fileEntity.getStatus(),
-                fileEntity.isActive(),
+                fileEntity.getIsActive(),
                 fileEntity.getUploadedAt()
         );
         return new ResponseEntity<>(fileResponse, HttpStatus.OK);

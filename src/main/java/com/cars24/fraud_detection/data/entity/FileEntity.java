@@ -22,7 +22,7 @@ public class FileEntity {
     private String fileType; // AUDIO / DOCUMENT
     private String filePath; // Location where the file is stored
     private String status; // PENDING, PROCESSING, COMPLETED, FAILED
-    private boolean isActive; // Soft delete flag
+    private Boolean isActive; // Soft delete flag
     private LocalDateTime uploadedAt; // Upload timestamp
 
     public FileEntity(String agentId, String leadId, String originalFilename, String fileType, String filePath) {
@@ -33,7 +33,7 @@ public class FileEntity {
         this.fileType = fileType;
         this.filePath = filePath;
         this.status = "PENDING"; // Default status
-        this.isActive = true; // Mark file as active
+        this.isActive = Boolean.TRUE; // Mark file as active
         this.uploadedAt = LocalDateTime.now(); // Set timestamp
     }
 }

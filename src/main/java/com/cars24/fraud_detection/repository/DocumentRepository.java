@@ -11,4 +11,5 @@ public interface DocumentRepository extends MongoRepository<DocumentEntity, Stri
     List<DocumentEntity> findByLeadId(String leadId);
     Optional<DocumentEntity> findByLeadIdAndDocumentType(String leadId, String documentType);
     List<DocumentEntity> findByLeadIdOrderByTimestampDesc(String leadId, Pageable pageable);
+    List<DocumentEntity> findByAgentIdAndLeadId(String agentId,String leadId);
 }
