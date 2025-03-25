@@ -314,15 +314,48 @@ public class FileServiceImpl implements FileService {
         return savedFile;
     }
 
-    @Override
+//    @Override
+//    @Transactional
+//    public List<FileResponse> uploadMultipleFiles(String agentId, String leadId, String fileType, List<MultipartFile> files) {
+//        List<FileResponse> responses = new ArrayList<>();
+//
+//        for (MultipartFile file : files) {
+//            try {
+//                byte[] fileData = file.getBytes();
+//                FileEntity savedFile = uploadFile(agentId, leadId, fileType, file.getOriginalFilename(), fileData);
+//                responses.add(new FileResponse(
+//                        savedFile.getFileId(),
+//                        savedFile.getAgentId(),
+//                        savedFile.getLeadId(),
+//                        savedFile.getOriginalFilename(),
+//                        savedFile.getFileType(),
+//                        savedFile.getFilePath(),
+//                        savedFile.getStatus(),
+//                        savedFile.getIsActive(),
+//                        savedFile.getUploadedAt()
+//                ));
+//            } catch (IOException e) {
+//                log.error("Error reading file: {}", file.getOriginalFilename(), e);
+//                throw new RuntimeException("Failed to read file: " + file.getOriginalFilename());
+//            }
+//        }
+//
+//        return responses;
+//    }
+
     @Transactional
-    public List<FileResponse> uploadMultipleFiles(String agentId, String leadId, String fileType, List<MultipartFile> files) {
+    @Override
+    public List<FileResponse> uploadMultipleFiles(String agentId, String leadId, List<String> fileTypes, List<MultipartFile> files) {
         List<FileResponse> responses = new ArrayList<>();
 
-        for (MultipartFile file : files) {
+        for (int i = 0; i < files.size(); i++) {
+            MultipartFile file = files.get(i);
+            String fileType = fileTypes.get(i);  // Get corresponding file type
+
             try {
                 byte[] fileData = file.getBytes();
                 FileEntity savedFile = uploadFile(agentId, leadId, fileType, file.getOriginalFilename(), fileData);
+
                 responses.add(new FileResponse(
                         savedFile.getFileId(),
                         savedFile.getAgentId(),
@@ -355,6 +388,7 @@ public class FileServiceImpl implements FileService {
 
     @Override
     @Async
+
     public void processAsyncAudio(FileEntity fileEntity) {
         log.info("Processing audio file asynchronously: {}", fileEntity.getFileId());
 
@@ -380,7 +414,7 @@ public class FileServiceImpl implements FileService {
             log.info("Audio processing completed: {}", response);
 
             // Update file status and other relevant data from AudioResponse
-            fileEntity.setStatus(response.getStatus());
+            fileEntity.setStatus("PROCESSED");
             // Update file status to PROCESSED and save
             fileDao.updateStatus(fileEntity.getFileId(),"PROCESSED");  // Use response.getStatus()
             log.info("Audio file processed successfully: {}", fileEntity.getFileId());
@@ -411,8 +445,7 @@ public class FileServiceImpl implements FileService {
     public void processAsyncDocument(FileEntity fileEntity) {
         log.info("Processing document file asynchronously: {}", fileEntity.getFileId());
         try {
-            // Simulated processing delay
-            Thread.sleep(5000);
+
             // **Read file content into byte array**
             byte[] fileData;
             try {
@@ -436,11 +469,17 @@ public class FileServiceImpl implements FileService {
             DocumentResponse response = documentService.processDocument(documentRequest);
             log.info("Document processing completed: {}", response);
             // Update file status to PROCESSED
+
+            fileEntity.setStatus("PROCESSED");
             fileDao.updateStatus(fileEntity.getFileId(), "PROCESSED");
             log.info("Document file processed successfully: {}", fileEntity.getFileId());
-        } catch (InterruptedException e) {
-            log.error("Error processing document file: {}", fileEntity.getFileId(), e);
+        }  catch (Exception e) {
+            log.error("Unexpected error while processing document: {}", fileEntity.getFileId(), e);
             fileDao.updateStatus(fileEntity.getFileId(), "FAILED");
+        }
+        finally {
+            // Save the updated FileEntity
+            fileDao.save(fileEntity);
         }
     }
 

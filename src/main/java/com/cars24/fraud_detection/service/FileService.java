@@ -18,5 +18,5 @@ public interface FileService {
 
     List<FileEntity> getFilesByAgentAndLead(String agentId, String leadId, String fileType);
 
-    List<FileResponse> uploadMultipleFiles(String agentId, String leadId, String fileType, List<MultipartFile> files);
+    List<FileResponse> uploadMultipleFiles(String agentId, String leadId, List<String> fileTypes, List<MultipartFile> files);
 }

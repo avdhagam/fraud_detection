@@ -5,7 +5,9 @@ import com.cars24.fraud_detection.data.entity.FileEntity;
 import com.cars24.fraud_detection.data.response.FileResponse;
 import com.cars24.fraud_detection.repository.FileRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
