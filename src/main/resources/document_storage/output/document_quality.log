@@ -1000,3 +1000,5 @@
 2025-03-25 16:49:26,760 - ERROR - Quality assessment error: 'NoneType' object is not subscriptable
 2025-03-25 16:49:42,514 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
 2025-03-25 16:49:42,517 - ERROR - Quality assessment error: 'NoneType' object is not subscriptable
+2025-03-25 19:07:45,772 - INFO - HTTP Request: POST https://openrouter.ai/api/v1/chat/completions "HTTP/1.1 200 OK"
+2025-03-25 19:07:45,785 - ERROR - Quality assessment error: 'NoneType' object is not subscriptable

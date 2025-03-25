@@ -173,8 +173,9 @@ public class AudioWorkflow implements WorkflowInitiator {
         // Run the LLM extraction script
         String llmScriptPath = "src/main/resources/python_workflows/LLMextractionvalidation.py";
         String audioScriptPath = "src/main/resources/python_workflows/AudioAnalysis.py";
-       // String audioFilePath = AUDIO_STORAGE_PATH + "/" + request.getUuid() + ".mp3";  // Construct full path
+        // String audioFilePath = AUDIO_STORAGE_PATH + "/" + request.getUuid() + ".mp3";  // Construct full path
         String audioFilePath =  request.getUuid() ;
+
         logger.info("Executing LLM extraction script: {} for audio file: {}", llmScriptPath, request.getAudioFile());
 
         Map<String, Object> llmExtractionResult = processAudioScript(llmScriptPath, audioFilePath, request.getLeadId());
@@ -206,7 +207,13 @@ public class AudioWorkflow implements WorkflowInitiator {
             Map<String,Object> audioAnalysisMap = processAudioScript(audioScriptPath, request.getUuid(), request.getLeadId());
 
             Map<String, Object> scoringResultsMap = (Map<String, Object>) llmExtractionResult.get("scoring_results");
-            Double overallScore = (Double) scoringResultsMap.get("overall_score");
+            log.info("scoring result map before casting is"+ llmExtractionResult.get("scoring_results"));
+            log.info("overall score before casting is"+ scoringResultsMap.get("overall_score"));
+           // Double overallScore = (Double) scoringResultsMap.get("overall_score");
+            Object overallScoreObj = scoringResultsMap.get("overall_score");
+            Double overallScore = (overallScoreObj instanceof Number) ? ((Number) overallScoreObj).doubleValue() : 0.0;
+
+
 
             Map<String, Object> fieldByFieldScoresMap = (Map<String, Object>) scoringResultsMap.get("field_by_field_scores");
             Map<String, Double> fieldByFieldScores = new HashMap<>();
@@ -241,7 +248,7 @@ public class AudioWorkflow implements WorkflowInitiator {
             // Convert transcriptList to a list of strings
             List<String> transcript = transcriptList.stream().map(map -> map.toString()).collect(Collectors.toList());
             // Create and return AudioResponse
-          //  return new AudioResponse(request.getUuid(), request.getAgentId(),llmExtractionResult, audioAnalysisMap, transcript, referenceName, subjectName, subjectAddress, relationToSubject, subjectOccupation, overallScore, explanation, fieldByFieldScores, status);
+            //  return new AudioResponse(request.getUuid(), request.getAgentId(),llmExtractionResult, audioAnalysisMap, transcript, referenceName, subjectName, subjectAddress, relationToSubject, subjectOccupation, overallScore, explanation, fieldByFieldScores, status);
             AudioResponse audioResponse = new AudioResponse(request.getUuid(), request.getAgentId(),llmExtractionResult, audioAnalysisMap, transcript, referenceName, subjectName, subjectAddress, relationToSubject, subjectOccupation, overallScore, explanation, fieldByFieldScores, status);
             System.out.println("AudioResponse: " + audioResponse);  // Print the object's contents
             return audioResponse;

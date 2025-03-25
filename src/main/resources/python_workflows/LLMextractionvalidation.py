@@ -151,19 +151,19 @@ def extract_transcript_information(transcript, ground_truth):
 
             return parsed_result
         except json.JSONDecodeError as e:
-            print(f"Error parsing API response: {e}")
+            # print(f"Error parsing API response: {e}")
             return {
                 "error": "Failed to parse response",
                 "status": "reject"
             }
         except Exception as e:
-            print(f"Unexpected error: {e}")
+            # print(f"Unexpected error: {e}")
             return {
                 "error": str(e),
                 "status": "reject"
             }
     else:
-        print(f"Error: API request failed with status code {response.status_code}")
+        # print(f"Error: API request failed with status code {response.status_code}")
         return {
             "error": f"API request failed with status code {response.status_code}",
             "status": "reject"
@@ -185,6 +185,7 @@ def process_transcript(transcript, ground_truth):
 
     # Extract and score in one step
     results = extract_transcript_information(transcript, ground_truth)
+
 
     # Construct the final output
     return {
@@ -208,7 +209,7 @@ def output_json(data):
     try:
         print(json.dumps(data))
     except Exception as e:
-        print(json.dumps({"error": f"Failed to encode data as JSON: {e}"}))
+        # print(json.dumps({"error": f"Failed to encode data as JSON: {e}"}))
         sys.exit(1)
 
 # Example usage
@@ -223,35 +224,42 @@ if __name__ == "__main__":
 
     ground_truth = get_ground_truth(lead_id)
 
-    transcript = Transcription.get_transcripts(audio_path)
-    # transcript = """start   end    speaker                                                              utterance
-    # 0.000  0.500 SPEAKER_01                                                            Hello?
-    # 1.560  2.180 SPEAKER_01                                                            Hello? Hi,
-    # 2.620  4.020 SPEAKER_00                                                            is it Arjun? Hello?
-    # 4.844  5.344 SPEAKER_00                                                            Sorry,
-    # 6.168  6.668 SPEAKER_00                                                            is
-    # 7.492  7.992 SPEAKER_00                                                            it
-    # 8.816  9.316 SPEAKER_01                                                            Arjun?
-    # 10.140  10.640 SPEAKER_00                                                            Yes.
-    # 11.660  13.860 SPEAKER_01                                                            Hi, Arjun, Shilpa from Kast 24.
-    # 15.220  15.720 SPEAKER_00                                                            Okay.
-    # 16.580  17.480 SPEAKER_00                                                            It's a verification
-    # 17.780  20.240 SPEAKER_00                                                            called C.J. Mathew has given your address.
-    # 21.280  21.780 SPEAKER_01                                                            Okay.
-    # 23.140  27.540 SPEAKER_00                                                            Actually he has taken a loan from us so that is the reason. How do you know him?
-    # 29.060  29.840 SPEAKER_01                                                            I'm a colleague.
-    # 31.300  33.940 SPEAKER_01                                                            Okay. Is he doing a job or a business right now?
-    # 34.900  35.780 SPEAKER_00                                                            No, no job.
-    # 36.760  38.800 SPEAKER_00                                                            And where does he stay? Is it a address?
-    # 40.120  41.180 SPEAKER_00                                                            He is now in
-    # 41.600  42.100 SPEAKER_00                                                            Pattimatham,
-    # 43.160  43.660 SPEAKER_01                                                            Ernakulam.
-    # 45.060  46.520 SPEAKER_00                                                            Sorry, sorry, can you repeat?
-    # 47.020  48.280 SPEAKER_01                                                            Patimatham, Kerala.
-    # 49.120  50.320 SPEAKER_00                                                            Okay, thank you.
-    # 50.860  51.360 SPEAKER_00                                                            Okay."""
+# ground_truth = {
+#         "reference_name": "Arjun",
+#         "subject_name": "Matthew",
+#         "subject_address": "45,sunshine blaze apartments, pattimathur ,ernakulam",
+#         "relation_to_subject": "work together",
+#         "subject_occupation": "unemployed"}
+
+# transcript = Transcription.get_transcripts(audio_path)
+transcript = """start   end    speaker                                                              utterance
+    0.000  0.500 SPEAKER_01                                                            Hello?
+    1.560  2.180 SPEAKER_01                                                            Hello? Hi,
+    2.620  4.020 SPEAKER_00                                                            is it Arjun? Hello?
+    4.844  5.344 SPEAKER_00                                                            Sorry,
+    6.168  6.668 SPEAKER_00                                                            is
+    7.492  7.992 SPEAKER_00                                                            it
+    8.816  9.316 SPEAKER_01                                                            Arjun?
+    10.140  10.640 SPEAKER_00                                                            Yes.
+    11.660  13.860 SPEAKER_01                                                            Hi, Arjun, Shilpa from Kast 24.
+    15.220  15.720 SPEAKER_00                                                            Okay.
+    16.580  17.480 SPEAKER_00                                                            It's a verification
+    17.780  20.240 SPEAKER_00                                                            called C.J. Mathew has given your address.
+    21.280  21.780 SPEAKER_01                                                            Okay.
+    23.140  27.540 SPEAKER_00                                                            Actually he has taken a loan from us so that is the reason. How do you know him?
+    29.060  29.840 SPEAKER_01                                                            I'm a colleague.
+    31.300  33.940 SPEAKER_01                                                            Okay. Is he doing a job or a business right now?
+    34.900  35.780 SPEAKER_00                                                            No, no job.
+    36.760  38.800 SPEAKER_00                                                            And where does he stay? Is it a address?
+    40.120  41.180 SPEAKER_00                                                            He is now in
+    41.600  42.100 SPEAKER_00                                                            Pattimatham,
+    43.160  43.660 SPEAKER_01                                                            Ernakulam.
+    45.060  46.520 SPEAKER_00                                                            Sorry, sorry, can you repeat?
+    47.020  48.280 SPEAKER_01                                                            Patimatham, Kerala.
+    49.120  50.320 SPEAKER_00                                                            Okay, thank you.
+    50.860  51.360 SPEAKER_00                                                            Okay."""
 
 
-    results = process_transcript(transcript, ground_truth)
+results = process_transcript(transcript, ground_truth)
 
-    output_json(results)
+print(output_json(results))
