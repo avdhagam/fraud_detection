@@ -92,4 +92,16 @@ public class LeadController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(leadNameEmails);
     }
+
+    @GetMapping("/{agentId}/{leadId}")
+    public LeadResponse getLeadFiles(
+            @PathVariable String leadId,
+            @PathVariable String agentId) {
+        return leadService.getLeadDetails(agentId,leadId);
+    }
+
+    @GetMapping("/active/{agentId}/{leadId}")
+    public LeadResponse getLeadDetailsWithActiveFiles(@PathVariable String agentId, @PathVariable String leadId) {
+        return leadService.getActiveLeadDetails(agentId, leadId);
+    }
 }

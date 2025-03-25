@@ -13,8 +13,8 @@ public interface LeadService {
     LeadEntity getLeadById(String leadId);
     List<LeadEntity> getLeadsByAgentId(String agentId);
     List<InsightsEntity> getLeadInsights(String leadId);
-
-    String getLeadName(String leadId);
-
     List<LeadNameEmail> getLeadNameEmailByAgentId(String agentId);
+    String getLeadName(String leadId);
+    LeadResponse getLeadDetails(String agentId,String leadId);
+    LeadResponse getActiveLeadDetails(String agentId, String leadId);
 }

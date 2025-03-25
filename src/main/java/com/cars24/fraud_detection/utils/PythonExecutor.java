@@ -22,7 +22,8 @@ public class PythonExecutor {
 
     public Map<String, Object> runPythonScript(String scriptName, Object... args) {
         try {
-            String pythonCommand = System.getProperty("os.name").toLowerCase().contains("win") ? "python" : "python3";
+            //String pythonCommand = System.getProperty("os.name").toLowerCase().contains("win") ? "python" : "python3";
+            String pythonCommand =  "C:\\Users\\dayad\\Downloads\\cars24\\fraud_detection\\venv\\Scripts\\python.exe";
             List<String> command = new ArrayList<>();
             command.add(pythonCommand);
             command.add(scriptName);

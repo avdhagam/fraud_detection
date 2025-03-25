@@ -33,6 +33,22 @@ public class AudioResponse {
     public <E, K, V> AudioResponse(String uuid, Object o, ArrayList<E> es, Object o1, Object o2, Object o3, Object o4, Object o5, double v, ArrayList<E> es1, HashMap<K,V> kvHashMap, String error) {
     }
 
-    public AudioResponse(String uuid, String agentId, Map<String, Object> llmExtractionResult, Map<String, Object> audioAnalysisMap, List<String> transcript, String referenceName, String subjectName, String subjectAddress, String relationToSubject, String subjectOccupation, Double overallScore, List<String> explanation, Map<String, Double> fieldByFieldScores, String status) {
+//    public AudioResponse(String uuid, String agentId, Map<String, Object> llmExtractionResult, Map<String, Object> audioAnalysisMap, List<String> transcript, String referenceName, String subjectName, String subjectAddress, String relationToSubject, String subjectOccupation, Double overallScore, List<String> explanation, Map<String, Double> fieldByFieldScores, String status) {
+//    }
+    public AudioResponse(String id, String agentId, Map<String, Object> llmExtractionResult, Map<String, Object> audioAnalysisMap, List<String> transcript, String referenceName, String subjectName, String subjectAddress, String relationToSubject, String subjectOccupation, Double overallScore, List<String> explanation, Map<String, Double> fieldByFieldScores, String status) {
+        this.id = id;
+        this.leadId = agentId;
+        this.llmExtraction = llmExtractionResult;
+        this.audioAnalysis = audioAnalysisMap;
+        this.transcript = transcript;
+        this.referenceName = referenceName;
+        this.subjectName = subjectName;
+        this.subjectAddress = subjectAddress;
+        this.relationToSubject = relationToSubject;
+        this.subjectOccupation = subjectOccupation;
+        this.overallScore = overallScore;
+        this.explanation = explanation;
+        this.fieldByFieldScores = fieldByFieldScores;
+        this.status = status;
     }
 }

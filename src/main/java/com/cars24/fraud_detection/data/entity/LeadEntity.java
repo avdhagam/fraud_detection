@@ -6,6 +6,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -26,6 +27,7 @@ public class LeadEntity {
     private String adharNumber;
     private String panNumber;
 
+//    private String docType;
 
     private String referenceName;
     private String relationToSubject;
@@ -35,6 +37,10 @@ public class LeadEntity {
     // Optional: Additional Lead Information
     private String address;
     private String phoneNumber;
+
+    private List<AudioEntity> referenceCalls;
+    private List<DocumentEntity> aadhaar;
+    private List<DocumentEntity> pan;
 
     @CreatedDate
     private LocalDateTime createdAt;

@@ -1,9 +1,0 @@
-{
-    "document_type": "Aadhaar",
-    "name": "Kiran Kumari",
-    "date_of_birth": "2003-01-01",
-    "id_number": "4382 5165 5729",
-    "gender": "Female",
-    "father_name": null,
-    "raw_text": "{\n  \"document_type\": \"Aadhaar\",\n  \"document_type_confidence\": 1.0,\n  \"name\": \"Kiran Kumari\",\n  \"name_confidence\": 1.0,\n  \"date_of_birth\": \"2003-01-01\",\n  \"date_of_birth_confidence\": 1.0,\n  \"gender\": \"Female\",\n  \"gender_confidence\": 1.0,\n  \"father_name\": null,\n  \"father_name_confidence\": 0.0,\n  \"id_number\": \"4382 5165 5729\",\n  \"id_number_confidence\": 1.0\n}"
-}
