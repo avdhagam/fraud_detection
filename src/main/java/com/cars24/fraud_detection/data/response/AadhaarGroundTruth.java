@@ -6,19 +6,19 @@ import lombok.Data;
 @Data
 public class AadhaarGroundTruth {
 
-    private String documentType;
+    private String document_type;
     private String name;
-    private String dateOfBirth;
+    private String date_of_birth;
     private String gender;
-    private String idNumber;
+    private String id_number;
 
     public static AadhaarGroundTruth fromLeadEntity(LeadEntity leadEntity) {
         AadhaarGroundTruth groundTruth = new AadhaarGroundTruth();
-        groundTruth.setDocumentType("Aadhaar");
+        groundTruth.setDocument_type("Aadhaar");
         groundTruth.setName(leadEntity.getName());
-        groundTruth.setDateOfBirth(leadEntity.getDob());
+        groundTruth.setDate_of_birth(leadEntity.getDob());
         groundTruth.setGender(leadEntity.getGender());
-        groundTruth.setIdNumber(leadEntity.getAdharNumber());
+        groundTruth.setId_number(leadEntity.getAdharNumber());
         return groundTruth;
     }
 
