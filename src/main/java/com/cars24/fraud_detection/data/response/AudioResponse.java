@@ -1,3 +1,4 @@
+// AudioResponse.java
 package com.cars24.fraud_detection.data.response;
 
 import lombok.AllArgsConstructor;
@@ -11,13 +12,13 @@ import java.util.Map;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class AudioResponse {
-    private String id; // AudioEntity ID
-    private String leadId; // Lead ID
-    private String documentType;
+    private String uuid;
+
+    private String userReportId;
 
     private Map<String, Object> llmExtraction;
+    private Map<String, Object> audioAnalysis;
     private List<String> transcript;
     private String referenceName;
     private String subjectName;
@@ -27,19 +28,26 @@ public class AudioResponse {
     private double overallScore;
     private List<String> explanation;
     private Map<String, Double> fieldByFieldScores;
-    private Map<String, Object> audioAnalysis;
     private String status;
 
-    public <E, K, V> AudioResponse(String uuid, Object o, ArrayList<E> es, Object o1, Object o2, Object o3, Object o4, Object o5, double v, ArrayList<E> es1, HashMap<K,V> kvHashMap, String error) {
-    }
-
-//    public AudioResponse(String uuid, String agentId, Map<String, Object> llmExtractionResult, Map<String, Object> audioAnalysisMap, List<String> transcript, String referenceName, String subjectName, String subjectAddress, String relationToSubject, String subjectOccupation, Double overallScore, List<String> explanation, Map<String, Double> fieldByFieldScores, String status) {
-//    }
-    public AudioResponse(String id, String agentId, Map<String, Object> llmExtractionResult, Map<String, Object> audioAnalysisMap, List<String> transcript, String referenceName, String subjectName, String subjectAddress, String relationToSubject, String subjectOccupation, Double overallScore, List<String> explanation, Map<String, Double> fieldByFieldScores, String status) {
-        this.id = id;
-        this.leadId = agentId;
-        this.llmExtraction = llmExtractionResult;
-        this.audioAnalysis = audioAnalysisMap;
+    public AudioResponse(String uuid,
+                         String userReportId,
+                         Map<String, Object> llmExtraction,
+                         Map<String, Object> audioAnalysis,
+                         List<String> transcript,
+                         String referenceName,
+                         String subjectName,
+                         String subjectAddress,
+                         String relationToSubject,
+                         String subjectOccupation,
+                         double overallScore,
+                         List<String> explanation,
+                         Map<String, Double> fieldByFieldScores,
+                         String status) {
+        this.uuid = uuid;
+        this.userReportId=userReportId;
+        this.llmExtraction = llmExtraction;
+        this.audioAnalysis = audioAnalysis;
         this.transcript = transcript;
         this.referenceName = referenceName;
         this.subjectName = subjectName;
@@ -50,5 +58,8 @@ public class AudioResponse {
         this.explanation = explanation;
         this.fieldByFieldScores = fieldByFieldScores;
         this.status = status;
+    }
+
+    public <E, K, V> AudioResponse(String uuid, Object o, ArrayList<E> es, Object o1, Object o2, Object o3, Object o4, Object o5, double v, ArrayList<E> es1, HashMap<K,V> kvHashMap, String error) {
     }
 }

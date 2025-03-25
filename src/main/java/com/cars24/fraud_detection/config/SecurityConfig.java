@@ -19,7 +19,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())  // Correct way to disable CSRF in Spring Security 6.1+
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/agents/**","/files/**", "/documents/**", "/audio/**","/leads/**").permitAll() // Allow register API without authentication
+                        .requestMatchers("/users/**", "/documents/**", "/audio/**").permitAll() // Allow register API without authentication
                         .anyRequest().authenticated()
                 );
 

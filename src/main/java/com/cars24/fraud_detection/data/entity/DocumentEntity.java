@@ -8,7 +8,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 import java.util.Map;
-import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -18,13 +17,12 @@ import java.util.UUID;
 public class DocumentEntity {
 
     @Id
-    private String id = UUID.randomUUID().toString(); // Generate UUID on creation
+    private String id;
 
-    private String leadId; // Reference to Lead (Foreign Key)
-    private String agentId; // Reference to Agent (Foreign Key)
-
+    private String userId;
     private String documentType;
 
+    private String documentId;
     private String fileName;
     private String filePath;
     private String status;  // PROCESSING, COMPLETED, FAILED
@@ -45,22 +43,42 @@ public class DocumentEntity {
     private LocalDateTime timestamp;
 
     public DocumentResponse toResponse() {
-        return DocumentResponse.builder()
-                .documentId(this.id) // Use entity's ID
-                .leadId(this.leadId)
-                .documentType(this.documentType)
-                .isValid("COMPLETED".equals(status))
-                .finalRiskScore(this.finalRiskScore)
-                .riskLevel(this.riskLevel)
-                .decision(this.decision)
-                .nextSteps(this.nextSteps)
-                .remarks(this.remarks)
-                .ocrResults(this.ocrResults)
-                .qualityResults(this.qualityResults)
-                .forgeryResults(this.forgeryResults)
-                .validationResults(this.validationResults)
-                .build();
+        return new DocumentResponse(
+                userId,
+                id,
+                documentType,
+                "COMPLETED".equals(status),
+                finalRiskScore,
+                riskLevel,
+                decision,
+                nextSteps,
+                remarks,
+                ocrResults,
+                qualityResults,
+                forgeryResults,
+                validationResults
+        );
     }
 
-    // Remove the old constructor, let Lombok handle it
+    public DocumentEntity(String userId, String documentId, String documentType, String fileName, String filePath, String status, String remarks,
+                          double finalRiskScore, String riskLevel, String decision, String nextSteps,
+                          Map<String, Object> ocrResults, Map<String, Object> qualityResults,
+                          Map<String, Object> forgeryResults, Map<String, Object> validationResults) {
+        this.userId = userId;
+        this.documentId = documentId;
+        this.documentType=documentType;
+        this.fileName = fileName;
+        this.filePath = filePath;
+        this.status = status;
+        this.remarks = remarks;
+        this.finalRiskScore = finalRiskScore;
+        this.riskLevel = riskLevel;
+        this.decision = decision;
+        this.nextSteps = nextSteps;
+        this.ocrResults = ocrResults;
+        this.qualityResults = qualityResults;
+        this.forgeryResults = forgeryResults;
+        this.validationResults = validationResults;
+    }
+
 }

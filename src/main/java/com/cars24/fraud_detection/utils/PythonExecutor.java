@@ -23,7 +23,6 @@ public class PythonExecutor {
     public Map<String, Object> runPythonScript(String scriptName, Object... args) {
         try {
             String pythonCommand = System.getProperty("os.name").toLowerCase().contains("win") ? "python" : "python3";
-            //String pythonCommand =  "C:\\Users\\dayad\\Downloads\\cars24\\fraud_detection\\venv\\Scripts\\python.exe";
             List<String> command = new ArrayList<>();
             command.add(pythonCommand);
             command.add(scriptName);
@@ -40,13 +39,6 @@ public class PythonExecutor {
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String scriptOutput = reader.lines().collect(Collectors.joining("\n"));
-
-            BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-            String errorOutput = errorReader.lines().collect(Collectors.joining("\n"));
-            if (!errorOutput.isEmpty()) {
-                log.error("Python script error output: {}", errorOutput);
-            }
-
 
             int exitCode = process.waitFor();
             if (exitCode != 0) {

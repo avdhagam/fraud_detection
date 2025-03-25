@@ -1,9 +1,0 @@
-{
-    "document_type": "Aadhaar",
-    "name": "Bhuvan Bam",
-    "date_of_birth": "1994-01-21",
-    "id_number": "5686 5772 6886 1788",
-    "gender": "Male",
-    "father_name": null,
-    "raw_text": "{\n  \"document_type\": \"Aadhaar\",\n  \"confidence\": 0.95,\n  \"name\": \"Bhuvan Bam\",\n  \"confidence\": 0.99,\n  \"date_of_birth\": \"1994-01-21\",\n  \"confidence\": 0.98,\n  \"gender\": \"Male\",\n  \"confidence\": 0.98,\n  \"father_name\": null,\n  \"confidence\": 0.0,\n  \"id_number\": \"5686 5772 6886 1788\",\n  \"confidence\": 0.95\n}"
-}
