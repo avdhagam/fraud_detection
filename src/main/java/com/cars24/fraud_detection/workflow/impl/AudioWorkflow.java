@@ -177,7 +177,7 @@ public class AudioWorkflow implements WorkflowInitiator {
         String audioFilePath =  request.getUuid() ;
         logger.info("Executing LLM extraction script: {} for audio file: {}", llmScriptPath, request.getAudioFile());
 
-        Map<String, Object> llmExtractionResult = processAudioScript(llmScriptPath, audioFilePath);
+        Map<String, Object> llmExtractionResult = processAudioScript(llmScriptPath, audioFilePath, request.getLeadId());
 
         if (llmExtractionResult == null || llmExtractionResult.isEmpty()) {
             logger.warn("LLM extraction script returned an empty response for requestId: {}", request.getUuid());
@@ -203,7 +203,7 @@ public class AudioWorkflow implements WorkflowInitiator {
             String relationToSubject = (String) extractedResultMap.get("relation_to_subject");
             String subjectOccupation = (String) extractedResultMap.get("subject_occupation");
 
-            Map<String,Object> audioAnalysisMap = processAudioScript(audioScriptPath, request.getUuid());
+            Map<String,Object> audioAnalysisMap = processAudioScript(audioScriptPath, request.getUuid(), request.getLeadId());
 
             Map<String, Object> scoringResultsMap = (Map<String, Object>) llmExtractionResult.get("scoring_results");
             Double overallScore = (Double) scoringResultsMap.get("overall_score");
@@ -252,14 +252,14 @@ public class AudioWorkflow implements WorkflowInitiator {
         }
     }
 
-    private Map<String, Object> processAudioScript(String scriptPath, String uuid) {
-        logger.debug("Running Python script: {} with audio file: {}", scriptPath, uuid);
-        Map<String, Object> result = pythonExecutor.runPythonScript(scriptPath, uuid);
+    private Map<String, Object> processAudioScript(String scriptPath, String uuid, String leadId) {
+        logger.debug("Running Python script: {} with audio file: {} and lead id: {}", scriptPath, uuid, leadId);
+        Map<String, Object> result = pythonExecutor.runPythonScript(scriptPath, uuid, leadId);
 
         if (result == null || result.isEmpty()) {
-            logger.warn("Python script {} returned an empty result for audio file: {}", scriptPath, uuid);
+            logger.warn("Python script {} returned an empty result for audio file: {} for lead Id: {}", scriptPath, uuid, leadId);
         } else {
-            logger.info("Python script {} execution successful", scriptPath);
+            logger.info("Python script {} execution successful for lead Id: {}", scriptPath, leadId);
         }
 
         return result;
