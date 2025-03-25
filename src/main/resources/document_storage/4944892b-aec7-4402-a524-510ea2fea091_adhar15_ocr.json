@@ -1,0 +1,8 @@
+{
+    "document_type": "Aadhaar",
+    "name": "Bhuvan Bam",
+    "date_of_birth": "1994-01-21",
+    "gender": "Male",
+    "id_number": "5686 5772 6886 1788",
+    "raw_text": "{\n  \"document_type\": \"Aadhaar\",\n  \"name\": \"Bhuvan Bam\",\n  \"date_of_birth\": \"1994-01-21\",\n  \"gender\": \"Male\",\n  \"id_number\": \"5686 5772 6886 1788\"\n}"
+}

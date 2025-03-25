@@ -8,20 +8,17 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
-@Data
 @Document(collection = "audio_entities")
+@Data
 public class AudioEntity {
 
     @Id
-    private String id = UUID.randomUUID().toString(); // Generate UUID on creation
-
-    private String leadId; // Reference to Lead (Foreign Key)
-    private String agentId; // Reference to Agent (Foreign Key)
+    private String id;
     private String documentType;
 
     private Map<String, Object> llmExtraction;
+    private String userId;
     private List<String> transcript;
     private String referenceName;
     private String subjectName;

@@ -1,0 +1,9 @@
+{
+    "document_type": "Aadhaar",
+    "name": "Abhishek Alakniranjan Kundu",
+    "date_of_birth": "1981-02-17",
+    "id_number": "6714 3083 3833",
+    "gender": "Male",
+    "father_name": null,
+    "raw_text": "{\n  \"document_type\": \"Aadhaar\",\n  \"confidence\": 1.0,\n  \"name\": \"Abhishek Alakniranjan Kundu\",\n  \"confidence\": 1.0,\n  \"date_of_birth\": \"1981-02-17\",\n  \"confidence\": 1.0,\n  \"gender\": \"Male\",\n  \"confidence\": 1.0,\n  \"father_name\": null,\n  \"confidence\": 0.0,\n  \"id_number\": \"6714 3083 3833\",\n  \"confidence\": 1.0\n}"
+}

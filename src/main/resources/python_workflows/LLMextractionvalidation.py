@@ -28,21 +28,6 @@ base_path = root_path / "audio_storage"
 #
 # uuid = get_uuid()
 
-
-def get_ground_truth(lead_id):
-    api_url = f"http://localhost:8080/leads/{lead_id}/audio"
-    try:
-        response = requests.get(api_url)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            print(f"Error: Failed to fetch ground truth for lead ID {lead_id}")
-            sys.exit(1)
-    except Exception as e:
-        print(f"Error fetching ground truth: {e}")
-        sys.exit(1)
-
-
 def get_audio_file_path(uuid):
     """Reconstruct the full path of the audio file using UUID."""
     file_name = f"{uuid}.mp3"  # Assuming files are stored as UUID.mp3
@@ -213,15 +198,12 @@ def output_json(data):
 
 # Example usage
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print("Usage: python llmextractor.py <UUID> <LEAD_ID>")
+    if len(sys.argv) < 2:
+        print("Usage: python llmextractor.py <UUID>")
         sys.exit(1)
 
     uuid = sys.argv[1]
-    lead_id = sys.argv[2]
     audio_path = get_audio_file_path(uuid)
-
-    ground_truth = get_ground_truth(lead_id)
 
     # transcript = Transcription.get_transcripts(audio_path)
     transcript = """start   end    speaker                                                              utterance
@@ -250,7 +232,13 @@ if __name__ == "__main__":
     47.020  48.280 SPEAKER_01                                                            Patimatham, Kerala.
     49.120  50.320 SPEAKER_00                                                            Okay, thank you.
     50.860  51.360 SPEAKER_00                                                            Okay."""
-
+    ground_truth = {
+        "reference_name": "Arjun",
+        "subject_name": "Matthew",
+        "subject_address": "45,sunshine blaze apartments, pattimathur ,ernakulam",
+        "relation_to_subject": "work together",
+        "subject_occupation": "unemployed"
+    }
 
     results = process_transcript(transcript, ground_truth)
 
