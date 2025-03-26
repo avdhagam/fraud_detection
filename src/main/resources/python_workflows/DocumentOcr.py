@@ -93,12 +93,12 @@ def extract_text_from_image(image_path):
 
             # Save OCR output dynamically
             ocr_output = {
-                "document_type": document_type,
+                "documentType": document_type,
                 "name": name,
-                "date_of_birth": date_of_birth,
-                "id_number": id_number,
+                "dateOfBirth": date_of_birth,
+                "idNumber": id_number,
                 "gender": gender,
-                "father_name": father_name,
+                "fatherName": father_name,
                 "raw_text": extracted_text  # Keep raw text for reference
             }
         except json.JSONDecodeError as e:

@@ -4,13 +4,16 @@ import base64
 import json
 import logging
 import re
-from openai import OpenAI
-import prompts
+import requests
 from pathlib import Path
-script_path = Path(__file__).resolve() # finds absolute path of script
-root_dir = script_path.parents[4]  # Calculate root directory by moving up four levels
+
+
+# Configure paths
+script_path = Path(__file__).resolve()
+root_dir = script_path.parents[4]
 sys.path.append(str(root_dir))
 import config
+
 # Configure logging
 log_dir = os.path.join("src", "main", "resources", "document_storage", "output")
 os.makedirs(log_dir, exist_ok=True)
@@ -19,94 +22,89 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
-# OpenRouter API Config
-API_KEY = config.OPENROUTER_API_KEY
-BASE_URL = "https://openrouter.ai/api/v1"
-client = OpenAI(base_url=BASE_URL, api_key=API_KEY)
+
+# Google Gemini API Config
+GEMINI_API_KEY = config.GEMINI_API_KEY
+GEMINI_OCR_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+
 # Document Storage Path
 DOCUMENT_STORAGE_PATH = os.path.join("src", "main", "resources", "document_storage")
 OUTPUT_PATH = os.path.join(DOCUMENT_STORAGE_PATH, "output")
 os.makedirs(OUTPUT_PATH, exist_ok=True)
-def assess_quality(image_path):
-    """Assess document quality using AI-based analysis."""
+
+def assess_quality(image_path, quality_prompt):
+    """Assess document quality using Google Gemini 1.5 Flash API."""
     try:
         if not os.path.exists(image_path):
             error_msg = f"File not found: {image_path}"
             logging.error(error_msg)
             return {"error": error_msg, "success": False, "finalQualityScore": 0.0}
-        # Encode image for AI processing
+
+        # Encode image in Base64
         with open(image_path, "rb") as img_file:
             image_base64 = base64.b64encode(img_file.read()).decode("utf-8")
-        # AI Quality Analysis Prompt
-        quality_prompt = prompts.PROMPTS["DOCUMENT_QUALITY_PROMPT"]
-        # Call AI Model
-        completion = client.chat.completions.create(
-            model="google/gemini-pro-vision",
-            messages=[
-                {"role": "user", "content": [
-                    {"type": "text", "text": quality_prompt},
-                    {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}}
-                ]}
+
+        # Prepare API Request Payload
+        payload = {
+            "contents": [
+                {"role": "user", "parts": [{"text": quality_prompt}]},
+                {"role": "user", "parts": [{"inline_data": {"mime_type": "image/jpeg", "data": image_base64}}]}
             ]
-        )
+        }
+
+        headers = {"Content-Type": "application/json"}
+        params = {"key": GEMINI_API_KEY}
+
+        # Call Google Gemini 1.5 Flash API
+        response = requests.post(GEMINI_OCR_URL, headers=headers, params=params, json=payload)
+
+        # Check API response
+        if response.status_code != 200:
+            logging.error(f"API Error: {response.text}")
+            return {"error": f"API Error: {response.text}", "success": False, "finalQualityScore": 0.0}
+
+        ai_response = response.json()
+
         # Extract AI Response
-        raw_response = completion.choices[0].message.content
+        if "candidates" not in ai_response or not ai_response["candidates"]:
+            logging.error("AI response is empty.")
+            return {"error": "AI response is empty", "success": False, "finalQualityScore": 0.0}
+
+        raw_response = ai_response["candidates"][0].get("content", {}).get("parts", [{}])[0].get("text", "")
         logging.info(f"Quality API Raw Response: {raw_response}")
+
         # Clean & Parse AI Response
         cleaned_response = re.sub(r"```json\n|\n```", "", raw_response).strip()
         try:
             ai_results = json.loads(cleaned_response)
         except json.JSONDecodeError as e:
             logging.error(f"Failed to parse JSON: {e}")
-            ai_results = {}
+            return {"error": "Invalid AI response format", "success": False, "finalQualityScore": 0.0}
+
         # Construct Final Quality Response
         combined_results = {
             "qualityAnalysis": {
-                "readability": {
-                    "readabilityScore": ai_results.get("readability_score", 0),
-                    "detailedInsight": ai_results.get("insights", {}).get("readability", "Readability insights not available."),
-                    "recommendations": ai_results.get("recommendations", {}).get("readability", "Ensure document text is clear.")
-                },
-                "completeness": {
-                    "completenessScore": ai_results.get("completeness_score", 0),
-                    "detailedInsight": ai_results.get("insights", {}).get("completeness", "Completeness insights unavailable."),
-                    "recommendations": ai_results.get("recommendations", {}).get("completeness", "Ensure full document is captured.")
-                },
-                "blur": {
-                    "blurScore": ai_results.get("blur_score", 0),
-                    "detailedInsight": ai_results.get("insights", {}).get("blur", "No blur analysis found."),
-                    "recommendations": ai_results.get("recommendations", {}).get("blur", "Retake photo with better focus.")
-                },
-                "lighting": {
-                    "lightingScore": ai_results.get("lighting_score", 0),
-                    "detailedInsight": ai_results.get("insights", {}).get("lighting", "No lighting insights available."),
-                    "recommendations": ai_results.get("recommendations", {}).get("lighting", "Adjust lighting to avoid glare.")
-                },
-                "colorAccuracy": {
-                    "colorAccuracyScore": ai_results.get("color_accuracy_score", 0),
-                    "detailedInsight": ai_results.get("insights", {}).get("color_accuracy", "No color accuracy insights available."),
-                    "recommendations": ai_results.get("recommendations", {}).get("color_accuracy", "Ensure colors are true to original document.")
-                },
-                "alignment": {
-                    "alignmentScore": ai_results.get("alignment_score", 0),
-                    "detailedInsight": ai_results.get("insights", {}).get("alignment_score", "No alignment insights found."),
-                    "recommendations": ai_results.get("recommendations", {}).get("alignment_score", "Align document properly before scanning.")
-                },
-                "noiseArtifacts": {
-                    "noiseArtifactsScore": ai_results.get("noise_artifacts_score", 0),
-                    "detailedInsight": ai_results.get("insights", {}).get("noise_artifacts", "No noise/artifact insights available."),
-                    "recommendations": ai_results.get("recommendations", {}).get("noise_artifacts", "Ensure document is clean before scanning.")
+                key: {
+                    "score": ai_results.get(f"{key}_score", 0.0),
+                    "detailedInsight": ai_results.get("insights", {}).get(key, f"No insights available for {key}"),
+                    "recommendations": ai_results.get("recommendations", {}).get(key, f"No recommendations available for {key}")
                 }
+                for key in [
+                    "readability", "completeness", "blur", "lighting", "color_accuracy", "alignment", "noise_artifacts"
+                ]
             },
             "finalQualityScore": ai_results.get("overall_quality_score", 0.0),
             "decision": ai_results.get("final_decision", "Review needed"),
             "success": True
         }
         return combined_results
+
     except Exception as e:
         logging.error(f"Quality assessment error: {str(e)}")
         return {"error": f"Quality assessment error: {str(e)}", "finalQualityScore": 0.0, "success": False}
+
 if __name__ == "__main__":
     image_path = sys.argv[1]
-    result = assess_quality(image_path)
+    quality_prompt = sys.argv[2] if len(sys.argv) > 2 else ""
+    result = assess_quality(image_path, quality_prompt)
     print(json.dumps(result, indent=4))
