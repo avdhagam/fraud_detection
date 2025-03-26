@@ -314,12 +314,42 @@ public class FileServiceImpl implements FileService {
         return savedFile;
     }
 
-    @Override
-    @Transactional
-    public List<FileResponse> uploadMultipleFiles(String agentId, String leadId, String fileType, List<MultipartFile> files) {
-        List<FileResponse> responses = new ArrayList<>();
+//    @Override
+//    @Transactional
+//    public List<FileResponse> uploadMultipleFiles(String agentId, String leadId, List<String> fileTypes, List<MultipartFile> files) {
+//        List<FileResponse> responses = new ArrayList<>();
+//
+//        for (MultipartFile file : files) {
+//            try {
+//                byte[] fileData = file.getBytes();
+//                FileEntity savedFile = uploadFile(agentId, leadId, fileTypes, file.getOriginalFilename(), fileData);
+//                responses.add(new FileResponse(
+//                        savedFile.getFileId(),
+//                        savedFile.getAgentId(),
+//                        savedFile.getLeadId(),
+//                        savedFile.getOriginalFilename(),
+//                        savedFile.getFileType(),
+//                        savedFile.getFilePath(),
+//                        savedFile.getStatus(),
+//                        savedFile.getIsActive(),
+//                        savedFile.getUploadedAt()
+//                ));
+//            } catch (IOException e) {
+//                log.error("Error reading file: {}", file.getOriginalFilename(), e);
+//                throw new RuntimeException("Failed to read file: " + file.getOriginalFilename());
+//            }
+//        }
+//
+//        return responses;
+//    }
 
-        for (MultipartFile file : files) {
+    @Transactional
+    @Override
+    public List<FileResponse> uploadMultipleFiles(String agentId, String leadId, List<String> fileTypes, List<MultipartFile> files) {
+        List<FileResponse> responses = new ArrayList<>();
+        for (int i = 0; i < files.size(); i++) {
+            MultipartFile file = files.get(i);
+            String fileType = fileTypes.get(i);  // Get corresponding file type
             try {
                 byte[] fileData = file.getBytes();
                 FileEntity savedFile = uploadFile(agentId, leadId, fileType, file.getOriginalFilename(), fileData);
@@ -339,7 +369,6 @@ public class FileServiceImpl implements FileService {
                 throw new RuntimeException("Failed to read file: " + file.getOriginalFilename());
             }
         }
-
         return responses;
     }
 

@@ -61,10 +61,10 @@ public class FileController {
     public ResponseEntity<List<FileResponse>> uploadMultipleFiles(
             @RequestParam("agentId") String agentId,
             @RequestParam("leadId") String leadId,
-            @RequestParam("fileType") String fileType,
+            @RequestParam("fileTypes") List<String> fileTypes,
             @RequestParam("files") List<MultipartFile> files) {
 
-        List<FileResponse> uploadedFiles = fileService.uploadMultipleFiles(agentId, leadId, fileType, files);
+        List<FileResponse> uploadedFiles = fileService.uploadMultipleFiles(agentId, leadId, fileTypes, files);
         return ResponseEntity.ok(uploadedFiles);
     }
 

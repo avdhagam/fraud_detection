@@ -1,164 +1,184 @@
-import sys
 import os
-import base64
-import json
 import cv2
+import json
 import numpy as np
 import logging
-from openai import OpenAI
+import piexif
+import magic
 import uuid
-import prompts
-from pathlib import Path
-script_path = Path(__file__).resolve() # finds absolute path of script
-root_dir = script_path.parents[4]  # Calculate root directory by moving up four levels
-sys.path.append(str(root_dir))
-import config
+import warnings
+warnings.simplefilter("ignore")
+
+from skimage.feature import graycomatrix, graycoprops
+from datetime import datetime
+from skimage.metrics import structural_similarity as ssim
+from PIL import Image, ImageChops, ImageEnhance
+
 # Configure logging
-log_dir = os.path.join("src", "main", "resources", "document_storage", "output")
+log_dir = "src/main/resources/document_storage/output"
 os.makedirs(log_dir, exist_ok=True)
 logging.basicConfig(
-    filename=os.path.join(log_dir, "document_forgery.log"),
+    filename=os.path.join(log_dir, "document_forgery_ml.log"),
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
-# OpenRouter API Config
-API_KEY = config.OPENROUTER_API_KEY
-BASE_URL = "https://openrouter.ai/api/v1"
-client = OpenAI(base_url=BASE_URL, api_key=API_KEY)
-# Document Storage Path
-DOCUMENT_STORAGE_PATH = os.path.join("src", "main", "resources", "document_storage")
-OUTPUT_PATH = os.path.join(DOCUMENT_STORAGE_PATH, "output")
+
+# Paths
+OUTPUT_PATH = "src/main/resources/document_storage/output"
 os.makedirs(OUTPUT_PATH, exist_ok=True)
-def detect_image_manipulation(image_path):
-    """Detect potential image manipulation using traditional CV methods."""
+
+def detect_tampering(image_path):
+    """Perform Error Level Analysis (ELA) to detect tampering."""
     try:
-        img = cv2.imread(image_path)
-        if img is None:
-            raise ValueError(f"Unable to load image from {image_path}")
-        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        noise_level = np.std(gray)
-        temp_path = os.path.join(OUTPUT_PATH, f"temp_{uuid.uuid4().hex[:8]}.jpg")
-        cv2.imwrite(temp_path, img, [int(cv2.IMWRITE_JPEG_QUALITY), 90])
-        compressed_img = cv2.imread(temp_path)
-        os.remove(temp_path)
-        if compressed_img is None:
-            raise ValueError("Error during compression analysis")
-        diff = cv2.absdiff(img, compressed_img)
-        diff_gray = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
-        ela_score = np.mean(diff_gray)
-        tampering_score = min(1.0, max(0.0, (ela_score / 10) * 0.5 + (noise_level > 50) * 0.5))
-        return {
-            "tamperingScore": float(tampering_score),
-            "metadataAnomalyScore": 0.0,
-            "formatConsistencyScore": 0.0,
-            "securityFeatureScore": 0.0,
-            "backgroundConsistencyScore": 0.0
-        }
+        original = Image.open(image_path).convert("RGB")
+        temp_path = os.path.join(OUTPUT_PATH, "temp.jpg")
+        original.save(temp_path, "JPEG", quality=90)
+        recompressed = Image.open(temp_path)
+        diff = ImageChops.difference(original, recompressed)
+        extrema = diff.getextrema()
+        max_diff = max([ex[1] for ex in extrema])
+        tampering_score = min(1.0, max(0.0, max_diff / 255))
+        return {"tamperingScore": tampering_score, "insight": "ELA-based tampering analysis completed."}
     except Exception as e:
-        logging.error(f"Error in image manipulation detection: {str(e)}")
-        return {"tamperingScore": 0.5, "metadataAnomalyScore": 0.5, "formatConsistencyScore": 0.5,
-                "securityFeatureScore": 0.5, "backgroundConsistencyScore": 0.5}
+        logging.error(f"Tampering detection error: {str(e)}")
+        return {"tamperingScore": 0.5, "insight": "Error in ELA processing."}
+
+def analyze_metadata(image_path):
+    """Extract and analyze metadata for inconsistencies like future dates and modifications."""
+    try:
+        exif_data = piexif.load(image_path)
+
+        if not exif_data:
+            return {"metadataAnomalyScore": 1.0, "insight": "No metadata found. Possible forgery."}
+
+        metadata_issues = []
+        exif_info = exif_data.get("0th", {})
+        exif_sub = exif_data.get("Exif", {})
+
+        # Extracting timestamps
+        date_time_original = exif_sub.get(piexif.ExifIFD.DateTimeOriginal, b"").decode("utf-8", errors="ignore")
+        date_time_digitized = exif_sub.get(piexif.ExifIFD.DateTimeDigitized, b"").decode("utf-8", errors="ignore")
+        current_time = datetime.now()
+
+        # Check for future timestamps
+        for date_field, label in [(date_time_original, "Original Date"), (date_time_digitized, "Digitized Date")]:
+            if date_field:
+                try:
+                    parsed_date = datetime.strptime(date_field, "%Y:%m:%d %H:%M:%S")
+                    if parsed_date > current_time:
+                        metadata_issues.append(f"{label} is in the future: {date_field}")
+                except ValueError:
+                    metadata_issues.append(f"Invalid date format in {label}: {date_field}")
+
+        # Check if digitized time is significantly different from original capture time
+        if date_time_original and date_time_digitized and date_time_original != date_time_digitized:
+            metadata_issues.append("Timestamp mismatch detected between original and digitized time.")
+
+        # Checking for suspicious editing software
+        software = exif_info.get(piexif.ImageIFD.Software, b"").decode("utf-8", errors="ignore")
+        if software and any(tool in software.lower() for tool in ["photoshop", "gimp", "editor"]):
+            metadata_issues.append(f"Suspicious software detected: {software}")
+
+        # Compute risk score (normalize based on detected issues)
+        metadata_score = min(1.0, len(metadata_issues) / 3.0)  # Cap the score at 1.0
+
+        return {
+            "metadataAnomalyScore": metadata_score,
+            "insight": "Metadata analysis completed.",
+            "issues": metadata_issues
+        }
+
+    except Exception as e:
+        logging.error(f"Metadata analysis error: {str(e)}")
+        return {"metadataAnomalyScore": 0.5, "insight": "Metadata extraction failed due to an error."}
+
+def check_format_consistency(image_path):
+    """Verify if the image format matches the file extension."""
+    try:
+        file_type = magic.Magic(mime=True).from_file(image_path)
+        expected_types = ["image/jpeg", "image/png","image/jpg"]
+        score = 0.0 if file_type in expected_types else 1.0
+        return {"formatConsistencyScore": score, "insight": f"File format detected: {file_type}"}
+    except Exception as e:
+        logging.error(f"Format consistency error: {str(e)}")
+        return {"formatConsistencyScore": 0.5, "insight": "File format detection failed."}
+
+def detect_security_features(image_path):
+    """Detect security features using edge detection."""
+    try:
+        img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+        edges = cv2.Canny(img, 100, 200)
+        edge_density = np.mean(edges) / 255
+        security_score = min(1.0, max(0.0, 1 - edge_density))
+        return {"securityFeatureScore": security_score, "insight": "Edge detection performed for security features."}
+    except Exception as e:
+        logging.error(f"Security feature detection error: {str(e)}")
+        return {"securityFeatureScore": 0.5, "insight": "Edge detection failed."}
+
+def analyze_background_integrity(image_path):
+    """Analyze background consistency using texture analysis (GLCM)."""
+    try:
+        img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+        glcm = graycomatrix(img, [1], [0], symmetric=True, normed=True)
+        contrast = graycoprops(glcm, 'contrast')[0, 0]
+        uniformity = graycoprops(glcm, 'ASM')[0, 0]
+        score = min(1.0, max(0.0, contrast / 100 + (1 - uniformity)))
+        return {"backgroundConsistencyScore": score, "insight": "Texture analysis performed for background consistency."}
+    except Exception as e:
+        logging.error(f"Background integrity error: {str(e)}")
+        return {"backgroundConsistencyScore": 0.5, "insight": "Texture analysis failed."}
+
 def analyze_forgery(image_path):
-    """Analyze document for potential forgery indicators."""
+    """Main function to analyze document forgery."""
     try:
         if not os.path.exists(image_path):
             raise FileNotFoundError(f"File not found: {image_path}")
-        cv_results = detect_image_manipulation(image_path)
-        try:
-            with open(image_path, "rb") as img_file:
-                image_base64 = base64.b64encode(img_file.read()).decode("utf-8")
-        except Exception as e:
-            logging.error(f"Error encoding image: {str(e)}")
-            return {"error": f"Failed to encode image: {str(e)}", "success": False}
-        forgery_prompt = prompts.PROMPTS["DOCUMENT_FORGERY_PROMPT"]
-        completion = client.chat.completions.create(
-            model="google/gemini-pro-vision",
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": forgery_prompt},
-                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image_base64}"}}
-                    ]
-                }
-            ]
-        )
-        raw_response = completion.choices[0].message.content
-        logging.info(f"Forgery API Raw Response: {raw_response}")
-        # Properly clean the response for JSON parsing
-        if "```json" in raw_response:
-            # Remove the ```json prefix and trailing ``` suffix
-            json_start = raw_response.find("```json") + len("```json")
-            json_end = raw_response.rfind("```")
-            if json_end > json_start:
-                cleaned_response = raw_response[json_start:json_end].strip()
-            else:
-                cleaned_response = raw_response[json_start:].strip()
-        else:
-            cleaned_response = raw_response.strip()
-        # Log the cleaned response to ensure it's not empty
-        logging.info(f"Cleaned API Response: {cleaned_response}")
-        if not cleaned_response:
-            logging.error("Error: Cleaned response is empty.")
-            return {"error": "Empty response from the forgery analysis API", "success": False}
-        try:
-            # First try direct parsing
-            ai_results = json.loads(cleaned_response)
-        except json.JSONDecodeError:
-            # If that fails, try additional cleanup
-            try:
-                # Remove any non-JSON characters and try again
-                import re
-                json_pattern = re.search(r'(\{.*\})', cleaned_response, re.DOTALL)
-                if json_pattern:
-                    cleaned_json = json_pattern.group(1)
-                    ai_results = json.loads(cleaned_json)
-                else:
-                    raise ValueError("Could not extract JSON pattern")
-            except Exception as e:
-                logging.error(f"Failed to parse JSON after cleanup: {str(e)}")
-                return {"error": "Invalid JSON response", "success": False}
+
+        tampering_results = detect_tampering(image_path)
+        metadata_results = analyze_metadata(image_path)
+        format_results = check_format_consistency(image_path)
+        security_results = detect_security_features(image_path)
+        background_results = analyze_background_integrity(image_path)
+
+        final_score = np.mean([
+            tampering_results['tamperingScore'],
+            metadata_results['metadataAnomalyScore'],
+            format_results['formatConsistencyScore'],
+            security_results['securityFeatureScore'],
+            background_results['backgroundConsistencyScore']
+        ])
+        decision = "Forgery Likely" if final_score > 0.6 else "Likely Authentic"
+
         combined_results = {
             "forgeryAnalysis": {
-                "tamperingAnalysis": {
-                    "tamperingScore": ai_results.get("Tampering Analysis", {}).get("Score", 0),
-                    "detailedInsight": ai_results.get("Tampering Analysis", {}).get("Insights", "No tampering insights available.")
-                },
-                "metadataAnalysis": {
-                    "metadataAnomalyScore": ai_results.get("Metadata Analysis", {}).get("Score", 0),
-                    "detailedInsight": ai_results.get("Metadata Analysis", {}).get("Insights", "No metadata insights available."),
-                },
-                "formatConsistencyAnalysis": {
-                    "formatConsistencyScore": ai_results.get("Format Consistency", {}).get("Score", 0),
-                    "detailedInsight": ai_results.get("Format Consistency", {}).get("Insights", "No format inconsistencies detected.")
-                },
-                "securityFeatureAnalysis": {
-                    "securityFeatureScore": ai_results.get("Security Features", {}).get("Score", 0),
-                    "detailedInsight": ai_results.get("Security Features", {}).get("Insights", "Security features analysis unavailable.")
-                },
-                "backgroundIntegrityAnalysis": {
-                    "backgroundConsistencyScore": ai_results.get("Background Integrity", {}).get("Score", 0),
-                    "detailedInsight": ai_results.get("Background Integrity", {}).get("Insights", "No background inconsistencies found.")
-                },
+                "tamperingAnalysis": tampering_results,
+                "metadataAnalysis": metadata_results,
+                "formatConsistencyAnalysis": format_results,
+                "securityFeatureAnalysis": security_results,
+                "backgroundIntegrityAnalysis": background_results,
                 "overallForgeryAssessment": {
-                    "finalForgeryRiskScore": ai_results.get("Forgery Risk Score", 0.0),
-                    "decision": ai_results.get("Final Decision", "Manual Review Recommended"),
+                    "finalForgeryRiskScore": final_score,
+                    "decision": decision,
                 }
             },
             "success": True
         }
+
         output_filename = f"forgery_analysis_{uuid.uuid4().hex[:8]}.json"
         output_path = os.path.join(OUTPUT_PATH, output_filename)
         with open(output_path, "w", encoding="utf-8") as json_file:
             json.dump(combined_results, json_file, indent=4)
+
         logging.info(f"Forgery analysis results saved to: {output_path}")
         return combined_results
     except Exception as e:
         logging.error(f"Forgery analysis error: {str(e)}")
         return {"error": str(e), "finalForgeryRiskScore": 0.7, "success": False}
+
 if __name__ == "__main__":
+    import sys
     if len(sys.argv) != 2:
-        print(json.dumps({"error": "Usage: python DocumentForgery.py <image_path>", "success": False}))
+        print(json.dumps({"error": "Usage: python document_forgery_ml.py <image_path>", "success": False}))
         sys.exit(1)
     image_path = sys.argv[1]
     result = analyze_forgery(image_path)

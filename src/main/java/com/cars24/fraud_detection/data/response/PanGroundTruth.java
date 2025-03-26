@@ -6,19 +6,19 @@ import lombok.Data;
 @Data
 public class PanGroundTruth {
 
-    private String documentType;
+    private String document_type;
     private String name;
-    private String dateOfBirth;
-    private String idNumber;
-    private String fatherName;
+    private String date_of_birth;
+    private String id_number;
+    private String father_name;
 
     public static PanGroundTruth fromLeadEntity(LeadEntity leadEntity) {
         PanGroundTruth groundTruth = new PanGroundTruth();
-        groundTruth.setDocumentType("PAN");
+        groundTruth.setDocument_type("PAN");
         groundTruth.setName(leadEntity.getName());
-        groundTruth.setDateOfBirth(leadEntity.getDob());
-        groundTruth.setIdNumber(leadEntity.getPanNumber());
-        groundTruth.setFatherName(leadEntity.getFatherName());
+        groundTruth.setDate_of_birth(leadEntity.getDob());
+        groundTruth.setId_number(leadEntity.getPanNumber());
+        groundTruth.setFather_name(leadEntity.getFatherName());
         return groundTruth;
     }
 }
