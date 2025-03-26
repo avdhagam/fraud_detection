@@ -17,6 +17,8 @@ import java.util.List;
 @RestController
 @RequestMapping("/files")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*", allowedHeaders = "*", methods = {RequestMethod.POST, RequestMethod.GET, RequestMethod.PUT, RequestMethod.OPTIONS})
+
 public class FileController {
 
     private final FileService fileService;

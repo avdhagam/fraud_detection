@@ -2,6 +2,7 @@ package com.cars24.fraud_detection.controller;
 
 import com.cars24.fraud_detection.data.request.AgentRequest;
 import com.cars24.fraud_detection.data.request.LoginRequest;
+import com.cars24.fraud_detection.data.response.AgentAnalysis;
 import com.cars24.fraud_detection.data.response.AgentResponse;
 import com.cars24.fraud_detection.data.response.LoginResponse;
 import com.cars24.fraud_detection.service.AgentService;
@@ -38,5 +39,11 @@ public class AgentController {
         agentResponse.setName(agentService.getAgentById(agentId).getName());
         agentResponse.setEmail(agentService.getAgentById(agentId).getEmail());
         return ResponseEntity.ok(agentResponse);
+    }
+
+    @GetMapping("/{agentId}/analysis")
+    public ResponseEntity<AgentAnalysis> getAgentAnalysis(@PathVariable String agentId) {
+        AgentAnalysis analysis = agentService.analyzeAgent(agentId);
+        return ResponseEntity.ok(analysis);
     }
 }

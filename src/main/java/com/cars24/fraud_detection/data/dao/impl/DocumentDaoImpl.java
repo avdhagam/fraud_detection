@@ -41,8 +41,10 @@ public class DocumentDaoImpl implements DocumentDao {
         return documentRepository.findByLeadIdOrderByTimestampDesc(leadId, PageRequest.of(0, limit));
     }
 
+
+
     @Override
-    public Optional<DocumentEntity> findByLeadIdAndDocumentType(String leadId, String documentType) {
+    public List<DocumentEntity> findByLeadIdAndDocumentType(String leadId, String documentType) {
         return documentRepository.findByLeadIdAndDocumentType(leadId, documentType);
     }
 }

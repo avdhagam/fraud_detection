@@ -35,7 +35,8 @@ public class LeadEntity {
 
 
     // Optional: Additional Lead Information
-    private String address;
+//    private String address;
+    private String subjectAddress;
     private String phoneNumber;
 
     private List<AudioEntity> referenceCalls;

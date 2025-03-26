@@ -47,10 +47,10 @@ def similarity_score(str1, str2, key):
 
     str1, str2 = normalize_text(str1), normalize_text(str2)
 
-    if key == "idNumber":
+    if key == "id_number":
         return 1.0 if str1 == str2 else 0.0
 
-    if key == "dateOfBirth":
+    if key == "date_of_birth":
         return 1.0 if normalize_date(str1) == normalize_date(str2) else 0.0
 
     if key == "gender":
@@ -68,7 +68,12 @@ def validate_document(ocr_data, reference_record):
     missing_fields = []
 
     for key, expected_value in reference_record.items():
-        extracted_value = ocr_data.get(key, "N/A")
+        extracted_entry = ocr_data.get(key, {})
+        if isinstance(extracted_entry, dict) and "value" in extracted_entry:
+            extracted_value = extracted_entry["value"]
+        else:
+            extracted_value = "N/A"
+
         if extracted_value == "N/A":
             missing_fields.append(key)
             match_score = 0

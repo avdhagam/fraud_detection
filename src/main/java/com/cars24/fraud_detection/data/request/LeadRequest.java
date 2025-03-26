@@ -80,10 +80,10 @@ public class LeadRequest {
     @Size(min = 1, max = 50, message = "Subject Occupation must be between 1 and 50 characters")
     private String subjectOccupation;
 
-    @NotNull(message = "Address is required")
-    @NotBlank(message = "Address cannot be blank")
-    @Size(min = 1, max = 200, message = "Address must be between 1 and 200 characters")
-    private String address;
+//    @NotNull(message = "Address is required")
+//    @NotBlank(message = "Address cannot be blank")
+//    @Size(min = 1, max = 200, message = "Address must be between 1 and 200 characters")
+//    private String address;
 
     @NotNull(message = "Phone Number is required")
     @NotBlank(message = "Phone Number cannot be blank")
@@ -104,7 +104,7 @@ public class LeadRequest {
         leadEntity.setReferenceName(this.referenceName);
         leadEntity.setRelationToSubject(this.relationToSubject);
         leadEntity.setSubjectOccupation(this.subjectOccupation);
-        leadEntity.setAddress(this.address);
+//        leadEntity.setAddress(this.address);
         leadEntity.setPhoneNumber(this.phoneNumber);
         leadEntity.setCreatedAt(LocalDate.now().atStartOfDay()); // Add this line
         return leadEntity;

@@ -25,7 +25,7 @@ public class LeadResponse {
     private String referenceName;
     private String relationToSubject;
     private String subjectOccupation;
-    private String address;
+    private String subjectAddress;
     private String phoneNumber;
     private LocalDateTime createdAt;
 
@@ -48,7 +48,7 @@ public class LeadResponse {
         this.referenceName = leadEntity.getReferenceName();
         this.relationToSubject = leadEntity.getRelationToSubject();
         this.subjectOccupation = leadEntity.getSubjectOccupation();
-        this.address = leadEntity.getAddress();
+        this.subjectAddress = leadEntity.getSubjectAddress();
         this.phoneNumber = leadEntity.getPhoneNumber();
         this.createdAt = leadEntity.getCreatedAt();
         this.referenceCalls = leadEntity.getReferenceCalls();

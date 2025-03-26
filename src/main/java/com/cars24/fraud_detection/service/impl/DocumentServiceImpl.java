@@ -125,7 +125,9 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public Optional<DocumentEntity> getDocumentByLeadIdAndType(String leadId, String documentType) {
-        return documentDao.findByLeadIdAndDocumentType(leadId, documentType);
+        List<DocumentEntity> documents = documentDao.findByLeadIdAndDocumentType(leadId, documentType);
+        //return documents.stream().findFirst();
+        return documents.isEmpty() ? Optional.empty() : Optional.of(documents.get(documents.size() - 1));
     }
 
     @Override
@@ -158,4 +160,6 @@ public class DocumentServiceImpl implements DocumentService {
                         .replace(new File("").getAbsolutePath() + File.separator, ""))
                 .orElse(null);
     }
+
+
 }

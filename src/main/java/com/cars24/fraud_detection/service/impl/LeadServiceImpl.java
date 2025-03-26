@@ -40,7 +40,7 @@ public class LeadServiceImpl implements LeadService {
         leadEntity.setGender(leadRequest.getGender());
         leadEntity.setAdharNumber(leadRequest.getAdharNumber());
         leadEntity.setPanNumber(leadRequest.getPanNumber());
-        leadEntity.setAddress(leadRequest.getAddress());
+        leadEntity.setSubjectAddress(leadRequest.getSubjectAddress());
         leadEntity.setPhoneNumber(leadRequest.getPhoneNumber());
         leadEntity.setReferenceName(leadRequest.getReferenceName());
         leadEntity.setRelationToSubject(leadRequest.getRelationToSubject());

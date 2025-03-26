@@ -943,3 +943,59 @@
   }
 }
 ```
+2025-03-26 12:27:12,432 - INFO - Quality API Raw Response: Here's a summary of the information provided in the image:
+
+This appears to be a mock-up of an Indian identity document.  The details shown are:
+
+* **Name:** Bhuvan Bam
+* **Date of Birth (DOB):** 21/1/1994
+* **Gender:** Male
+* **Identification Number:** 5686 5772 6886 1788
+* **QR Code:** A QR code is present, which likely contains additional information.
+
+**Important Note:** This is clearly not a genuine government-issued ID.  The format and details are not consistent with official Indian identification documents (like Aadhaar).  The image is likely a fan-made creation or a humorous edit.
+
+2025-03-26 12:27:12,432 - ERROR - Failed to parse JSON: Expecting value: line 1 column 1 (char 0)
+2025-03-26 12:38:46,255 - INFO - Quality API Raw Response: Here's a summary of the information from the image:
+
+This appears to be a mock-up of an Indian identity document, possibly Aadhaar card.  It shows:
+
+* **Name:** Bhuvan Bam
+* **Date of Birth (DOB):** 21/1/1994
+* **Gender:** Male
+* **Identification Number:** 5686 5772 6886 1788
+* **Government of India Emblem:**  The official emblem is visible at the top.
+* **QR Code:** A QR code is present, presumably linking to further verification.
+
+**Important Note:** This is clearly not a genuine government-issued document.  The image is a fabrication, likely created for illustrative or entertainment purposes.  Real Aadhaar cards have different security features and a unique identification number format.
+
+2025-03-26 12:38:46,255 - ERROR - Failed to parse JSON: Expecting value: line 1 column 1 (char 0)
+2025-03-26 13:04:06,437 - INFO - Quality API Raw Response: Here's a summary of the information from the image:
+
+This appears to be a mock-up of an Indian identity card or similar document.  It contains the following information:
+
+* **Government of India:**  Clearly indicates the issuing authority.
+* **Name:** Bhuvan Bam
+* **Date of Birth (DOB):** 21/1/1994
+* **Gender:** Male (\u092a\u0941\u0930\u0941\u0937 in Hindi)
+* **ID Number:** 5686 5772 6886 1788
+* **QR Code:** A QR code is present, likely containing additional data.
+
+
+**Important Note:** This is clearly a fabricated image and not a genuine government-issued document.  The image quality and formatting are inconsistent with official Indian identity documents.  Do not use this as a form of identification.
+
+2025-03-26 13:04:06,437 - ERROR - Failed to parse JSON: Expecting value: line 1 column 1 (char 0)
+2025-03-26 13:08:56,085 - INFO - Quality API Raw Response: Here's a summary of the information from the image:
+
+This appears to be a mock-up of an Indian identity document.  The information displayed includes:
+
+* **Government of India:**  The header clearly states this.
+* **Name:** Bhuvan Bam
+* **Date of Birth (DOB):** 21/1/1994
+* **Gender:** Male (\u092a\u0941\u0930\u0941\u0937 in Hindi)
+* **Identification Number:** 5686 5772 6886 1788
+* **QR Code:** A QR code is present, likely containing the same information.
+
+**Important Note:** This is not a real Indian government ID card.  The formatting and the inclusion of a prominent YouTuber's name makes it clear this is a fabricated image.  Real Indian government IDs have much stricter security features and are not made this way.
+
+2025-03-26 13:08:56,087 - ERROR - Failed to parse JSON: Expecting value: line 1 column 1 (char 0)

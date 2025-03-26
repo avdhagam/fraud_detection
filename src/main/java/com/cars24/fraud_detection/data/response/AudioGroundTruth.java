@@ -17,7 +17,7 @@ public class AudioGroundTruth {
         AudioGroundTruth groundTruth = new AudioGroundTruth();
         groundTruth.setReferenceName(leadEntity.getReferenceName());
         groundTruth.setSubjectName(leadEntity.getName());
-        groundTruth.setSubjectAddress(leadEntity.getAddress());
+        groundTruth.setSubjectAddress(leadEntity.getSubjectAddress());
         groundTruth.setRelationToSubject(leadEntity.getRelationToSubject());
         groundTruth.setSubjectOccupation(leadEntity.getSubjectOccupation());
         return groundTruth;
