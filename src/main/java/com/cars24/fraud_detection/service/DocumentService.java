@@ -17,4 +17,8 @@ public interface DocumentService {
     Optional<DocumentEntity> getDocumentByLeadIdAndType(String leadId, String documentType);
     InsightsEntity getDocumentInsights(String documentId); // Added this line
     Optional<DocumentEntity> getDocumentByIdAndType(String documentId, String documentType) ;
+
+    List<String> getRecentPanId(String leadId, int limit, String pan);
+
+    List<String> getRecentAadharId(String leadId, int limit, String aadhaar);
 }

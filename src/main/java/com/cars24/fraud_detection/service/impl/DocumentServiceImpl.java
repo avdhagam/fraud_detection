@@ -14,13 +14,15 @@ import com.cars24.fraud_detection.workflow.WorkflowInitiator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -163,6 +165,47 @@ public class DocumentServiceImpl implements DocumentService {
     public Optional<DocumentEntity> getDocumentByIdAndType(String documentId, String documentType) {
         return documentDao.findByIdAndDocumentType(documentId, documentType);
     }
+
+    @Override
+    public List<String> getRecentPanId(String leadId, int limit, String pan) {
+        log.info("Fetching last {} {} docs for lead ID: {}", limit, pan, leadId);
+
+        Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "timestamp"));
+        List<DocumentEntity> recentDocs = documentDao.getRecentDocumentsByLeadIdAndType(leadId, pan, pageable);
+
+        log.info("Total {} pan docs fetched: {}", pan, recentDocs.size());
+        for (DocumentEntity doc : recentDocs) {
+            log.info("Found {} pan doc: {} with timestamp: {}", pan, doc.getId(), doc.getTimestamp());
+        }
+
+        return recentDocs.stream()
+                .map(DocumentEntity::getId) // Extract only the file names
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<String> getRecentAadharId(String leadId, int limit, String aadhaar) {
+        log.info("Fetching last {} {} aadhar docs for lead ID: {}", limit, aadhaar, leadId);
+
+        Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "timestamp"));
+        List<DocumentEntity> recentDocs = documentDao.getRecentDocumentsByLeadIdAndType(leadId, aadhaar, pageable);
+
+        log.info("Total {} aadhars docs fetched: {}", aadhaar, recentDocs.size());
+        for (DocumentEntity doc : recentDocs) {
+            log.info("Found {} aadhar doc: {} with timestamp: {}", aadhaar, doc.getId(), doc.getTimestamp());
+        }
+
+        return recentDocs.stream()
+                .map(DocumentEntity::getId) // Extract only the file names
+                .collect(Collectors.toList());
+    }
+
+
+
+
+
+
+
 
 
 }

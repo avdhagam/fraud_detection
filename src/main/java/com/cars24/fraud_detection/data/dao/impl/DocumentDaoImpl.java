@@ -5,6 +5,7 @@ import com.cars24.fraud_detection.data.entity.DocumentEntity;
 import com.cars24.fraud_detection.repository.DocumentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -50,5 +51,10 @@ public class DocumentDaoImpl implements DocumentDao {
 
     public Optional<DocumentEntity> findByIdAndDocumentType(String documentId, String documentType) {
         return documentRepository.findByIdAndDocumentType(documentId, documentType);
+    }
+
+    @Override
+    public List<DocumentEntity> getRecentDocumentsByLeadIdAndType(String leadId, String doctype, Pageable pageable) {
+        return documentRepository.getRecentDocumentsByLeadIdAndType(leadId, doctype, pageable);
     }
 }

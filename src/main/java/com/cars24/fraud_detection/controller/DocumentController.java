@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/documents")
@@ -144,5 +145,36 @@ public class DocumentController {
                 .orElse(null); // Handle not found case
 
         return ResponseEntity.ok(document);
+    }
+
+    @GetMapping("/recentaadhaar/{leadId}")
+    public ResponseEntity<List<String>> getRecentAadhaarNames(
+            @PathVariable String leadId,
+            @RequestParam(defaultValue = "1") int limit) {
+
+        log.info("Fetching last {} aadhaars for lead ID: {}", limit, leadId);
+
+        List<String> fileIds = documentService.getRecentAadharId(leadId, limit, "Aadhaar");
+        List<String> cleanedFileIds = fileIds.stream()
+                .map(fileId -> fileId.replaceAll("-(?i)AADHAAR\\.jpg$", "")) // Case-insensitive removal
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(cleanedFileIds);
+        //return ResponseEntity.ok(fileNames);
+    }
+
+    @GetMapping("/recentpan/{leadId}")
+    public ResponseEntity<List<String>> getRecentPanNames(
+            @PathVariable String leadId,
+            @RequestParam(defaultValue = "1") int limit) {
+
+        log.info("Fetching last {} pans for lead ID: {}", limit, leadId);
+
+        List<String> fileIds = documentService.getRecentPanId(leadId, limit, "Pan");
+        List<String> cleanedFileIds = fileIds.stream()
+                .map(fileId -> fileId.replaceAll("-(?i)PAN\\.jpg$", "")) // Case-insensitive removal
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(cleanedFileIds);
+        //return ResponseEntity.ok(fileNames);
     }
 }
