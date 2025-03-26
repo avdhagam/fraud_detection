@@ -82,4 +82,15 @@ public class AudioController {
 
         return ResponseEntity.ok(recentAudioUUIDs);
     }
+
+    @GetMapping("/recentaudio/{leadId}")
+    public ResponseEntity<String> getRecentAudio(@PathVariable String leadId) {
+        log.info("Fetching most recent audio file for lead ID: {}", leadId);
+        java.util.List<String> recentAudioUUIDs = audioService.getRecentAudios(leadId, 1);
+        if (recentAudioUUIDs.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        String latestAudioId = recentAudioUUIDs.get(0);
+        return ResponseEntity.ok(latestAudioId);
+    }
 }

@@ -16,24 +16,24 @@ public class FileEntity {
     @Id
     private String fileId; // Unique ID for the file (String because MongoDB uses ObjectId)
 
-    private String agentId; // ID of the agent who uploaded
-    private String leadId; // Lead ID associated with the file
-    private String originalFilename; // Original file name
-    private String fileType; // AUDIO / DOCUMENT
-    private String filePath; // Location where the file is stored
-    private String status; // PENDING, PROCESSING, COMPLETED, FAILED
-    private Boolean isActive; // Soft delete flag
-    private LocalDateTime uploadedAt; // Upload timestamp
+    private String agentId;
+    private String leadId;
+    private String originalFilename;
+    private String fileType;
+    private String filePath;
+    private String status;
+    private Boolean isActive;
+    private LocalDateTime uploadedAt;
 
     public FileEntity(String agentId, String leadId, String originalFilename, String fileType, String filePath) {
-        this.fileId = UUID.randomUUID().toString(); // Generate a unique file ID
+        this.fileId = UUID.randomUUID().toString();
         this.agentId = agentId;
         this.leadId = leadId;
         this.originalFilename = originalFilename;
         this.fileType = fileType;
         this.filePath = filePath;
-        this.status = "PENDING"; // Default status
-        this.isActive = Boolean.TRUE; // Mark file as active
-        this.uploadedAt = LocalDateTime.now(); // Set timestamp
+        this.status = "PENDING";
+        this.isActive = Boolean.TRUE;
+        this.uploadedAt = LocalDateTime.now();
     }
 }

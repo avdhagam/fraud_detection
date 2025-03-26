@@ -23,7 +23,7 @@ public class FileController {
     private final FileService fileService;
 
     @PostMapping("/upload")
-    public ResponseEntity<FileResponse> uploadFile(
+    public ResponseEntity<FileEntity> uploadFile(
             @RequestParam("file") MultipartFile file,
             @RequestParam("agentId") String agentId,
             @RequestParam("leadId") String leadId,
@@ -33,27 +33,10 @@ public class FileController {
             byte[] fileData = file.getBytes();
             FileEntity savedFile = fileService.uploadFile(agentId, leadId, fileType, file.getOriginalFilename(), fileData);
 
-            FileResponse fileResponse = new FileResponse(
-                    savedFile.getFileId(),
-                    savedFile.getAgentId(),
-                    savedFile.getLeadId(),
-                    savedFile.getOriginalFilename(),
-                    savedFile.getFileType(),
-                    savedFile.getFilePath(),
-                    savedFile.getStatus(),
-                    savedFile.getIsActive(),
-                    savedFile.getUploadedAt()
-            );
-            return new ResponseEntity<>(fileResponse, HttpStatus.CREATED);
+            return new ResponseEntity<>(savedFile, HttpStatus.CREATED);
 
         } catch (IOException e) {
             log.error("Error during file upload: ", e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        } catch (IllegalArgumentException e) {
-            log.error("Invalid arguments: ", e);
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            log.error("Unexpected error: ", e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -70,23 +53,9 @@ public class FileController {
     }
 
     @GetMapping("/{fileId}")
-    public ResponseEntity<FileResponse> getFile(@PathVariable String fileId) {
+    public ResponseEntity<FileEntity> getFile(@PathVariable String fileId) {
         FileEntity fileEntity = fileService.getFile(fileId);
-        if (fileEntity == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        FileResponse fileResponse = new FileResponse(
-                fileEntity.getFileId(),
-                fileEntity.getAgentId(),
-                fileEntity.getLeadId(),
-                fileEntity.getOriginalFilename(),
-                fileEntity.getFileType(),
-                fileEntity.getFilePath(),
-                fileEntity.getStatus(),
-                fileEntity.getIsActive(),
-                fileEntity.getUploadedAt()
-        );
-        return new ResponseEntity<>(fileResponse, HttpStatus.OK);
+        return new ResponseEntity<>(fileEntity, HttpStatus.OK);
     }
 
     @GetMapping("/{agentId}/{leadId}/{fileType}")
@@ -96,5 +65,20 @@ public class FileController {
             @PathVariable String fileType) {
         return fileService.getFilesByAgentAndLead(agentId, leadId, fileType);
     }
+
+    @GetMapping("/{agentId}/{leadId}/active")
+    public List<FileEntity> getActiveFilesByAgentAndLead(
+            @PathVariable String agentId,
+            @PathVariable String leadId) {
+        return fileService.getActiveFilesByAgentAndLead(agentId, leadId);
+    }
+
+    @GetMapping("/{agentId}/{leadId}")
+    public List<FileEntity> getFilesByAgentAndLead(
+            @PathVariable String agentId,
+            @PathVariable String leadId) {
+        return fileService.getFilesByAgentAndLead(agentId, leadId);
+    }
+
 
 }

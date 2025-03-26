@@ -10,8 +10,7 @@ import java.util.List;
 
 public interface FileRepository extends MongoRepository<FileEntity, String> {
     List<FileEntity> findByAgentIdAndLeadIdAndFileType(String agentId, String leadId, String fileType);
-
-   // @Query("{ 'agentId': ?0, 'leadId': ?1, 'isActive': { $ne: false } }")
     List<FileEntity> findByAgentIdAndLeadIdAndIsActive(String agentId, String leadId, Boolean isActive);
-
+    List<FileEntity> findByAgentIdAndLeadId(String agentId, String leadId);
+    List<FileEntity> findByAgentIdAndLeadIdAndIsActiveTrue(String agentId, String leadId);
 }

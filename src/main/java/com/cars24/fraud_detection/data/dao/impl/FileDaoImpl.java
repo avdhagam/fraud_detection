@@ -48,4 +48,16 @@ public class FileDaoImpl implements FileDao {
         return fileRepository.findByAgentIdAndLeadIdAndIsActive(agentId, leadId, isActive);
     }
 
+    @Override
+    public List<FileEntity> findByAgentIdAndLeadId(String agentId, String leadId) {
+        return fileRepository.findByAgentIdAndLeadId(agentId, leadId);
+    }
+
+    @Override
+    public List<FileEntity> findByAgentIdAndLeadIdAndIsActiveTrue(String agentId, String leadId) {
+        return fileRepository.findByAgentIdAndLeadIdAndIsActiveTrue(agentId, leadId);
+    }
+
+
+
 }
