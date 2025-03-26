@@ -9,7 +9,9 @@ import java.util.Optional;
 
 public interface DocumentRepository extends MongoRepository<DocumentEntity, String> {
     List<DocumentEntity> findByLeadId(String leadId);
- List<DocumentEntity> findByLeadIdAndDocumentType(String leadId, String documentType);
+    List<DocumentEntity> findByLeadIdAndDocumentType(String leadId, String documentType);
     List<DocumentEntity> findByLeadIdOrderByTimestampDesc(String leadId, Pageable pageable);
     List<DocumentEntity> findByAgentIdAndLeadId(String agentId,String leadId);
+    Optional<DocumentEntity> findByIdAndDocumentType(String documentId, String documentType);
+
 }

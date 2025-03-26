@@ -11,4 +11,6 @@ public interface DocumentDao {
     List<DocumentEntity> findByLeadId(String leadId);
     List<DocumentEntity> getRecentDocumentsByLeadId(String leadId, int limit);
     List<DocumentEntity> findByLeadIdAndDocumentType(String leadId, String documentType);
+
+    Optional<DocumentEntity> findByIdAndDocumentType(String documentId, String documentType) ;
 }

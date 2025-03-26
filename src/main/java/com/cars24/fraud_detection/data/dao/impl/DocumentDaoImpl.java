@@ -47,4 +47,8 @@ public class DocumentDaoImpl implements DocumentDao {
     public List<DocumentEntity> findByLeadIdAndDocumentType(String leadId, String documentType) {
         return documentRepository.findByLeadIdAndDocumentType(leadId, documentType);
     }
+
+    public Optional<DocumentEntity> findByIdAndDocumentType(String documentId, String documentType) {
+        return documentRepository.findByIdAndDocumentType(documentId, documentType);
+    }
 }

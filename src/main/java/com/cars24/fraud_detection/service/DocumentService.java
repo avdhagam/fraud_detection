@@ -16,4 +16,5 @@ public interface DocumentService {
     List<String> getRecentDocumentNames(String leadId, int limit);
     Optional<DocumentEntity> getDocumentByLeadIdAndType(String leadId, String documentType);
     InsightsEntity getDocumentInsights(String documentId); // Added this line
+    Optional<DocumentEntity> getDocumentByIdAndType(String documentId, String documentType) ;
 }

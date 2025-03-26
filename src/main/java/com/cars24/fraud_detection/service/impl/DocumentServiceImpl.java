@@ -160,6 +160,9 @@ public class DocumentServiceImpl implements DocumentService {
                         .replace(new File("").getAbsolutePath() + File.separator, ""))
                 .orElse(null);
     }
+    public Optional<DocumentEntity> getDocumentByIdAndType(String documentId, String documentType) {
+        return documentDao.findByIdAndDocumentType(documentId, documentType);
+    }
 
 
 }
