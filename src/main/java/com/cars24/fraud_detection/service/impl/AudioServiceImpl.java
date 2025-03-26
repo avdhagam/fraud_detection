@@ -264,7 +264,7 @@ public class AudioServiceImpl implements AudioService {
     private final AudioDao audioDao;
     private final LeadDao leadDao;  // Inject LeadDao
     private final WorkflowInitiator workflowInitiator;
-    private static final Logger logger = Logger.getLogger(AudioServiceImpl.class.getName());
+    static final Logger logger = Logger.getLogger(AudioServiceImpl.class.getName());
 
     private final DocumentTypeConfig documentTypeConfig;
 
