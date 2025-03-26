@@ -96,4 +96,18 @@ public class FileController {
         return fileService.getFilesByAgentAndLead(agentId, leadId, fileType);
     }
 
+    @GetMapping("/{agentId}/{leadId}/active")
+    public List<FileEntity> getActiveFilesByAgentAndLead(
+            @PathVariable String agentId,
+            @PathVariable String leadId) {
+        return fileService.getActiveFilesByAgentAndLead(agentId, leadId);
+    }
+
+    @GetMapping("/{agentId}/{leadId}")
+    public List<FileEntity> getFilesByAgentAndLead(
+            @PathVariable String agentId,
+            @PathVariable String leadId) {
+        return fileService.getFilesByAgentAndLead(agentId, leadId);
+    }
+
 }

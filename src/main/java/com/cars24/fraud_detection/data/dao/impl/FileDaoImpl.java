@@ -5,7 +5,9 @@ import com.cars24.fraud_detection.data.entity.FileEntity;
 import com.cars24.fraud_detection.data.response.FileResponse;
 import com.cars24.fraud_detection.repository.FileRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -37,7 +39,7 @@ public class FileDaoImpl implements FileDao {
 
     @Override
     public List<FileEntity> findByAgentIdAndLeadIdAndFileType(String agentId, String leadId, String fileType) {
-       return fileRepository.findByAgentIdAndLeadIdAndFileType(agentId, leadId, fileType);
+        return fileRepository.findByAgentIdAndLeadIdAndFileType(agentId, leadId, fileType);
 
     }
 
@@ -45,5 +47,17 @@ public class FileDaoImpl implements FileDao {
     public List<FileEntity> findByAgentIdAndLeadIdAndIsActive(String agentId, String leadId, Boolean isActive) {
         return fileRepository.findByAgentIdAndLeadIdAndIsActive(agentId, leadId, isActive);
     }
+
+    @Override
+    public List<FileEntity> findByAgentIdAndLeadId(String agentId, String leadId) {
+        return fileRepository.findByAgentIdAndLeadId(agentId, leadId);
+    }
+
+    @Override
+    public List<FileEntity> findByAgentIdAndLeadIdAndIsActiveTrue(String agentId, String leadId) {
+        return fileRepository.findByAgentIdAndLeadIdAndIsActiveTrue(agentId, leadId);
+    }
+
+
 
 }

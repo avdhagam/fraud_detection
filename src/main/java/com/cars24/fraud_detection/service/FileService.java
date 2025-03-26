@@ -10,13 +10,13 @@ import java.util.List;
 public interface FileService {
     FileEntity uploadFile(String agentId, String leadId, String fileType, String originalFilename, byte[] fileData);
 
-    void processAsyncAudio(FileEntity fileEntity);
-
-    void processAsyncDocument(FileEntity fileEntity);
-
     FileEntity getFile(String fileId);
 
     List<FileEntity> getFilesByAgentAndLead(String agentId, String leadId, String fileType);
 
     List<FileResponse> uploadMultipleFiles(String agentId, String leadId, List<String> fileTypes, List<MultipartFile> files);
+
+    List<FileEntity> getFilesByAgentAndLead(String agentId, String leadId);
+
+    List<FileEntity> getActiveFilesByAgentAndLead(String agentId, String leadId);
 }
