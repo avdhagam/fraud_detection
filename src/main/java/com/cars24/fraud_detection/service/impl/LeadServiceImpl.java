@@ -120,6 +120,7 @@ public class LeadServiceImpl implements LeadService {
     private InsightsEntity createDocumentInsightsEntity(DocumentEntity document, String documentName) {
         return InsightsEntity.builder()
                 .leadId(document.getLeadId())
+                .id(document.getId())
                 .doctype(document.getDocumentType())
                 .documentName(documentName)
                 .status(document.getStatus())
@@ -132,6 +133,7 @@ public class LeadServiceImpl implements LeadService {
     private InsightsEntity createAudioInsightsEntity(AudioEntity audio, String documentName) {
         return InsightsEntity.builder()
                 .leadId(audio.getLeadId())
+                .id(audio.getId())
                 .doctype(audio.getDocumentType())
                 .documentName(documentName)
                 .status(audio.getStatus())
@@ -142,6 +144,7 @@ public class LeadServiceImpl implements LeadService {
 
     private InsightsEntity createPendingDocumentInsightsEntity(String leadId, String documentType, String documentName) {
         return InsightsEntity.builder()
+                .id(null)
                 .leadId(leadId)
                 .doctype(documentType)
                 .documentName(documentName)
@@ -154,6 +157,7 @@ public class LeadServiceImpl implements LeadService {
 
     private InsightsEntity createPendingAudioInsightsEntity(String leadId, String documentType, String documentName) {
         return InsightsEntity.builder()
+                .id(null)
                 .leadId(leadId)
                 .doctype(documentType)
                 .documentName(documentName)

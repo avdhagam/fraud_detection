@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 @Builder
 public class InsightsEntity {
     private String leadId; // Add leadId field
+    private String id;
     private String doctype;
     private String documentName;
     private String status;
