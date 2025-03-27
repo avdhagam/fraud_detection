@@ -66,8 +66,8 @@ def parse_transcript_to_structured_format(transcript_text):
     """
     structured_transcript = []
 
-
-    pattern = r'(\d+\.\d+)\s+(\d+\.\d+)\s+(SPEAKER_\d+)\s+(.+?)(?=\d+\.\d+\s+\d+\.\d+\s+SPEAKER_|\Z)'
+    # Explicitly group components in the regex pattern
+    pattern = r'(\d+\.\d+)\s+(\d+\.\d+)\s+(SPEAKER_\d+)\s+((?:.+?)(?=(?:\d+\.\d+\s+\d+\.\d+\s+SPEAKER_)|\Z))'
 
     matches = re.finditer(pattern, transcript_text, re.DOTALL)
 
@@ -85,6 +85,7 @@ def parse_transcript_to_structured_format(transcript_text):
         })
 
     return structured_transcript
+
 
 def extract_transcript_information(transcript, ground_truth):
     """
@@ -142,7 +143,8 @@ def extract_transcript_information(transcript, ground_truth):
             content = result.get("choices", [{}])[0].get("message", {}).get("content", "")
 
             # Clean and parse the JSON response
-            content = re.sub(r'^```json\s*|\s*```$', '', content, flags=re.MULTILINE).strip()
+            content = re.sub(r'^(?:```json)\s*|\s*(?:```)$', '', content, flags=re.MULTILINE).strip()
+
             parsed_result = json.loads(content)
 
             # Determine status based on overall score
