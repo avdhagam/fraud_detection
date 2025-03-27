@@ -89,6 +89,7 @@ public class FileController {
         return ResponseEntity.ok(uploadedFiles);
     }
 
+
     @GetMapping("/{fileId}")
     public ResponseEntity<FileResponse> getFile(@PathVariable String fileId) {
         FileEntity fileEntity = fileService.getFile(fileId);
