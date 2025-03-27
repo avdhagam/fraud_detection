@@ -31,6 +31,7 @@ public class AudioResponse {
     private String status;
 
     public <E, K, V> AudioResponse(String uuid, Object o, ArrayList<E> es, Object o1, Object o2, Object o3, Object o4, Object o5, double v, ArrayList<E> es1, HashMap<K,V> kvHashMap, String error) {
+        throw new UnsupportedOperationException("Constructor not implemented yet");
     }
 
 //    public AudioResponse(String uuid, String agentId, Map<String, Object> llmExtractionResult, Map<String, Object> audioAnalysisMap, List<String> transcript, String referenceName, String subjectName, String subjectAddress, String relationToSubject, String subjectOccupation, Double overallScore, List<String> explanation, Map<String, Double> fieldByFieldScores, String status) {
