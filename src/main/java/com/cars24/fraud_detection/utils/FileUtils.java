@@ -165,7 +165,7 @@ public class FileUtils {
                 lastException = e;
                 log.warn("Archive attempt {} failed: {}", attempt + 1, e.getMessage());
                 try {
-                    Thread.sleep(100 * (attempt + 1));
+                    Thread.sleep(100L * (attempt + 1));
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     throw new DocumentProcessingException("Archive operation interrupted", ie);
