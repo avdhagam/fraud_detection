@@ -93,7 +93,7 @@ def clean_json_content(content, max_length=50000):
 
     # Alternative safe regex with bounded complexity
     content = re.sub(
-        r'^```json\s*|```\s*$',
+        r'(^```json\s*)|(```\s*$)',
         '',
         content,
         flags=re.MULTILINE
