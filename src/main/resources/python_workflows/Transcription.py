@@ -140,12 +140,15 @@ def cluster_speakers(embeddings, num_speakers):
     """Clusters audio features to determine speaker labels."""
     scaler = StandardScaler()
     embeddings_scaled = scaler.fit_transform(embeddings)
-    pca = PCA(n_components=min(5, embeddings_scaled.shape[1]))
+
+    # Ensure PCA component count does not exceed the number of features
+    pca_components = min(5, embeddings_scaled.shape[1], len(embeddings_scaled))
+    pca = PCA(n_components=pca_components, random_state=42)
     embeddings_pca = pca.fit_transform(embeddings_scaled)
 
     clustering_algorithms = {
         "KMeans": KMeans(n_clusters=num_speakers, random_state=42),
-        "Spectral": SpectralClustering(n_clusters=num_speakers, affinity='nearest_neighbors'),
+        "Spectral": SpectralClustering(n_clusters=num_speakers, affinity='nearest_neighbors', random_state=42),
         "Agglomerative": AgglomerativeClustering(n_clusters=num_speakers, linkage="ward"),
         "DBSCAN": DBSCAN(eps=1.5, min_samples=2)
     }
@@ -159,8 +162,10 @@ def cluster_speakers(embeddings, num_speakers):
                 break
         except Exception as e:
             # logging.warning(f"{name} clustering failed: {e}")
-            return "error"
+            continue
+
     return best_labels if best_labels is not None else np.zeros(len(embeddings))
+
 
 def format_transcription_output(utterances, speaker_labels):
     """Formats transcription output in a structured string format."""
