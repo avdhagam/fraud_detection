@@ -999,3 +999,97 @@ This appears to be a mock-up of an Indian identity document.  The information di
 **Important Note:** This is not a real Indian government ID card.  The formatting and the inclusion of a prominent YouTuber's name makes it clear this is a fabricated image.  Real Indian government IDs have much stricter security features and are not made this way.
 
 2025-03-26 13:08:56,087 - ERROR - Failed to parse JSON: Expecting value: line 1 column 1 (char 0)
+2025-03-26 17:20:54,635 - INFO - Quality API Raw Response: Here's a summary of the information from the image:
+
+This appears to be a mock-up of an Indian identity document.  It shows:
+
+* **Government of India Emblem:**  The official emblem is present at the top.
+* **Name:** Bhuvan Bam
+* **Date of Birth (DOB):** 21/1/1994
+* **Gender:** Male (\u092a\u0941\u0930\u0941\u0937 in Hindi)
+* **Identification Number:** 5686 5772 6886 1788
+* **QR Code:** A QR code is included, likely for verification purposes.
+
+**Important Note:** This is clearly a fabricated or sample document.  It does not represent a genuine government-issued ID.  Real Indian identity documents have specific security features and are issued through official channels.
+
+2025-03-26 17:20:54,638 - ERROR - Failed to parse JSON: Expecting value: line 1 column 1 (char 0)
+2025-03-26 17:47:13,408 - INFO - Quality API Raw Response: Here's a summary of the information from the provided image:
+
+This appears to be a mock-up of an Indian identification card.  It shows:
+
+* **Government of India Emblem:**  The official emblem is displayed at the top.
+* **Name:** Bhuvan Bam
+* **Date of Birth (DOB):** 21/1/1994
+* **Gender:** Male (\u092a\u0941\u0930\u0941\u0937 in Hindi)
+* **Identification Number:** 5686 5772 6886 1788
+* **QR Code:** A QR code is present, likely containing further information.
+
+**Important Note:** This is not a genuine Indian government-issued ID.  The design and information are not consistent with actual Aadhaar or other official identification cards.  It's likely a fan-made image.
+
+2025-03-26 17:47:13,408 - ERROR - Failed to parse JSON: Expecting value: line 1 column 1 (char 0)
+2025-03-27 13:04:35,493 - INFO - Quality API Raw Response: Here's a summary of the information from the provided image:
+
+This appears to be a mock-up of an Indian identity document, possibly Aadhaar card-inspired.  The information shown is:
+
+* **Name:** Bhuvan Bam
+* **Date of Birth (DOB):** 21/1/1994
+* **Gender:** Male
+* **Identification Number:** 5686 5772 6886 1788
+* **QR Code:** A QR code is present, likely containing additional or encoded information.
+
+
+**Important Note:** This is clearly not a genuine government document.  The formatting and layout are not consistent with official Indian identity cards.  It's likely a fan-made image.
+
+2025-03-27 13:04:35,493 - ERROR - Failed to parse JSON: Expecting value: line 1 column 1 (char 0)
+2025-03-27 13:09:32,378 - INFO - Quality API Raw Response: Here's a summary of the information from the image:
+
+This appears to be a mock-up of an Aadhaar card (India's national identification card).  The information shown includes:
+
+* **Name:** Bhuvan Bam
+* **Date of Birth (DOB):** 21/1/1994
+* **Gender:** Male
+* **Aadhaar Number (likely fake):** 5686 5772 6886 1788
+* **QR Code:** A QR code is present, presumably containing the same information.
+
+**Important Note:**  This is clearly not a genuine Aadhaar card. The Aadhaar number and the overall design aren't consistent with a real card.  Aadhaar cards have specific security features that are not present here.  Do not attempt to use this as an official document.
+
+2025-03-27 13:09:32,378 - ERROR - Failed to parse JSON: Expecting value: line 1 column 1 (char 0)
+2025-03-27 13:19:03,225 - INFO - Quality API Raw Response: Here's a summary of the information from the provided image:
+
+This appears to be a mock-up of an Indian identity document, similar in format to an Aadhaar card.  It shows:
+
+* **Name:** Bhuvan Bam
+* **Date of Birth (DOB):** 21/1/1994
+* **Gender:** Male
+* **Identification Number:** 5686 5772 6886 1788
+* **QR Code:** A QR code is present, likely containing further information.
+* **Government of India Emblem:** The official emblem of the Government of India is displayed at the top.
+
+**Important Note:**  This is clearly a fabricated ID.  Real Indian government identification documents have security features not present here, and the number format is not consistent with actual Aadhaar numbers.  Do not attempt to use this image for any official purpose.
+
+2025-03-27 13:19:03,226 - ERROR - Failed to parse JSON: Expecting value: line 1 column 1 (char 0)
+2025-03-27 13:19:04,498 - INFO - Quality API Raw Response: Here's a summary of the information from the provided image of an Indian Permanent Account Number (PAN) card:
+
+* **Name:** Prachit Chopra
+* **Father's Name:** Sanjeev Chopra
+* **Date of Birth:** 25/08/1990
+* **PAN Number:** AMWPC3594M
+
+The image also shows the issuing authority as the Income Tax Department, Government of India.  Note that the signature is a handwritten representation of the name "Prachit."  I cannot provide any other information as it would violate personal privacy.
+
+2025-03-27 13:19:04,499 - ERROR - Failed to parse JSON: Expecting value: line 1 column 1 (char 0)
+2025-03-27 14:20:32,880 - INFO - Quality API Raw Response: Here's a summary of the information extracted from the provided image:
+
+This appears to be a mock-up of an Indian identity document.  The information displayed includes:
+
+* **Government of India:** Clearly indicates the issuing authority.
+* **Name:** Bhuvan Bam
+* **Date of Birth (DOB):** 21/1/1994 (January 21st, 1994)
+* **Gender:** Male (\u092a\u0941\u0930\u0941\u0937 in Hindi)
+* **Identification Number:** 5686 5772 6886 1788 (This is likely a placeholder; real ID numbers are much longer and more complex)
+* **QR Code:** A QR code is present, which would likely contain the same information digitally.
+
+
+It is important to note that this is *not* a genuine Indian government-issued identity document.  The ID number format and overall design are not consistent with official documents.  This is likely a fan-made image or a fictional representation.
+
+2025-03-27 14:20:32,896 - ERROR - Failed to parse JSON: Expecting value: line 1 column 1 (char 0)
