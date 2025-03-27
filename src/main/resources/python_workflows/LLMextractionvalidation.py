@@ -143,7 +143,12 @@ def extract_transcript_information(transcript, ground_truth):
             content = result.get("choices", [{}])[0].get("message", {}).get("content", "")
 
             # Clean and parse the JSON response
-            content = re.sub(r'^(?:```json)[ \t]*|[ \t]*(?:```)$', '', content, flags=re.MULTILINE).strip()
+            content = re.sub(
+                r'(?:^(?:```json)[ \t]*)|(?:[ \t]*(?:```)$)',
+                '',
+                content,
+                flags=re.MULTILINE
+            ).strip()
 
 
             parsed_result = json.loads(content)
