@@ -60,11 +60,15 @@ public class AudioController {
     }
 
     @GetMapping("/{audioId}")
-    public ResponseEntity<AudioResponse> getAudio(@PathVariable String audioId) throws AudioProcessingException {
-        log.info("Received get request for audio ID: {}", audioId);
+    public ResponseEntity<AudioResponse> getAudio(
+            @PathVariable String audioId) throws AudioProcessingException {
+
+        log.info("Received get request for an audio file.");
+
         AudioResponse response = audioService.getAudioResults(audioId);
         return ResponseEntity.ok(response);
     }
+
 
     @GetMapping("/file/{audioId}")
     public ResponseEntity<FileSystemResource> getAudioFile(@PathVariable String audioId) {
