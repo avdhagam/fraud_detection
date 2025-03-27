@@ -86,6 +86,7 @@ public class AgentServiceImpl implements AgentService {
         int acceptedReferenceCalls = 0;
         int rejectedReferenceCalls = 0;
         double totalAgentTalkTime = 0;
+
         double totalReferenceTalkTime = 0;
         int validReferenceCallCount = 0;
 
