@@ -50,50 +50,61 @@ public class FileServiceImpl implements FileService {
     @Override
     @Transactional
     public FileEntity uploadFile(String agentId, String leadId, String fileType, String originalFilename, byte[] fileData) {
-        // **Determine storage path based on file type**
+        // Validate file type against allowed values
+        List<String> allowedTypes = List.of("REFERENCE_CALL", "AADHAAR", "PAN");
+        if (!allowedTypes.contains(fileType.toUpperCase())) {
+            throw new IllegalArgumentException("Invalid file type");
+        }
+
+        // Get the designated storage path securely
         String storagePath = determineStoragePath(fileType);
 
         // Ensure directory exists
         File storageDir = new File(storagePath);
-        if (!storageDir.exists()) {
-            storageDir.mkdirs();
+        if (!storageDir.exists() && !storageDir.mkdirs()) {
+            throw new RuntimeException("Failed to create storage directory: " + storagePath);
         }
 
-        // **Extract file extension from original filename**
+        // Validate and extract the file extension
         String fileExtension = extractFileExtension(originalFilename);
         if (fileExtension == null) {
             throw new IllegalArgumentException("Invalid file type");
         }
 
-        // **Generate unique filename**
-        String filename = UUID.randomUUID().toString() + "-" + fileType + fileExtension;
-        String filePath = Paths.get(storagePath, filename).normalize().toString();  // Correct filePath
+        // Securely generate a unique file within the allowed directory
+        File tempFile;
+        try {
+            tempFile = File.createTempFile(UUID.randomUUID().toString() + "-" + fileType, fileExtension, storageDir);
+        } catch (IOException e) {
+            log.error("Error creating temp file in directory: {}", storagePath, e);
+            throw new RuntimeException("File upload failed: Unable to create file.");
+        }
 
-        // **Save file to local storage**
-        try (FileOutputStream fos = new FileOutputStream(filePath)) {
+        // Save file to secure location
+        try (FileOutputStream fos = new FileOutputStream(tempFile)) {
             fos.write(fileData);
         } catch (IOException e) {
-            log.error("Error saving file: {}", filePath, e);
+            log.error("Error saving file: {}", tempFile.getAbsolutePath(), e);
             throw new RuntimeException("File upload failed");
         }
 
-        // **Mark all existing files as INACTIVE**
+        // Mark all existing files as INACTIVE
         List<FileEntity> existingFiles = fileDao.findByAgentIdAndLeadIdAndFileType(agentId, leadId, fileType);
         for (FileEntity existingFile : existingFiles) {
-            existingFile.setIsActive(Boolean.FALSE); // Mark previous files as inactive
+            existingFile.setIsActive(Boolean.FALSE);
             fileDao.save(existingFile);
         }
 
-        //  **Create and Save New FileEntity**
-        FileEntity newFile = new FileEntity(agentId, leadId, filename, fileType, originalFilename); // Add originalFilename
-        newFile.setStatus("PENDING");  // Default status
-        newFile.setIsActive(Boolean.TRUE);  // Mark new file as active
+        // Create and save new FileEntity
+        FileEntity newFile = new FileEntity(agentId, leadId, tempFile.getName(), fileType, originalFilename);
+        newFile.setStatus("PENDING");
+        newFile.setIsActive(Boolean.TRUE);
         newFile.setUploadedAt(LocalDateTime.now());
-        newFile.setFilePath(filePath);  // Save full file path
+        newFile.setFilePath(tempFile.getAbsolutePath());
 
         FileEntity savedFile = fileDao.save(newFile);
 
-
+        // Trigger async processing based on file type
         if (documentTypeConfig.getDocumentDisplayName("REFERENCE_CALL").equalsIgnoreCase(fileType)) {
             asyncFileProcessingService.processAsyncAudio(savedFile);
         } else {
@@ -101,10 +112,9 @@ public class FileServiceImpl implements FileService {
         }
 
         log.info("File uploaded successfully and async processing started.");
-
-
         return savedFile;
     }
+
 
 
 
