@@ -336,16 +336,16 @@ public class AudioServiceImpl implements AudioService {
 
     @Override
     public AudioResponse getAudioResults(String audioId) throws AudioProcessingException {
-        logger.info("Fetching audio analysis for ID: " + audioId);
+        logger.info("Fetching audio analysis");
 
         Optional<AudioEntity> audioEntityOpt = audioDao.getAudioById(audioId);
         if (audioEntityOpt.isEmpty()) {
-            logger.warning("Audio analysis not found for ID: " + audioId);
-            throw new AudioProcessingException("Audio analysis not found for ID: " + audioId);
+            logger.warning("Audio analysis not found");
+            throw new AudioProcessingException("Audio analysis not found for the provided ID");
         }
 
         AudioEntity audioEntity = audioEntityOpt.get();
-        logger.info("Fetched audio entity: " + audioEntity);
+        logger.info("Fetched audio entity successfully");
 
         AudioResponse response = new AudioResponse();
         response.setId(audioEntity.getId());
