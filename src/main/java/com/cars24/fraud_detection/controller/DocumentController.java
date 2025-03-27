@@ -109,32 +109,11 @@ public class DocumentController {
         return ResponseEntity.ok(fileNames);
     }
 
-//    @GetMapping("/{leadId}/{docType}")
-//    public ResponseEntity<DocumentResponse> getDocumentByLeadIdAndType(
-//            @PathVariable String leadId,
-//            @PathVariable String docType) {
-//        DocumentResponse document = documentService.getDocumentByLeadIdAndType(leadId, docType)
-//                .map(DocumentEntity::toResponse)
-//                .orElse(null); // Or handle not found case as appropriate
-//        return ResponseEntity.ok(document);
-//    }
-
     @GetMapping("/types")
     public ResponseEntity<Map<String, String>> getAllDocumentTypes() {
         System.out.println("Fetching document types: " + documentTypeConfig.getMapping());
         return ResponseEntity.ok(documentTypeConfig.getMapping());
     }
-
-//    @GetMapping("/{leadId}/{docType}")
-//    public ResponseEntity<DocumentResponse> getDocumentsByLeadIdAndType(
-//            @PathVariable String leadId,
-//            @PathVariable String docType) {
-//        DocumentResponse document = documentService.getDocumentByLeadIdAndType(leadId, docType)
-//                .map(DocumentEntity::toResponse)
-//                .orElse(null); // Handle not found case
-//
-//        return ResponseEntity.ok(document);
-//    }
 
     @GetMapping("/{documentId}/{docType}")
     public ResponseEntity<DocumentResponse> getDocumentByIdAndType(
