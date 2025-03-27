@@ -67,7 +67,7 @@ public class FileServiceImpl implements FileService {
 
         // **Generate unique filename**
         String filename = UUID.randomUUID().toString() + "-" + fileType + fileExtension;
-        String filePath = Paths.get(storagePath, filename).toString();  // Correct filePath
+        String filePath = Paths.get(storagePath, filename).normalize().toString();  // Correct filePath
 
         // **Save file to local storage**
         try (FileOutputStream fos = new FileOutputStream(filePath)) {
@@ -143,8 +143,13 @@ public class FileServiceImpl implements FileService {
 
 
     private String determineStoragePath(String fileType) {
-        String referenceCallType = documentTypeConfig.getDocumentDisplayName("REFERENCE_CALL");
-        if (referenceCallType.equalsIgnoreCase(fileType)) {
+        List<String> allowedTypes = List.of("REFERENCE_CALL", "AADHAAR", "PAN"); // Define allowed types
+
+        if (!allowedTypes.contains(fileType.toUpperCase())) {
+            throw new IllegalArgumentException("Invalid file type");
+        }
+
+        if (documentTypeConfig.getDocumentDisplayName("REFERENCE_CALL").equalsIgnoreCase(fileType)) {
             return AUDIO_STORAGE_PATH;
         } else {
             return DOCUMENT_STORAGE_PATH;
@@ -155,9 +160,18 @@ public class FileServiceImpl implements FileService {
 
     private String extractFileExtension(String originalFilename) {
         if (originalFilename == null || !originalFilename.contains(".")) {
-            return null;
+            throw new IllegalArgumentException("Invalid file name");
         }
-        return originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase();
+
+        String extension = originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase();
+
+        List<String> allowedExtensions = List.of(".pdf", ".doc", ".docx", ".jpg", ".png", ".mp3", ".wav");
+
+        if (!allowedExtensions.contains(extension)) {
+            throw new IllegalArgumentException("Unsupported file type");
+        }
+
+        return extension;
     }
 
     private byte[] readFileAsBytes(String filePath) throws IOException {
@@ -167,7 +181,10 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public FileEntity getFile(String fileId) {
-        return fileDao.findById(fileId).orElse(null);
+        if (!fileId.matches("^[a-fA-F0-9\\-]{36}$")) { // Ensure fileId is a valid UUID
+            throw new IllegalArgumentException("Invalid file ID");
+        }
+        return fileDao.findById(fileId).orElseThrow(() -> new RuntimeException("File not found"));
     }
 
     @Override
@@ -188,7 +205,6 @@ public class FileServiceImpl implements FileService {
 
 
 }
-
 
 
 

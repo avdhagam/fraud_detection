@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Collections;
 
 @Slf4j
 @RestController
@@ -66,9 +67,29 @@ public class FileController {
             @RequestParam("fileTypes") List<String> fileTypes,
             @RequestParam("files") List<MultipartFile> files) {
 
-        List<FileResponse> uploadedFiles = fileService.uploadMultipleFiles(agentId, leadId, fileTypes, files);
+        // Validate input data to prevent directory traversal
+        if (!isValidUUID(agentId) || !isValidUUID(leadId)) {
+            return ResponseEntity.badRequest().body(Collections.emptyList());
+        }
+
+        // Use internally generated IDs or controlled mappings for file storage
+        String safeAgentId = sanitizeId(agentId);
+        String safeLeadId = sanitizeId(leadId);
+
+        List<FileResponse> uploadedFiles = fileService.uploadMultipleFiles(safeAgentId, safeLeadId, fileTypes, files);
         return ResponseEntity.ok(uploadedFiles);
     }
+
+    // Helper method to validate UUID format (or other strict validation)
+    private boolean isValidUUID(String input) {
+        return input.matches("^[a-fA-F0-9\\-]{36}$"); // Matches UUID format
+    }
+
+    // Sanitize input by stripping unwanted characters
+    private String sanitizeId(String input) {
+        return input.replaceAll("[^a-zA-Z0-9_-]", ""); // Allow only alphanumeric, underscores, and hyphens
+    }
+
 
     @GetMapping("/{fileId}")
     public ResponseEntity<FileResponse> getFile(@PathVariable String fileId) {
