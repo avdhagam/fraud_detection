@@ -14,20 +14,9 @@ root_dir = script_path.parents[4]  # Calculate root directory by moving up four 
 sys.path.append(str(root_dir)) # Add the project's root directory to the Python path
 import config
 
-
 # Define base path for stored audio files
 root_path = Path(__file__).resolve().parent.parent  # Moves up two levels
 base_path = root_path / "audio_storage"
-
-# def get_uuid():
-#     if len(sys.argv)>1:
-#         return sys.argv[1]
-#     else:
-#         print("Error: UUID not provided")
-#         sys.exit(1)
-#
-# uuid = get_uuid()
-
 
 def get_ground_truth(lead_id):
     api_url = f"http://localhost:8080/leads/{lead_id}/audio"
@@ -41,7 +30,6 @@ def get_ground_truth(lead_id):
     except Exception as e:
         print(f"Error fetching ground truth: {e}")
         sys.exit(1)
-
 
 def get_audio_file_path(uuid):
     """Reconstruct the full path of the audio file using UUID."""
@@ -86,6 +74,32 @@ def parse_transcript_to_structured_format(transcript_text):
 
     return structured_transcript
 
+def clean_json_content(content, max_length=50000):
+    """
+    Safely clean JSON content while preventing regex DoS vulnerabilities.
+
+    Args:
+        content (str): Input content to clean
+        max_length (int): Maximum length of content to process
+
+    Returns:
+        str: Cleaned content without JSON code block markers
+    """
+    # Truncate input to prevent excessive processing
+    content = content[:max_length]
+
+    # Use simple string methods to remove markers
+    content = content.removeprefix('```json').removesuffix('```')
+
+    # Alternative safe regex with bounded complexity
+    content = re.sub(
+        r'(^```json\s*)|(```\s*$)',
+        '',
+        content,
+        flags=re.MULTILINE
+    )
+
+    return content.strip()
 
 def extract_transcript_information(transcript, ground_truth):
     """
@@ -142,14 +156,8 @@ def extract_transcript_information(transcript, ground_truth):
             result = response.json()
             content = result.get("choices", [{}])[0].get("message", {}).get("content", "")
 
-            # Clean and parse the JSON response
-            content = re.sub(
-                r'(?:^(?:```json)[ \t]*)|(?:[ \t]*(?:```)$)',
-                '',
-                content,
-                flags=re.MULTILINE
-            ).strip()
-
+            # Clean and parse the JSON response using safe method
+            content = clean_json_content(content)
 
             parsed_result = json.loads(content)
 
@@ -258,7 +266,6 @@ if __name__ == "__main__":
     47.020  48.280 SPEAKER_01                                                            Patimatham, Kerala.
     49.120  50.320 SPEAKER_00                                                            Okay, thank you.
     50.860  51.360 SPEAKER_00                                                            Okay."""
-
 
     results = process_transcript(transcript, ground_truth)
 
