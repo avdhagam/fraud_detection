@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-
 @Slf4j
 @Service
 public class PythonExecutor {
@@ -22,8 +21,7 @@ public class PythonExecutor {
 
     public Map<String, Object> runPythonScript(String scriptName, Object... args) {
         try {
-           // String pythonCommand = System.getProperty("os.name").toLowerCase().contains("win") ? "python" : "python3";
-            String pythonCommand =  "C:\\Users\\dayad\\Downloads\\cars24\\fraud_detection\\venv\\Scripts\\python.exe";
+            String pythonCommand = "C:\\Users\\dayad\\Downloads\\cars24\\fraud_detection\\venv\\Scripts\\python.exe";
             List<String> command = new ArrayList<>();
             command.add(pythonCommand);
             command.add(scriptName);
@@ -43,29 +41,34 @@ public class PythonExecutor {
 
             BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
             String errorOutput = errorReader.lines().collect(Collectors.joining("\n"));
+
             if (!errorOutput.isEmpty()) {
                 log.error("Python script error output: {}", errorOutput);
             }
 
+            int exitCode;
+            try {
+                exitCode = process.waitFor();
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt(); // Re-interrupt the thread
+                throw new PythonExecutionException("Thread was interrupted while waiting for Python script execution", ie);
+            }
 
-            int exitCode = process.waitFor();
             if (exitCode != 0) {
                 log.error("Python script failed with exit code {}: {}", exitCode, scriptOutput);
                 throw new PythonExecutionException("Python script execution failed with exit code " + exitCode);
             }
 
-            // Handle null or empty output gracefully
             if (scriptOutput == null || scriptOutput.trim().isEmpty()) {
                 log.warn("Python script returned empty or null output.");
                 Map<String, Object> result = new HashMap<>();
-                result.put("output", ""); // Store an empty string as output
+                result.put("output", "");
                 return result;
             }
 
-            // Attempt to parse the output as JSON
             try {
                 Map<String, Object> result = objectMapper.readValue(scriptOutput, Map.class);
-                log.info("script output:{}",scriptOutput);
+                log.info("script output:{}", scriptOutput);
                 log.info("Python script executed successfully with parsed JSON result: {}", result);
                 return result;
             } catch (Exception jsonEx) {
