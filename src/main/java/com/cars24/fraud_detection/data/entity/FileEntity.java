@@ -36,4 +36,8 @@ public class FileEntity {
         this.isActive = Boolean.TRUE; // Mark file as active
         this.uploadedAt = LocalDateTime.now(); // Set timestamp
     }
+
+    public FileEntity() {
+
+    }
 }

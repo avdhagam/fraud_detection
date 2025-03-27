@@ -22,10 +22,6 @@ GEMINI_OCR_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini
 # Ensure UTF-8 output encoding
 sys.stdout = codecs.getwriter("utf-8")(sys.stdout.buffer, "strict")
 
-# if not GEMINI_API_KEY or GEMINI_API_KEY == "AIzaSyAgBhKlHqLjf8Wc4m3SDfRQvsB5uXh955Q":
-#     print(json.dumps({"error": "Missing or invalid API Key. Set GEMINI_API_KEY as an environment variable."}, indent=4))
-#     sys.exit(1)
-
 def encode_image(image_path):
     """Encodes an image file as base64."""
     try:
